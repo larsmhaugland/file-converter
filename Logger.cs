@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 public class Logger
 {
@@ -27,11 +28,28 @@ public class Logger
 		}
 	}
 
-	private void writeLog(string message)
+	public void writeLog(string message, bool error)
 	{
+		lock(lockObject)
+		{
+            // https://learn.microsoft.com/en-us/dotnet/standard/io/how-to-write-text-to-a-file
+            // Set a variable to the Documents path.
+            string docPath = "output/logs/";
+
+            // Write the specified text asynchronously to a new file.
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
+            {
+                outputFile.WriteAsync(message);
+            }
+        }
     }
 
+	/*
 	private void writeErrorLog(string message)
 	{
-    }
+        lock (lockObject)
+        {
+
+        }
+    }*/
 }
