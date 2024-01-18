@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 
 public enum HashAlgorithms
 {
@@ -10,7 +11,7 @@ public enum HashAlgorithms
 }
 
 public class FileInfo
-{
+{ 
 	public string FileName { get; set; } 				// Relative path to file with root of Input folder
 	public string OriginalPronom { get; set; }			// Original Pronom ID
 	public string NewPronom { get; set; }				// New Pronom ID
@@ -20,10 +21,11 @@ public class FileInfo
     public string NewFormatName { get; set; }           // New Format Name
     public string OriginalChecksum { get; set; }        // Original Checksum
     public string NewChecksum { get; set; }             // New Checksum
-	public bool IsConverted { get; set; }				// True if file is converted
-	public bool SupportsConversion { get; set; }        // True if file supports conversion
     public long OriginalSize { get; set; }              // Original file size
-    public long NewSize { get; set; }                   // New file size
+    public long NewSize { get; set; }
+    public bool IsConverted { get; set; }				// True if file is converted
+	public bool SupportsConversion { get; set; }        // True if file supports conversion
+                       // New file size
 
     private HashAlgorithms HashingAlgorithm;
     public FileInfo()
@@ -110,12 +112,5 @@ public class FileInfo
                 return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
             }
         }
-    }
-
-    public void LogFileInfo()
-    {
-        
-    }
-
-    
+    }    
 }
