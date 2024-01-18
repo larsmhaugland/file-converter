@@ -1,4 +1,13 @@
 ﻿using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+
+public enum HashAlgorithms
+{
+    MD5,
+    SHA256
+}
 
 public class FileInfo
 {
@@ -16,7 +25,9 @@ public class FileInfo
     public long OriginalSize { get; set; }              // Original file size
     public long NewSize { get; set; }                   // New file size
 
-
+    private HashAlgorithms HashingAlgorithm;
+    
+    Logger logger = Logger.Instance;
     public FileInfo()
 	{
 	}
@@ -28,6 +39,80 @@ public class FileInfo
 	 */
 	public FileInfo(string output)
 	{
-		//Basically just the code from FileManager.cs
-	}
+
+        ParseOutput(output);
+        //Get checksum
+        switch (HashingAlgorithm)
+        {
+            case HashAlgorithms.MD5:
+                OriginalChecksum = CalculateFileChecksum(MD5.Create());
+                break;
+            default:
+                OriginalChecksum = CalculateFileChecksum(SHA256.Create());
+                break;
+
+        }
+    }
+
+    void ParseOutput(string output)
+    {
+        // Use regular expressions to extract the relevant information
+        Regex fileNameRegex = new Regex(@"filename : '(.+)'");
+        Match fileNameMatch = fileNameRegex.Match(output);
+        if (fileNameMatch.Success)
+        {
+            string path = fileNameMatch.Groups[1].Value;
+            //Get only relative path from Output dir
+            FileName = path.Split('\\').Last();
+        }
+        else
+        {
+
+        }
+
+        Regex fileSizeRegex = new Regex(@"filesize : (\d+)");
+        Match fileSizeMatch = fileSizeRegex.Match(output);
+        if (fileSizeMatch.Success)
+        {
+            OriginalSize = long.Parse(fileSizeMatch.Groups[1].Value);
+        }
+        else
+        {
+
+        }
+
+        Regex idRegex = new Regex(@"id\s+:\s+'([^']+)'");
+        Match idMatch = idRegex.Match(output);
+        if (idMatch.Success)
+        {
+            OriginalPronom = idMatch.Groups[1].Value;
+        }
+        else
+        {
+
+        }
+
+        Regex formatRegex = new Regex(@"format\s+:\s+'([^']+)'");
+        Match formatMatch = formatRegex.Match(output);
+        if (formatMatch.Success)
+        {
+            OriginalFormatName = formatMatch.Groups[1].Value;
+        }
+        else
+        {
+
+        }
+    }
+    string CalculateFileChecksum(HashAlgorithm algorithm)
+    {
+        using (var conversionMethod = algorithm)
+        {
+            using (var stream = File.OpenRead(FileName))
+            {
+                return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
+            }
+        }
+    }
+
+    
 }

@@ -66,44 +66,6 @@ public class FileManager
             if (error.Length > 0)
                 Console.WriteLine("Error:\n" + error);
         }
-        return ParseFileInformation(output);
-    }
-
-    static FileInfo ParseFileInformation(string output)
-    {
-        FileInfo fileInfo = new FileInfo();
-
-        // Use regular expressions to extract the relevant information
-        Regex fileNameRegex = new Regex(@"filename : '(.+)'");
-        Match fileNameMatch = fileNameRegex.Match(output);
-        if (fileNameMatch.Success)
-        {
-            fileInfo.FileName = fileNameMatch.Groups[1].Value;
-        }
-        //Get only file name
-        fileInfo.FileName = fileInfo.FileName.Split('\\').Last();
-
-        Regex fileSizeRegex = new Regex(@"filesize : (\d+)");
-        Match fileSizeMatch = fileSizeRegex.Match(output);
-        if (fileSizeMatch.Success)
-        {
-            fileInfo.OriginalSize = long.Parse(fileSizeMatch.Groups[1].Value);
-        }
-
-        Regex idRegex = new Regex(@"id\s+:\s+'([^']+)'");
-        Match idMatch = idRegex.Match(output);
-        if (idMatch.Success)
-        {
-            fileInfo.OriginalPronom = idMatch.Groups[1].Value;
-        }
-
-        Regex formatRegex = new Regex(@"format\s+:\s+'([^']+)'");
-        Match formatMatch = formatRegex.Match(output);
-        if (formatMatch.Success)
-        {
-            fileInfo.OriginalFormatName = formatMatch.Groups[1].Value;
-        }
-
-        return fileInfo;
+        return new FileInfo(output);
     }
 }
