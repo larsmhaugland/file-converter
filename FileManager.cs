@@ -22,12 +22,16 @@ public class FileManager
     public void IdentifyFiles()
     {
 		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
-        Parallel.ForEach(filePaths, filePath =>
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+        Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
         {
             FileInfo file = GetFileInfo(filePath);
             if (file != null)
                 Files.Add(file);
         });
+        stopwatch.Stop();
+        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
     }
 
     static FileInfo GetFileInfo(string filePath)
