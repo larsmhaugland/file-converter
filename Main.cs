@@ -9,6 +9,7 @@ class Program
 		ConversionManager cm = new ConversionManager();
 
 		Logger logger = Logger.Instance;
-		logger.SetUpMessage("sendt fra main",false);
+		FileManager fileManager = new FileManager("input/","output/");
+		fileManager.IdentifyFiles();
 	}
 }

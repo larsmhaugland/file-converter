@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.IO;
+using System.Text.Json;
 
 public class Logger
 {
@@ -17,7 +18,12 @@ public class Logger
         {
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
-       
+
+		docPath = "output/";
+        using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "documentation.json")))
+        {
+            outputFile.WriteAsync("\n");
+        }
 
     }
 	public static Logger Instance
@@ -66,12 +72,41 @@ public class Logger
     /// <param name="filetype"> Optional: the filetype </param>
     /// <param name="filename"> Optional: the filename </param>
     /// <returns> returns the message in the correct format </returns>
-    public void SetUpMessage(string message, bool error, string format = "N/A", string filetype = "N/A", string filename = "N/A")
+    public void SetUpRunTimeLogMessage(string message, bool error, string format = "N/A", string filetype = "N/A", string filename = "N/A")
     {
 		string errorM = "Message: ";
 		if (error) { errorM = "Error: "; }
         string formattedMessage =  errorM + " | " + format + " | " + filetype + " | " + filename + " | " + message+"\n";
 		WriteLog(formattedMessage, "output/logs/log.txt");
+    }
+
+	public void SetUpDocumentation(FileInfo fileinfo)
+	{
+        // JSON data
+        var jsonData = new
+        {
+            FileName = fileinfo.FileName,
+            OriginalPronom = fileinfo.OriginalPronom,
+            OriginalChecksum = fileinfo.OriginalChecksum,
+            OriginalSize = fileinfo.OriginalSize,
+            NewPronom = fileinfo.NewPronom,
+            NewChecksum = fileinfo.NewChecksum,
+            NewSize = fileinfo.NewSize,
+            Converter = "converter",
+            IsConverted = fileinfo.IsConverted
+        };
+
+        // Convert the object to JSON with indentation
+        string jsonString = JsonSerializer.Serialize(jsonData, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        // Specify the path to your output JSON file
+        string filePath = "output/documentation.json";
+
+        // Send it to writelog to print it out there
+        WriteLog( jsonString, filePath);
     }
     /*
 	private void writeErrorLog(string message)
