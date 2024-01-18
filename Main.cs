@@ -6,10 +6,10 @@ class Program
 {
 	static void Main()
 	{
-
+		Directory.SetCurrentDirectory("../../../");
 		ConversionManager cm = new ConversionManager();
 
-		Logger logger = Logger.Instance;
+		//Logger logger = Logger.Instance;
 		FileManager fileManager = new FileManager("input/","output/");
 		fileManager.IdentifyFiles();
         if (fileManager.Files.Count > 0)
