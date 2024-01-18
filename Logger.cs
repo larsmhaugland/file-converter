@@ -28,7 +28,11 @@ public class Logger
 		}
 	}
 
-	public void writeLog(string message, bool error)
+	/// <summary>
+	/// writes a log to a file
+	/// </summary>
+	/// <param name="message">The message to be logged</param>
+	public void writeLog(string message)
 	{
 		lock(lockObject)
 		{
@@ -39,12 +43,27 @@ public class Logger
             // Write the specified text asynchronously to a new file.
             using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
             {
-                outputFile.WriteAsync(message);
+				outputFile.WriteAsync("Message: " + message);
             }
         }
     }
 
-	/*
+	/// <summary>
+	/// sets up status and error messages to the correct format.
+	/// </summary>
+	/// <param name="format"> the fileformat </param>
+	/// <param name="filetype"> the filetype </param>
+	/// <param name="filename"> the filename </param>
+	/// <param name="message"> the message to be sent </param>
+	/// <param name="error"> true if it is an error </param>
+	/// <returns> returns the message in the correct format </returns>
+    string setUpMessage(string message, bool error, string format = "N/A", string filetype = "N/A", string filename = "N/A")
+    {
+		string errorM = "Message: ";
+		if (error) { errorM = "Error: "; }
+        return errorM + " | " + format + " | " + filetype + " | " + filename + " | " + message;
+    }
+    /*
 	private void writeErrorLog(string message)
 	{
         lock (lockObject)
