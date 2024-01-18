@@ -1,15 +1,25 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.FileIO;
+using System;
 using System.IO;
 
 public class Logger
 {
 	private static Logger instance;
 	private static readonly object lockObject = new object();
-	string fileName;		// Path to log file
+	string fileName;        // Path to log file
 
-	private Logger()
+    private Logger()
 	{
-	}
+        string docPath = "output/logs/";
+
+        // Write the specified text asynchronously to a new file.
+        using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
+        {
+            outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
+        }
+       
+
+    }
 	public static Logger Instance
 	{
 		get
@@ -28,23 +38,42 @@ public class Logger
 		}
 	}
 
-	public void writeLog(string message, bool error)
+	/// <summary>
+	/// writes a log to a file
+	/// </summary>
+	/// <param name="message"> The message to be logged </param>
+	/// <param name="filepath"> The filepath to the logfile </param>
+	private void WriteLog(string message, string filepath)
 	{
 		lock(lockObject)
 		{
-            // https://learn.microsoft.com/en-us/dotnet/standard/io/how-to-write-text-to-a-file
-            // Set a variable to the Documents path.
-            string docPath = "output/logs/";
+			// https://learn.microsoft.com/en-us/dotnet/standard/io/how-to-write-text-to-a-file    
 
-            // Write the specified text asynchronously to a new file.
-            using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
-            {
-                outputFile.WriteAsync(message);
-            }
+			// Write the specified text asynchronously to a new file.
+			using (StreamWriter outputFile = new StreamWriter(filepath, true))
+			{
+				outputFile.WriteAsync(message);
+			}
         }
     }
 
-	/*
+    /// <summary>
+    /// sets up status and error messages to the correct format.
+    /// </summary>
+	/// <param name="message"> the message to be sent </param>
+    /// <param name="error"> true if it is an error </param>
+    /// <param name="format"> Optional: the fileformat </param>
+    /// <param name="filetype"> Optional: the filetype </param>
+    /// <param name="filename"> Optional: the filename </param>
+    /// <returns> returns the message in the correct format </returns>
+    public void SetUpMessage(string message, bool error, string format = "N/A", string filetype = "N/A", string filename = "N/A")
+    {
+		string errorM = "Message: ";
+		if (error) { errorM = "Error: "; }
+        string formattedMessage =  errorM + " | " + format + " | " + filetype + " | " + filename + " | " + message+"\n";
+		WriteLog(formattedMessage, "output/logs/log.txt");
+    }
+    /*
 	private void writeErrorLog(string message)
 	{
         lock (lockObject)

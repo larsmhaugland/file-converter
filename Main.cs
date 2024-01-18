@@ -9,7 +9,8 @@ class Program
 		ConversionManager cm = new ConversionManager();
 
 		Logger logger = Logger.Instance;
-		logger.writeLog("sendt fra main", false);
+		logger.SetUpMessage("sendt fra main",false);
+	}
 
 
 	}
