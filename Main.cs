@@ -10,6 +10,6 @@ class Program
 
 		Logger logger = Logger.Instance;
 		FileManager fileManager = new FileManager("input/","output/");
-		fileManager.
+		fileManager.IdentifyFiles();
 	}
 }

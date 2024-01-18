@@ -63,7 +63,7 @@ public class FileManager
         }
         if (error.Length > 0)
         {
-            Logger.Instance.writeLog("FileManager SF " + error, true);
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
             return null;
         }
         return new FileInfo(output);
