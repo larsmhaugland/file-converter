@@ -9,12 +9,12 @@ class Program
 		Directory.SetCurrentDirectory("../../../");
 		ConversionManager cm = new ConversionManager();
 
-		//Logger logger = Logger.Instance;
-		FileManager fileManager = new FileManager("input/","output/");
+		Logger logger = Logger.Instance;
+		FileManager fileManager = new FileManager("input","output");
 		fileManager.IdentifyFiles();
         if (fileManager.Files.Count > 0)
         {
-			logger.SetUpDocumentation(fileManager.Files[0]);
+			logger.SetUpDocumentation(fileManager.Files[0]); 			
         }
     }
 }

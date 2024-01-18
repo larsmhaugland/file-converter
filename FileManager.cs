@@ -15,6 +15,7 @@ public class FileManager
 
 	public FileManager(string input, string output)
 	{
+        Files = new List<FileInfo>();
 		InputFolder = input;
 		OutputFolder = output;
 	}

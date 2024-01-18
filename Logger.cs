@@ -11,7 +11,13 @@ public class Logger
 
     private Logger()
 	{
-        string docPath = "output/logs/";
+        string docPath = "output/logs";
+
+        if (!Directory.Exists(docPath))
+        {
+            Directory.CreateDirectory(docPath);
+        }
+        docPath += "/"; 
 
         // Write the specified text asynchronously to a new file.
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
