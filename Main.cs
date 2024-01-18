@@ -11,7 +11,4 @@ class Program
 		Logger logger = Logger.Instance;
 		logger.SetUpMessage("sendt fra main",false);
 	}
-
-
-	}
 }
