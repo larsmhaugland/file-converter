@@ -7,7 +7,7 @@ class Program
 		ConversionManager cm = new ConversionManager();
 
 		Logger logger = Logger.Instance;
-		logger.writeLog("sendt fra main");
+		logger.SetUpMessage("sendt fra main",false);
 	}
 
 
