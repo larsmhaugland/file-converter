@@ -9,7 +9,7 @@ public class FileManager
 	string OutputFolder;    // Path to output folder
 	List<FileInfo> Files;	// List of files to be converted
 
-	public FileManager()
+	private FileManager()
 	{
 	}
 
@@ -19,15 +19,14 @@ public class FileManager
 		OutputFolder = output;
 	}
 
-    /**
-	 * 
-	 */
-    void IdentifyFiles()
+    public void IdentifyFiles()
     {
 		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
         Parallel.ForEach(filePaths, filePath =>
         {
-            Files.Add(GetFileInfo(filePath));
+            FileInfo file = GetFileInfo(filePath);
+            if (file != null)
+                Files.Add(file);
         });
     }
 
@@ -38,7 +37,7 @@ public class FileManager
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
         {
-            FileName = @"", // or any other command you want to run
+            FileName = @"ConversionTools/sf.exe", // or any other command you want to run
             Arguments = filePath,
             RedirectStandardInput = false,
             RedirectStandardOutput = true,
@@ -48,6 +47,7 @@ public class FileManager
         };
 
         string output = "";
+        string error = "";
         // Create the process
         using (Process process = new Process { StartInfo = psi })
         {
@@ -56,15 +56,15 @@ public class FileManager
 
             // Read the output
             output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
+            error = process.StandardError.ReadToEnd();
 
             // Wait for the process to exit
-            process.WaitForExit();
-
-            // Display the output and error
-            //Console.WriteLine("Output:\n" + output);
-            if (error.Length > 0)
-                Console.WriteLine("Error:\n" + error);
+            process.WaitForExit();                     
+        }
+        if (error.Length > 0)
+        {
+            Logger.Instance.writeLog("FileManager SF " + error, true);
+            return null;
         }
         return new FileInfo(output);
     }
