@@ -26,8 +26,6 @@ public class FileInfo
     public long NewSize { get; set; }                   // New file size
 
     private HashAlgorithms HashingAlgorithm;
-    
-    Logger logger = Logger.Instance;
     public FileInfo()
 	{
 	}
@@ -112,6 +110,11 @@ public class FileInfo
                 return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
             }
         }
+    }
+
+    public void LogFileInfo()
+    {
+        
     }
 
     
