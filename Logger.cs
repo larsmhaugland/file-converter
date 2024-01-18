@@ -29,9 +29,11 @@ public class Logger
 
 	private void writeLog(string message)
 	{
+		
     }
 
 	private void writeErrorLog(string message)
 	{
+
     }
 }
