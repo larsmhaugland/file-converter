@@ -7,7 +7,7 @@ public class FileManager
 {
 	string InputFolder;		// Path to input folder
 	string OutputFolder;    // Path to output folder
-	List<FileInfo> Files;	// List of files to be converted
+	public List<FileInfo> Files;	// List of files to be converted
 
 	private FileManager()
 	{
