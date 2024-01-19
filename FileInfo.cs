@@ -12,7 +12,8 @@ public enum HashAlgorithms
 
 public class FileInfo
 { 
-	public string FileName { get; set; } 				// Relative path to file with root of Input folder
+    public string FilePath { get; set; }                    // Absolute path
+	public string FileName { get; set; } 				// Filename with extention
 	public string OriginalPronom { get; set; }			// Original Pronom ID
 	public string NewPronom { get; set; }				// New Pronom ID
 	public string OriginalMime { get; set; }			// Original Mime Type
@@ -61,9 +62,10 @@ public class FileInfo
         Match fileNameMatch = fileNameRegex.Match(output);
         if (fileNameMatch.Success)
         {
-            string path = fileNameMatch.Groups[1].Value;
+            FilePath = fileNameMatch.Groups[1].Value;
             //Get only relative path from Output dir
-            FileName = path.Split('\\').Last();
+
+            FileName = FilePath.Split('\\').Last();
         }
         else
         {
@@ -107,10 +109,10 @@ public class FileInfo
     {
         using (var conversionMethod = algorithm)
         {
-            using (var stream = File.OpenRead(FileName))
+            using (var stream = File.OpenRead(FilePath))
             {
                 return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
             }
         }
-    }    
+    }
 }

@@ -39,11 +39,12 @@ public class FileManager
     {
         // Wrap the file path in quotes
         filePath = "\"" + filePath + "\"";
+        string options = $"-home ConversionTools ";
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
         {
             FileName = @"ConversionTools/sf.exe", // or any other command you want to run
-            Arguments = filePath,
+            Arguments = options + filePath,
             RedirectStandardInput = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
