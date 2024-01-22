@@ -25,7 +25,7 @@ public class FileManager
         Logger logger = Logger.Instance;
         for(int i = 0; i < Files.Count; i++)
         {
-            logger.SetUpDocumentation(Files[i]);
+            logger.SetUpDocumentation(Files);
         }
     }
 
