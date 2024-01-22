@@ -40,13 +40,14 @@ class Program
 
 		Logger logger = Logger.Instance;
 
-		FileManager fileManager = new FileManager(parsedOptions.Input,parsedOptions.Output);
+        FileManager fileManager = new FileManager(parsedOptions.Input,parsedOptions.Output);
 
-		fileManager.IdentifyFiles();
+        logger.AskAboutReqAndConv();
+        fileManager.IdentifyFiles();
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
-			logger.SetUpDocumentation(fileManager.Files);
+            logger.SetUpDocumentation(fileManager.Files);
         }
     }
 }

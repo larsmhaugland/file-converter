@@ -21,9 +21,14 @@ public class Logger
 
     public class JsonRoot
     {
-        public string requester { get; set; } // the person requesting the converting
-        public string converter { get; set; } // the person that converts
+        public string? requester { get; set; } // the person requesting the converting
+        public string? converter { get; set; } // the person that converts
     }
+    JsonRoot root = new JsonRoot
+    {
+        requester = "requester",
+        converter = "converter"
+    };
     public class JsonData
     {
         public string? Filename { get; set; }
@@ -140,11 +145,7 @@ public class Logger
             data.Add(jsondata);
         }
 
-        JsonRoot root = new JsonRoot
-        {
-            requester = "requester",
-            converter = "converter"
-        };
+
 
         // Create an anonymous object with "requester" and "converter" properties
         var metadata = new
@@ -168,5 +169,13 @@ public class Logger
 
         // Send it to writelog to print it out there
         WriteLog(json, filePath);
+    }
+
+    public void AskAboutReqAndConv()
+    {
+        Console.WriteLine("Who is requesting the converting?");
+        root.requester = Console.ReadLine();
+        Console.WriteLine("Who is converting?");
+        root.converter = Console.ReadLine();
     }
 }
