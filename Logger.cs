@@ -45,7 +45,7 @@ public class Logger
 
     private Logger()
 	{
-        string docPath = "output/logs";
+        string docPath = GlobalVariables.parsedOptions.Output + "/logs";
 
         if (!Directory.Exists(docPath))
         {
@@ -59,7 +59,7 @@ public class Logger
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
 
-		docPath = "output/";
+		docPath = GlobalVariables.parsedOptions.Output + "/";
 
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "documentation.json")))
         {

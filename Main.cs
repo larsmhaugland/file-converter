@@ -4,24 +4,27 @@ using System.IO;
 using System.Runtime.InteropServices;
 using CommandLine;
 
-class Program
-{ 
-	class Options
+public static class GlobalVariables
 {
-	[Option('i',"input", Required = false, HelpText = "Specify input directory",Default = "Input")]
-	public string Input { get; set; }
+    public static Options parsedOptions = null;
+}
+public class Options
+{
+    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "Input")]
+    public string Input { get; set; }
 
-	[Option('o',"output", Required = false, HelpText = "Specify output directory",Default ="Output")]
-	public string Output { get; set; }
+    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "Output")]
+    public string Output { get; set; }
 
 }
+class Program
+{ 
+	
 	static void Main(string[] args)
 	{
-		Options parsedOptions = null;
-
 		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
 		{
-			parsedOptions = options;
+            GlobalVariables.parsedOptions = options;
 			if (options.Input != null)
 			{
 				Console.WriteLine("Input: " + options.Input);
@@ -32,7 +35,7 @@ class Program
 			}
 		});
 
-		if (parsedOptions == null)
+		if (GlobalVariables.parsedOptions == null)
 			return;
 
 		Directory.SetCurrentDirectory("../../../");
@@ -40,7 +43,7 @@ class Program
 
 		Logger logger = Logger.Instance;
 
-        FileManager fileManager = new FileManager(parsedOptions.Input,parsedOptions.Output);
+        FileManager fileManager = new FileManager(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 
         logger.AskAboutReqAndConv();
         fileManager.IdentifyFiles();
