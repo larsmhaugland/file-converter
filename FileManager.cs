@@ -20,11 +20,24 @@ public class FileManager
 		OutputFolder = output;
 	}
 
+    public void DocumentFiles()
+    {
+        Logger logger = Logger.Instance;
+        for(int i = 0; i < Files.Count; i++)
+        {
+            logger.SetUpDocumentation(Files[i]);
+        }
+    }
+
     public void IdentifyFiles()
     {
+        //Identify all files in input directory
 		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
+
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.Start();
+
+        //In Parallel: Run SF and parse output into FileInfo constructor
         Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
         {
             FileInfo file = GetFileInfo(filePath);
@@ -38,13 +51,13 @@ public class FileManager
     static FileInfo GetFileInfo(string filePath)
     {
         // Wrap the file path in quotes
-        filePath = "\"" + filePath + "\"";
+        string wrappedPath = "\"" + filePath + "\"";
         string options = $"-home ConversionTools ";
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
         {
             FileName = @"ConversionTools/sf.exe", // or any other command you want to run
-            Arguments = options + filePath,
+            Arguments = options + wrappedPath,
             RedirectStandardInput = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -72,6 +85,6 @@ public class FileManager
             Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
             return null;
         }
-        return new FileInfo(output);
+        return new FileInfo(output,filePath);
     }
 }

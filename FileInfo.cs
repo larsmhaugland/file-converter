@@ -38,10 +38,10 @@ public class FileInfo
 	 * @param output
 	 *     
 	 */
-	public FileInfo(string output)
+	public FileInfo(string output, string path)
 	{
 
-        ParseOutput(output);
+        ParseOutput(output, path);
         //Get checksum
         switch (HashingAlgorithm)
         {
@@ -55,22 +55,10 @@ public class FileInfo
         }
     }
 
-    void ParseOutput(string output)
+    void ParseOutput(string output, string path)
     {
-        // Use regular expressions to extract the relevant information
-        Regex fileNameRegex = new Regex(@"filename : '(.+)'");
-        Match fileNameMatch = fileNameRegex.Match(output);
-        if (fileNameMatch.Success)
-        {
-            FilePath = fileNameMatch.Groups[1].Value;
-            //Get only relative path from Output dir
-
-            FileName = FilePath.Split('\\').Last();
-        }
-        else
-        {
-
-        }
+        FilePath = path;
+        FileName = FilePath.Split('\\').Last();
 
         Regex fileSizeRegex = new Regex(@"filesize : (\d+)");
         Match fileSizeMatch = fileSizeRegex.Match(output);
@@ -109,10 +97,13 @@ public class FileInfo
     {
         using (var conversionMethod = algorithm)
         {
-            using (var stream = File.OpenRead(FilePath))
+            try
             {
-                return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
-            }
+                using (var stream = File.OpenRead(FilePath))
+                {
+                    return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            } catch { return ""; }
         }
     }
 }

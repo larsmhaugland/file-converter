@@ -1,21 +1,48 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using CommandLine;
 
 class Program
+{ 
+	class Options
 {
-	static void Main()
+	[Option('i',"input", Required = false, HelpText = "Specify input directory",Default = "Input")]
+	public string Input { get; set; }
+
+	[Option('o',"output", Required = false, HelpText = "Specify output directory",Default ="Output")]
+	public string Output { get; set; }
+
+}
+	static void Main(string[] args)
 	{
+		Options parsedOptions = null;
+
+		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
+		{
+			parsedOptions = options;
+			if (options.Input != null)
+			{
+				Console.WriteLine("Input: " + options.Input);
+			}
+			if (options.Output != null)
+			{
+				Console.WriteLine("Output: " + options.Output);
+			}
+		});
+
+		if (parsedOptions == null)
+			return;
+
 		Directory.SetCurrentDirectory("../../../");
 		ConversionManager cm = new ConversionManager();
 
 		Logger logger = Logger.Instance;
-		FileManager fileManager = new FileManager("input","output");
+
+		FileManager fileManager = new FileManager(parsedOptions.Input,parsedOptions.Output);
+
 		fileManager.IdentifyFiles();
-        if (fileManager.Files.Count > 0)
-        {
-			logger.SetUpDocumentation(fileManager.Files[0]);
-            logger.SetUpDocumentation(fileManager.Files[1]);
-        }
+		fileManager.DocumentFiles();
     }
 }
