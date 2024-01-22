@@ -139,23 +139,27 @@ public class Logger
             };
             data.Add(jsondata);
         }
+
         JsonRoot root = new JsonRoot
         {
             requester = "requester",
             converter = "converter"
         };
+
         // Create an anonymous object with "requester" and "converter" properties
         var metadata = new
         {
             root.requester,
             root.converter
         };
+
         // Create an anonymous object with a "Files" property
         var jsonDataWrapper = new
         {
             Metadata = metadata,
             Files = data
         };
+
         // Serialize the wrapper object
         string json = JsonSerializer.Serialize(jsonDataWrapper, options);
 

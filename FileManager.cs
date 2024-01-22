@@ -23,10 +23,7 @@ public class FileManager
     public void DocumentFiles()
     {
         Logger logger = Logger.Instance;
-        for(int i = 0; i < Files.Count; i++)
-        {
-            logger.SetUpDocumentation(Files);
-        }
+        logger.SetUpDocumentation(Files);
     }
 
     public void IdentifyFiles()

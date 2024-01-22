@@ -128,7 +128,7 @@ public class FileInfo
                 {
                     return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
                 }
-            } catch { return ""; }
+            } catch { return "Not found"; }
         }
     }
 }

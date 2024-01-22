@@ -45,6 +45,7 @@ class Program
 		fileManager.IdentifyFiles();
         if (fileManager.Files.Count > 0)
         {
+			Console.WriteLine("Files identified: " + fileManager.Files.Count);
 			logger.SetUpDocumentation(fileManager.Files);
         }
     }
