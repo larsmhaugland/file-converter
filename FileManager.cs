@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 public class FileManager
 {
-	string InputFolder;		// Path to input folder
-	string OutputFolder;    // Path to output folder
+	string InputFolder;		        // Path to input folder
+	string OutputFolder;            // Path to output folder
 	public List<FileInfo> Files;	// List of files to be converted
 
 	private FileManager()
@@ -34,18 +34,34 @@ public class FileManager
         //Identify all files in input directory
 		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
 
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-
         //In Parallel: Run SF and parse output into FileInfo constructor
         Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
         {
-            FileInfo file = GetFileInfo(filePath);
-            if (file != null)
-                Files.Add(file);
+            var extention = Path.GetExtension(filePath);
+            switch (extention)
+            {
+                case ".zip":
+                    //TODO: Unzip
+                    break;
+                case ".tar":
+                    //TODO: Untar
+                    break;
+                case ".gz":
+                    //TODO: Unzip
+                    break;
+                case ".rar":
+                    //TODO: Unrar
+                    break;
+                case ".7z":
+                    //TODO: Un7z
+                    break;
+                default:
+                    FileInfo file = GetFileInfo(filePath);
+                    if (file != null)
+                        Files.Add(file);
+                    break;
+            }
         });
-        stopwatch.Stop();
-        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
     }
 
     static FileInfo GetFileInfo(string filePath)
