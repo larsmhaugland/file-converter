@@ -14,8 +14,7 @@ class Program
 		fileManager.IdentifyFiles();
         if (fileManager.Files.Count > 0)
         {
-			logger.SetUpDocumentation(fileManager.Files[0]);
-            logger.SetUpDocumentation(fileManager.Files[1]);
+			logger.SetUpDocumentation(fileManager.Files);
         }
     }
 }

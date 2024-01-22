@@ -2,12 +2,35 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.Json.Serialization;
+using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 
 public class Logger
 {
-	private static Logger instance;
+	private static Logger? instance;
 	private static readonly object lockObject = new object();
 	string fileName;        // Path to log file
+
+    // Configure JSON serializer options for pretty-printing
+    JsonSerializerOptions options = new JsonSerializerOptions
+    {
+        WriteIndented = true,
+    };
+    public class JsonData
+    {
+        public string? Filename { get; set; }
+        public string? OriginalPronom { get; set; }
+        public string? OriginalChecksum { get; set; }
+        public long OriginalSize { get; set; }
+        public string? NewPronom { get; set; }
+        public string? NewChecksum { get; set; }
+        public long NewSize { get; set; }
+        public string[]? Converter { get; set; }
+        public bool IsConverted { get; set; }
+    }
+    List<JsonData> data = new List<JsonData>();
 
     private Logger()
 	{
@@ -26,6 +49,7 @@ public class Logger
         }
 
 		docPath = "output/";
+
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "documentation.json")))
         {
             outputFile.WriteAsync("\n");
@@ -64,7 +88,8 @@ public class Logger
 			// Write the specified text asynchronously to a new file.
 			using (StreamWriter outputFile = new StreamWriter(filepath, true))
 			{
-				outputFile.WriteAsync(message);
+				outputFile.Write(message);
+                outputFile.Flush();
 			}
         }
     }
@@ -86,40 +111,33 @@ public class Logger
 		WriteLog(formattedMessage, "output/logs/log.txt");
     }
 
-	public void SetUpDocumentation(FileInfo fileinfo)
-	{
-        // JSON data
-        var jsonData = new
+    /// <summary>
+    /// Sets up the layout for how a file should be written to the final documentation file
+    /// </summary>
+    /// <param name="fileinfo"> info about the file </param>
+	public void SetUpDocumentation(List<FileInfo> files)
+	{        
+        foreach (FileInfo file in files)
         {
-            FileName = fileinfo.FileName,
-            OriginalPronom = fileinfo.OriginalPronom,
-            OriginalChecksum = fileinfo.OriginalChecksum,
-            OriginalSize = fileinfo.OriginalSize,
-            NewPronom = fileinfo.NewPronom,
-            NewChecksum = fileinfo.NewChecksum,
-            NewSize = fileinfo.NewSize,
-            Converter = "converter",
-            IsConverted = fileinfo.IsConverted
-        };
+            JsonData jsondata = new JsonData();
+            jsondata.Filename = file.FileName;
+            jsondata.OriginalPronom = file.OriginalPronom;
+            jsondata.OriginalChecksum = file.OriginalChecksum;
+            jsondata.OriginalSize = file.OriginalSize;
+            jsondata.NewPronom = file.NewPronom;
+            jsondata.NewChecksum = file.NewChecksum;
+            jsondata.NewSize = file.NewSize;
+            jsondata.Converter = ["converter"];
+            jsondata.IsConverted = file.IsConverted;
+            data.Add(jsondata);
+        }
 
-        // Convert the object to JSON with indentation
-        string jsonString = JsonSerializer.Serialize(jsonData, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        string json = JsonSerializer.Serialize(data, options);
 
         // Specify the path to your output JSON file
         string filePath = "output/documentation.json";
 
         // Send it to writelog to print it out there
-        WriteLog( jsonString, filePath);
+        WriteLog(json, filePath);
     }
-    /*
-	private void writeErrorLog(string message)
-	{
-        lock (lockObject)
-        {
-
-        }
-    }*/
 }
