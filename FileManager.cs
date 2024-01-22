@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 public class FileManager
 {
-	string InputFolder;		// Path to input folder
-	string OutputFolder;    // Path to output folder
+	string InputFolder;		        // Path to input folder
+	string OutputFolder;            // Path to output folder
 	public List<FileInfo> Files;	// List of files to be converted
 
 	private FileManager()
@@ -20,31 +20,60 @@ public class FileManager
 		OutputFolder = output;
 	}
 
+    public void DocumentFiles()
+    {
+        Logger logger = Logger.Instance;
+        for(int i = 0; i < Files.Count; i++)
+        {
+            logger.SetUpDocumentation(Files[i]);
+        }
+    }
+
     public void IdentifyFiles()
     {
+        //Identify all files in input directory
 		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
+
+        //In Parallel: Run SF and parse output into FileInfo constructor
         Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
         {
-            FileInfo file = GetFileInfo(filePath);
-            if (file != null)
-                Files.Add(file);
+            var extention = Path.GetExtension(filePath);
+            switch (extention)
+            {
+                case ".zip":
+                    //TODO: Unzip
+                    break;
+                case ".tar":
+                    //TODO: Untar
+                    break;
+                case ".gz":
+                    //TODO: Unzip
+                    break;
+                case ".rar":
+                    //TODO: Unrar
+                    break;
+                case ".7z":
+                    //TODO: Un7z
+                    break;
+                default:
+                    FileInfo file = GetFileInfo(filePath);
+                    if (file != null)
+                        Files.Add(file);
+                    break;
+            }
         });
-        stopwatch.Stop();
-        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
     }
 
     static FileInfo GetFileInfo(string filePath)
     {
         // Wrap the file path in quotes
-        filePath = "\"" + filePath + "\"";
+        string wrappedPath = "\"" + filePath + "\"";
         string options = $"-home ConversionTools ";
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
         {
             FileName = @"ConversionTools/sf.exe", // or any other command you want to run
-            Arguments = options + filePath,
+            Arguments = options + wrappedPath,
             RedirectStandardInput = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -72,6 +101,6 @@ public class FileManager
             Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
             return null;
         }
-        return new FileInfo(output);
+        return new FileInfo(output,filePath);
     }
 }
