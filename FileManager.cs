@@ -2,24 +2,32 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 
 public class FileManager
 {
-	string InputFolder;		        // Path to input folder
-	string OutputFolder;            // Path to output folder
-	public List<FileInfo> Files;	// List of files to be converted
+    string InputFolder;             // Path to input folder
+    string OutputFolder;            // Path to output folder
+    public List<FileInfo> Files;	// List of files to be converted
+    public Dictionary<string, SettingsData> FileSettings;
 
-	private FileManager()
-	{
-	}
+    private FileManager()
+    {
+    }
 
-	public FileManager(string input, string output)
-	{
+    public FileManager(string input, string output)
+    {
         Files = new List<FileInfo>();
-		InputFolder = input;
-		OutputFolder = output;
-	}
-
+        FileSettings = new Dictionary<string, SettingsData>();
+        InputFolder = input;
+        OutputFolder = output;
+    }
+    public class SettingsData
+    {
+        public string Pronom { get; set; }
+        public string ConvertTo { get; set; }
+        public string DefaultType { get; set; }
+    }
     public void DocumentFiles()
     {
         Logger logger = Logger.Instance;
@@ -29,10 +37,10 @@ public class FileManager
     public void IdentifyFiles()
     {
         //Identify all files in input directory
-		string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
+        string[] filePaths = Directory.GetFiles(InputFolder, "*.*", SearchOption.AllDirectories);
 
         //In Parallel: Run SF and parse output into FileInfo constructor
-        Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
+        Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePath =>
         {
             var extention = Path.GetExtension(filePath);
             //Switch for different compression formats
@@ -94,13 +102,46 @@ public class FileManager
             error = process.StandardError.ReadToEnd();
 
             // Wait for the process to exit
-            process.WaitForExit();                     
+            process.WaitForExit();
         }
         if (error.Length > 0)
         {
             Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
             return null;
         }
-        return new FileInfo(output,filePath);
+        return new FileInfo(output, filePath);
+    }
+
+
+    public void ReadSettings(string pathToSettings)
+    {
+        try
+        {
+            // Load the XML document from a file
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.Load(pathToSettings);
+
+            // Access elements and attributes
+            XmlNodeList fileTypeNodes = xmlDoc.SelectNodes("/root/FileTypes");
+            if (fileTypeNodes != null)
+            {
+                foreach (XmlNode fileTypeNode in fileTypeNodes)
+                {
+                    string extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
+                    SettingsData settings = new SettingsData
+                    {
+                        Pronom = fileTypeNode.SelectSingleNode("Pronom")?.InnerText,
+                        ConvertTo = fileTypeNode.SelectSingleNode("ConvertTo")?.InnerText,
+                        DefaultType = fileTypeNode.SelectSingleNode("Default")?.InnerText
+                    };
+
+                    FileSettings[extension] = settings;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
 }

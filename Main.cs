@@ -47,6 +47,7 @@ class Program
 
         logger.AskAboutReqAndConv();
         fileManager.IdentifyFiles();
+		fileManager.ReadSettings("./Settings.xml");
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
