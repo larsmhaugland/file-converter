@@ -24,8 +24,6 @@ sonarqube-check:
   only:
     - merge_requests
     - master
-    - main
-    - structure
 
 sonarqube-vulnerability-report:
   stage: sonarqube-vulnerability-report
@@ -35,8 +33,6 @@ sonarqube-vulnerability-report:
   only:
     - merge_requests
     - master
-    - main
-    - structure
   artifacts:
     expire_in: 1 day
     reports:
