@@ -11,8 +11,8 @@ public class Logger
 {
 	private static Logger? instance;
 	private static readonly object lockObject = new object();
-	string fileName;        // Path to log file
-
+	string logPath;         // Path to log file
+    string docPath;         // Path to documentation file
     // Configure JSON serializer options for pretty-printing
     JsonSerializerOptions options = new JsonSerializerOptions
     {
@@ -45,23 +45,25 @@ public class Logger
 
     private Logger()
 	{
-        string docPath = GlobalVariables.parsedOptions.Output + "/logs";
+        string path = GlobalVariables.parsedOptions.Output + "/logs";
 
-        if (!Directory.Exists(docPath))
+        if (!Directory.Exists(path))
         {
-            Directory.CreateDirectory(docPath);
+            Directory.CreateDirectory(path);
         }
-        docPath += "/"; 
-
+        DateTime currentDateTime = DateTime.Now;
+        string formattedDateTime = currentDateTime.ToString("yyyy-MM-dd HHmmss");
+        path += "/";
+        logPath = path+ "log " + formattedDateTime + ".txt";
         // Write the specified text asynchronously to a new file.
-        using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "log.txt")))
+        using (StreamWriter outputFile = new StreamWriter(logPath))
         {
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
 
-		docPath = GlobalVariables.parsedOptions.Output + "/";
-
-        using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "documentation.json")))
+        path = GlobalVariables.parsedOptions.Output + "/";
+        docPath = path + "documentation.json";
+        using (StreamWriter outputFile = new StreamWriter(docPath))
         {
             outputFile.WriteAsync("\n");
         }
@@ -119,7 +121,7 @@ public class Logger
 		string errorM = "Message: ";
 		if (error) { errorM = "Error: "; }
         string formattedMessage =  errorM + " | " + format + " | " + filetype + " | " + filename + " | " + message+"\n";
-		WriteLog(formattedMessage, "output/logs/log.txt");
+		WriteLog(formattedMessage, logPath);
     }
 
     /// <summary>
@@ -164,11 +166,8 @@ public class Logger
         // Serialize the wrapper object
         string json = JsonSerializer.Serialize(jsonDataWrapper, options);
 
-        // Specify the path to your output JSON file
-        string filePath = "output/documentation.json";
-
         // Send it to writelog to print it out there
-        WriteLog(json, filePath);
+        WriteLog(json, docPath);
     }
 
     public void AskAboutReqAndConv()
