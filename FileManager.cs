@@ -35,6 +35,7 @@ public class FileManager
         Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount}, filePath =>
         {
             var extention = Path.GetExtension(filePath);
+            //Switch for different compression formats
             switch (extention)
             {
                 case ".zip":
@@ -53,11 +54,13 @@ public class FileManager
                     //TODO: Un7z
                     break;
                 default:
-                    FileInfo file = GetFileInfo(filePath);
-                    if (file != null)
-                        Files.Add(file);
+                    //Do nothing
                     break;
             }
+
+            FileInfo file = GetFileInfo(filePath);
+            if (file != null)
+                Files.Add(file);
         });
     }
 
