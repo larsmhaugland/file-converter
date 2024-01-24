@@ -1,0 +1,69 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "Metadata": {
+        "type": "object",
+        "properties": {
+          "requester": {
+            "type": "string"
+          },
+          "converter": {
+            "type": "string"
+          }
+        },
+        "required": ["requester", "converter"]
+      },
+      "Files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "Filename": {
+              "type": "string"
+            },
+            "OriginalPronom": {
+              "type": "string"
+            },
+            "OriginalChecksum": {
+              "type": "string"
+            },
+            "OriginalSize": {
+              "type": "integer"
+            },
+            "NewPronom": {
+              "type": ["string", "null"]
+            },
+            "NewChecksum": {
+              "type": ["string", "null"]
+            },
+            "NewSize": {
+              "type": "integer"
+            },
+            "Converter": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "IsConverted": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "Filename",
+            "OriginalPronom",
+            "OriginalChecksum",
+            "OriginalSize",
+            "NewPronom",
+            "NewChecksum",
+            "NewSize",
+            "Converter",
+            "IsConverted"
+          ]
+        }
+      }
+    },
+    "required": ["Metadata", "Files"]
+  }
+  
