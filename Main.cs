@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using CommandLine;
+using System.Diagnostics;
 
 public static class GlobalVariables
 {
@@ -10,10 +11,10 @@ public static class GlobalVariables
 }
 public class Options
 {
-    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "Input")]
+    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
     public string Input { get; set; }
 
-    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "Output")]
+    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
     public string Output { get; set; }
 
 }
@@ -45,8 +46,12 @@ class Program
 
         FileManager fileManager = new FileManager(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 
-        logger.AskAboutReqAndConv();
-        fileManager.IdentifyFiles();
+        //logger.AskAboutReqAndConv();
+		Stopwatch stopwatch = new Stopwatch();
+        stopwatch.Start();
+		fileManager.IdentifyFilesJSON();
+		stopwatch.Stop();
+		Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);

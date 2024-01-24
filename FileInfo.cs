@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography.X509Certificates;
 
 public enum HashAlgorithms
 {
@@ -11,25 +12,53 @@ public enum HashAlgorithms
 }
 
 public class FileInfo
-{ 
+{
+    [JsonPropertyName("filePath")]
     public string FilePath { get; set; }                    // Absolute path
-	public string FileName { get; set; } 				// Filename with extention
-	public string OriginalPronom { get; set; }			// Original Pronom ID
-	public string NewPronom { get; set; }				// New Pronom ID
-	public string OriginalMime { get; set; }			// Original Mime Type
-	public string NewMime { get; set; }                 // New Mime Type
+
+    [JsonPropertyName("filename")]
+    public string FileName { get; set; } 				// Filename with extention
+
+    [JsonPropertyName("")]
+    public string OriginalPronom { get; set; }			// Original Pronom ID
+
+    [JsonPropertyName("")]
+    public string NewPronom { get; set; }				// New Pronom ID
+
+    [JsonPropertyName("")]
+    public string OriginalMime { get; set; }			// Original Mime Type
+
+    [JsonPropertyName("")]
+    public string NewMime { get; set; }                 // New Mime Type
+
+    [JsonPropertyName("")]
     public string OriginalFormatName { get; set; }      // Original Format Name
+
+    [JsonPropertyName("")]
     public string NewFormatName { get; set; }           // New Format Name
+
+    [JsonPropertyName("")]
     public string OriginalChecksum { get; set; }        // Original Checksum
+
+    [JsonPropertyName("")]
     public string NewChecksum { get; set; }             // New Checksum
 
+    [JsonPropertyName("")]
     public List<string> ConversionTools { get; set; }   // List of conversion tools used
-    public long OriginalSize { get; set; }              // Original file size (bytes)
-    public long NewSize { get; set; }                   // New file size (bytes)
-    public bool IsConverted { get; set; }				// True if file is converted
-	public bool SupportsConversion { get; set; }        // True if file supports conversion
-                       // New file size
 
+    [JsonPropertyName("")]
+    public long OriginalSize { get; set; }              // Original file size (bytes)
+
+    [JsonPropertyName("")]
+    public long NewSize { get; set; }                   // New file size (bytes)
+
+    [JsonPropertyName("")]
+    public bool IsConverted { get; set; }				// True if file is converted
+
+    [JsonPropertyName("")]
+    public bool SupportsConversion { get; set; }        // True if file supports conversion 
+
+    [JsonPropertyName("hashingAlgorithm")]
     private HashAlgorithms HashingAlgorithm;
     public FileInfo()
 	{
@@ -54,6 +83,27 @@ public class FileInfo
                 OriginalChecksum = CalculateFileChecksum(SHA256.Create());
                 break;
 
+        }
+    }
+
+    public FileInfo(SiegfriedFile siegfriedFile)
+    {
+        OriginalSize = siegfriedFile.filesize;
+        FileName = siegfriedFile.filename;
+        OriginalPronom = siegfriedFile.matches[0].id;
+        OriginalFormatName = siegfriedFile.matches[0].format;
+        OriginalMime = siegfriedFile.matches[0].mime;
+        FilePath = siegfriedFile.filename;
+
+
+        switch(HashingAlgorithm)
+        {
+            case HashAlgorithms.MD5:
+                OriginalChecksum = CalculateFileChecksum(MD5.Create());
+                break;
+            default:
+                OriginalChecksum = CalculateFileChecksum(SHA256.Create());
+                break;
         }
     }
 
