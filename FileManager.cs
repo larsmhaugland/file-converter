@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 
 public class SiegfriedJSON
 {
@@ -53,23 +54,30 @@ public struct SiegfriedMatches
 
 public class FileManager
 {
+    public Dictionary<string, SettingsData> FileSettings;
     string SiegfriedVersion;
     string ScanDate;
 	string InputFolder;		        // Path to input folder
 	string OutputFolder;            // Path to output folder
 	public List<FileInfo> Files;	// List of files to be converted
 
-	private FileManager()
-	{
-	}
+    private FileManager()
+    {
+    }
 
-	public FileManager(string input, string output)
-	{
+    public FileManager(string input, string output)
+    {
         Files = new List<FileInfo>();
-		InputFolder = input;
-		OutputFolder = output;
-	}
-
+        FileSettings = new Dictionary<string, SettingsData>();
+        InputFolder = input;
+        OutputFolder = output;
+    }
+    public class SettingsData
+    {
+        public string Pronom { get; set; }
+        public string ConvertTo { get; set; }
+        public string DefaultType { get; set; }
+    }
     public void DocumentFiles()
     {
         Logger logger = Logger.Instance;

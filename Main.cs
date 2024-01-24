@@ -46,12 +46,9 @@ class Program
 
         FileManager fileManager = new FileManager(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 
-        //logger.AskAboutReqAndConv();
-		Stopwatch stopwatch = new Stopwatch();
-        stopwatch.Start();
-		fileManager.IdentifyFilesJSON();
-		stopwatch.Stop();
-		Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+        logger.AskAboutReqAndConv();
+        fileManager.IdentifyFilesJSON();
+		fileManager.ReadSettings("./Settings.xml");
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);

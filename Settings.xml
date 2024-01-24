@@ -1,0 +1,13 @@
+<!-- Settings -->
+<root>
+    <Requester></Requester>  
+    <Converter></Converter>
+	<FileTypes>
+		<Filename>png</Filename>
+		<Pronom>fmt/11</Pronom>
+		<ConvertTo></ConvertTo>
+		<!-- Type here to change the default format to be converted to-->
+		<Options> jpg, pdf, gif, tif, bmp </Options>
+		<Default> jpg </Default>
+	</FileTypes>
+</root>
