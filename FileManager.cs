@@ -64,7 +64,7 @@ public class FileManager
     private FileManager()
     {
     }
-
+    //Test for gitlab runner
     public FileManager(string input, string output)
     {
         Files = new List<FileInfo>();
