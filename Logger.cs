@@ -18,6 +18,17 @@ public class Logger
     {
         WriteIndented = true,
     };
+
+    public class JsonRoot
+    {
+        public string? requester { get; set; } // the person requesting the converting
+        public string? converter { get; set; } // the person that converts
+    }
+    JsonRoot root = new JsonRoot
+    {
+        requester = "requester",
+        converter = "converter"
+    };
     public class JsonData
     {
         public string? Filename { get; set; }
@@ -30,11 +41,11 @@ public class Logger
         public string[]? Converter { get; set; }
         public bool IsConverted { get; set; }
     }
-    List<JsonData> data = new List<JsonData>();
+    List<JsonData> data = [];
 
     private Logger()
 	{
-        string docPath = "output/logs";
+        string docPath = GlobalVariables.parsedOptions.Output + "/logs";
 
         if (!Directory.Exists(docPath))
         {
@@ -48,7 +59,7 @@ public class Logger
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
 
-		docPath = "output/";
+		docPath = GlobalVariables.parsedOptions.Output + "/";
 
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "documentation.json")))
         {
@@ -112,32 +123,59 @@ public class Logger
     }
 
     /// <summary>
-    /// Sets up the layout for how a file should be written to the final documentation file
+    /// Sets up how the final documentation file should be printed
     /// </summary>
-    /// <param name="fileinfo"> info about the file </param>
+    /// <param name="files"> list containing fileinfo about all files </param>
 	public void SetUpDocumentation(List<FileInfo> files)
 	{        
         foreach (FileInfo file in files)
         {
-            JsonData jsondata = new JsonData();
-            jsondata.Filename = file.FileName;
-            jsondata.OriginalPronom = file.OriginalPronom;
-            jsondata.OriginalChecksum = file.OriginalChecksum;
-            jsondata.OriginalSize = file.OriginalSize;
-            jsondata.NewPronom = file.NewPronom;
-            jsondata.NewChecksum = file.NewChecksum;
-            jsondata.NewSize = file.NewSize;
-            jsondata.Converter = ["converter"];
-            jsondata.IsConverted = file.IsConverted;
+            JsonData jsondata = new JsonData
+            {
+                Filename = file.FileName,
+                OriginalPronom = file.OriginalPronom,
+                OriginalChecksum = file.OriginalChecksum,
+                OriginalSize = file.OriginalSize,
+                NewPronom = file.NewPronom,
+                NewChecksum = file.NewChecksum,
+                NewSize = file.NewSize,
+                Converter = ["converter"],
+                IsConverted = file.IsConverted
+            };
             data.Add(jsondata);
         }
 
-        string json = JsonSerializer.Serialize(data, options);
+
+
+        // Create an anonymous object with "requester" and "converter" properties
+        var metadata = new
+        {
+            root.requester,
+            root.converter
+        };
+
+        // Create an anonymous object with a "Files" property
+        var jsonDataWrapper = new
+        {
+            Metadata = metadata,
+            Files = data
+        };
+
+        // Serialize the wrapper object
+        string json = JsonSerializer.Serialize(jsonDataWrapper, options);
 
         // Specify the path to your output JSON file
         string filePath = "output/documentation.json";
 
         // Send it to writelog to print it out there
         WriteLog(json, filePath);
+    }
+
+    public void AskAboutReqAndConv()
+    {
+        Console.WriteLine("Who is requesting the converting?");
+        root.requester = Console.ReadLine();
+        Console.WriteLine("Who is converting?");
+        root.converter = Console.ReadLine();
     }
 }
