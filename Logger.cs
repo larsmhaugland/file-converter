@@ -19,16 +19,18 @@ public class Logger
         WriteIndented = true,
     };
 
-    public class JsonRoot
+    public static class JsonRoot
     {
-        public string? requester { get; set; } // the person requesting the converting
-        public string? converter { get; set; } // the person that converts
+        public static string? requester { get; set; } // the person requesting the converting
+        public static string? converter { get; set; } // the person that converts
     }
+    /*
     JsonRoot root = new JsonRoot
     {
         requester = "requester",
         converter = "converter"
     };
+    */
     public class JsonData
     {
         public string? Filename { get; set; }
@@ -152,8 +154,8 @@ public class Logger
         // Create an anonymous object with "requester" and "converter" properties
         var metadata = new
         {
-            root.requester,
-            root.converter
+            JsonRoot.requester,
+            JsonRoot.converter
         };
 
         // Create an anonymous object with a "Files" property
@@ -172,9 +174,23 @@ public class Logger
 
     public void AskAboutReqAndConv()
     {
-        Console.WriteLine("Who is requesting the converting?");
-        root.requester = Console.ReadLine();
-        Console.WriteLine("Who is converting?");
-        root.converter = Console.ReadLine();
+        if(JsonRoot.requester == null || JsonRoot.requester == "")
+        {
+            Console.WriteLine("Who is requesting the converting?");
+            JsonRoot.requester = Console.ReadLine();
+        }
+        else
+        {
+            Console.WriteLine("the requester was found in the settings file");
+        }
+        if(JsonRoot.converter == null || JsonRoot.converter == "")
+        {
+            Console.WriteLine("Who is converting?");
+            JsonRoot.converter = Console.ReadLine();
+        }
+        else
+        {
+            Console.WriteLine("the converter was found in the settings file");
+        }
     }
 }

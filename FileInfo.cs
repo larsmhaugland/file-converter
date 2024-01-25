@@ -14,7 +14,7 @@ public enum HashAlgorithms
 public class FileInfo
 {
     [JsonPropertyName("filePath")]
-    public string FilePath { get; set; }                    // Absolute path
+    public string FilePath { get; set; }                // Relative path
 
     [JsonPropertyName("filename")]
     public string FileName { get; set; } 				// Filename with extention

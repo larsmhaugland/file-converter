@@ -45,10 +45,11 @@ class Program
 		Logger logger = Logger.Instance;
 
         FileManager fileManager = new FileManager(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-
+		
+		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
         fileManager.IdentifyFilesJSON();
-		fileManager.ReadSettings("./Settings.xml");
+		
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
