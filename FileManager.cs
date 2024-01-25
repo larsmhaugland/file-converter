@@ -13,6 +13,7 @@ public class FileManager
     private static FileManager? instance;
     private static readonly object lockObject = new object();
     public Dictionary<string, SettingsData> FileSettings;
+    public Dictionary<string, SettingsData> FolderOverride;
     string SiegfriedVersion;
     string ScanDate;
 	string InputFolder;		        // Path to input folder

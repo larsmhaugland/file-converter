@@ -44,11 +44,10 @@ class Program
 
 		Logger logger = Logger.Instance;
 
-        FileManager fileManager = new FileManager(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+		FileManager fileManager = FileManager.Instance;
 		
 		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
-        fileManager.IdentifyFilesJSON();
 		
         if (fileManager.Files.Count > 0)
         {
