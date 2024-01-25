@@ -1,10 +1,35 @@
 ﻿using System;
+using System.Runtime.Intrinsics.X86;
 
 public class ConversionManager
 {
 	List<FileInfo> Files;
-	//TODO: ConversionMap
+    //TODO: ConversionMap
+    Dictionary<KeyValuePair<string,string>,List<string>> ConversionMap;
+    List<string> WordPronoms = [
+        "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
+        "x-fmt/275", "x-fmt/276", "fmt/1688", "fmt/37",
+        "fmt/38", "fmt/1282", "fmt/1283", "x-fmt/131",
+        "x-fmt/42", "x-fmt/43", "fmt/473", "fmt/40",
+        "x-fmt/44", "fmt/523", "fmt/1827", "fmt/412",
+        "fmt/754", "x-fmt/393", "x-fmt/394", "fmt/892",
+        "fmt/494"
+        ];
 
+    private void initMap()
+    {
+        foreach (string pronom in WordPronoms)
+        {
+            foreach(string otherpronom in WordPronoms)
+            {
+                if (pronom != otherpronom)
+                {
+                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/147", otherpronom]); // word to pdf other word
+                }
+            } 
+        }
+        // TODO: Add more routes
+    }
 	public ConversionManager()
 	{
 
@@ -15,7 +40,7 @@ public class ConversionManager
 
 	}
 
-	void ConvertFiles(string pronom)
+	void ConvertFiles(FileInfo fileinfo, string pronom)
 	{
 		Converter converter = new Converter();
 		Logger logger = Logger.Instance;
