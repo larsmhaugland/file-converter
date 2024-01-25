@@ -262,7 +262,10 @@ public class FileManager
                         DefaultType = fileTypeNode.SelectSingleNode("Default")?.InnerText
                     };
                     if (String.IsNullOrEmpty(settings.ConvertTo)) { settings.ConvertTo = null; }
-                    if (String.IsNullOrEmpty(extension)) { FileSettings[extension] = settings; }
+                    if (String.IsNullOrEmpty(settings.ConvertFrom)) {
+                        FileSettings[settings.ConvertFrom] = settings;
+                        logger.SetUpRunTimeLogMessage("No convertTo sepcified at " + settings.ConvertFrom,true);
+                    }
                     
                 }
             }
@@ -280,7 +283,24 @@ public class FileManager
                     bool folderPathEmpty = String.IsNullOrEmpty(folderPath);
                     bool convertFromEmpty = String.IsNullOrEmpty(settings.ConvertFrom);
                     bool convertToEmpty = String.IsNullOrEmpty(settings.ConvertTo);
-                    if (!folderPathEmpty && !convertFromEmpty && !convertToEmpty)
+
+                    if (folderPathEmpty && convertFromEmpty && convertToEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("empty folderOverride in seettings", true);
+                    }
+                    else if (folderPathEmpty && !convertFromEmpty && !convertToEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("folderpath is empty for " + settings.ConvertFrom + "-" + settings.ConvertTo + " in settings", true);
+                    }
+                    else if (convertFromEmpty && !convertToEmpty && !folderPathEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("convertFrom is empty for " + folderPath + " in settings", true);
+                    }
+                    else if (convertToEmpty && !convertFromEmpty && !folderPathEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("convertTo is empty for " + folderPath + " in settings", true);
+                    }
+                    else
                     { 
                         FolderOverride[folderPath] = settings;
                     }

@@ -61,6 +61,7 @@ public class ConversionManager
             case "fmt/116":
             case "fmt/117":
                 // TODO: Put image converter here
+                // TODO: Add convertername to fileinfo list
                 break;
             #endregion
             #region HTML
@@ -74,7 +75,8 @@ public class ConversionManager
 			case "fmt/1132":
 			case "fmt/102":
 			case "fmt/583":
-                // converter.HTMLConverter();
+                // TODO: Put HTML converter here
+                // TODO: Add convertername to fileinfo list
                 break;
             #endregion
             #region PDF
@@ -120,7 +122,8 @@ public class ConversionManager
             case "fmt/491":
             case "fmt/1129":
             case "fmt/1451":
-                    // converter.PDFConverter
+                // converter.PDFConverter
+                // TODO: Add convertername to fileinfo list
                 break;
             #endregion
             #region Word
@@ -162,10 +165,11 @@ public class ConversionManager
             // DOTX
             case "fmt/597":
                 // TODO: Add word converter here
+                // TODO: Add convertername to fileinfo list
                 break;
             #endregion
             #region Excel
-            #region XLS
+            // XLS
             case "fmt/55":
             case "fmt/56":
             case "fmt/57":
@@ -177,26 +181,24 @@ public class ConversionManager
             // case "fmt/494":
             case "fmt/62":
             case "fmt/59":
-            #endregion
+            
+            // XLSX
             /*
-            #region XLSX
             case "fmt/214":
             case "fmt/1828":
             case "fmt/494":
-            #endregion
-            #region XLSM
-            case "fmt/445":
-            #endregion
             */
-            // XLTX Region
-            #region XLTX
+            // XLSM
+            //case "fmt/445":
+            
+            // XLTX
             case "fmt/598":
                 // TODO: add excel converter here
+                // TODO: Add convertername to fileinfo list
                 break;
             #endregion
-            #endregion
             #region PowerPoint
-            #region PPT
+            // PPT
             case "fmt/1537":
             case "fmt/1866":
             case "fmt/181":
@@ -211,23 +213,20 @@ public class ConversionManager
             case "fmt/215":
             case "fmt/1829":
             //case "fmt/494":
-            #endregion
+            
+            // PPTX
             /*
-            #region PPTX
             case "fmt/215":
             case "fmt/1829":
             case "fmt/494":
-            #endregion
-            
-            #region PPTM
-            case "fmt/487":
-            #endregion
             */
-            #region POTX
+            
+            // PPTM
+            // case "fmt/487":
+            // POTX
             case "fmt/631":
                 // TODO: add powerpoint converter here
                 break;
-            #endregion
             #endregion
             #region Open Document
             #region ODF
@@ -307,7 +306,7 @@ public class ConversionManager
                 // Do Nothing
             #endregion
             default:
-				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronom); 			
+				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronom); 	
 				break;
 		}
 	}
