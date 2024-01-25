@@ -22,17 +22,15 @@ public class ConversionManager
         switch (pronom)
 		{
             #region image
-            #region GIF
+            // GIF
             case "fmt/3":
 			case "fmt/4":
-            #endregion
-            #region PNG
+            // PNG
             case "fmt/11":
 			case "fmt/12":
 			case "fmt/13":
 			case "fmt/935":
-            #endregion
-            #region JPG/JPEG
+            // JPG/JPEG
             case "fmt/41":
             case "fmt/42":
             case "fmt/43":
@@ -44,8 +42,7 @@ public class ConversionManager
             case "fmt/1507":
             case "fmt/112":
             case "fmt/367":
-            #endregion
-            #region TIF
+            // TIF
             case "fmt/1917":
             case "x-fmt/399":
             case "x-fmt/388":
@@ -55,8 +52,7 @@ public class ConversionManager
             case "fmt/154":
             case "fmt/153":
             case "fmt/156":
-            #endregion
-            #region BMP
+            // BMP
             case "x-fmt/270":
             case "fmt/115":
             case "fmt/118":
@@ -64,10 +60,8 @@ public class ConversionManager
             case "fmt/114":
             case "fmt/116":
             case "fmt/117":
-            #endregion
                 // TODO: Put image converter here
                 break;
-            
             #endregion
             #region HTML
             case "fmt/103":
@@ -130,7 +124,7 @@ public class ConversionManager
                 break;
             #endregion
             #region Word
-            #region DOC
+            // DOC
             case "x-fmt/329":
             case "fmt/609":
             case "fmt/39":
@@ -156,23 +150,19 @@ public class ConversionManager
             case "x-fmt/394":
             case "fmt/892":
             case "fmt/494":
-            #endregion
+            // DOCX
             /* 
-            #region DOC  
             case "fmt/473":
             case "fmt/1827":
             case "fmt/412":
             case "fmt/494":    
-            #endregion
-            #region DOCM
-            case "fmt/523":
-            #endregion
             */
-            #region DOTX
+            // DOCM
+            // case "fmt/523":
+            // DOTX
             case "fmt/597":
                 // TODO: Add word converter here
                 break;
-            #endregion
             #endregion
             #region Excel
             #region XLS
@@ -270,7 +260,52 @@ public class ConversionManager
                 break;
             #endregion
             #endregion
+            #region Rich Text Format
+            case "fmt/969":
+            case "fmt/45":
+            case "fmt/50":
+            case "fmt/52":
+            case "fmt/53":
+            case "fmt/355":
+                // TODO: add RTF converter here
+                break;
+            #endregion
+            #region E-Mail
+            #region PST
+            case "x-fmt/248":
+            case "x-fmt/249":
+            #endregion
+            #region MSG
+            case "x-fmt/430":
+            case "fmt/1144":
+            #endregion
+            #region EML
+            case "fmt/278":
+            case "fmt/950":
+            #endregion
+            #region OLM
+            // OLM Region (Not Found)
+            #endregion
+            #endregion
+            #region Compressed folder
+            // ZIP 
+            case "x-fmt/263":
 
+            // TAR 
+            case "x-fmt/265":
+
+            // 7ZIP
+            case "fmt/484":
+
+            // GZ
+            case "fmt/266":
+
+            // RAR
+            case "x-fmt/264":
+            case "fmt/411":
+            case "fmt/613":
+                // Do Nothing
+            #endregion
             default:
 				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronom); 			
 				break;
