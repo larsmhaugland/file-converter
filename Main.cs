@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using CommandLine;
+using System.Diagnostics;
 
 public static class GlobalVariables
 {
@@ -10,10 +11,10 @@ public static class GlobalVariables
 }
 public class Options
 {
-    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "Input")]
+    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
     public string Input { get; set; }
 
-    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "Output")]
+    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
     public string Output { get; set; }
 
 }
@@ -47,7 +48,7 @@ class Program
 		
 		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
-        fileManager.IdentifyFiles();
+        fileManager.IdentifyFilesJSON();
 		
         if (fileManager.Files.Count > 0)
         {
