@@ -115,11 +115,25 @@ public class FileManager
 
     public void ReadSettings(string pathToSettings)
     {
+        Logger logger = Logger.Instance;
         try
         {
+
+
             // Load the XML document from a file
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(pathToSettings);
+            // Uncomment the line below to simulate an error
+            //xmlDoc.Load("nonexistent_file.xml");
+
+            // Access elements and attributes
+            XmlNode requesterNode = xmlDoc.SelectSingleNode("/root/Requester");
+            string requester = requesterNode?.InnerText;
+            Logger.JsonRoot.requester = requester;
+
+            XmlNode converterNode = xmlDoc.SelectSingleNode("/root/Converter");
+            string converter = converterNode?.InnerText;
+            Logger.JsonRoot.converter = converter;
 
             // Access elements and attributes
             XmlNodeList fileTypeNodes = xmlDoc.SelectNodes("/root/FileTypes");
@@ -141,7 +155,9 @@ public class FileManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred: {ex.Message}");
+            
+            string exceptionMessage = ex.Message.ToString();
+            logger.SetUpRunTimeLogMessage(exceptionMessage, true);
         }
     }
 }

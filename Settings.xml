@@ -1,7 +1,7 @@
 <!-- Settings -->
 <root>
-    <Requester></Requester>  
-    <Converter></Converter>
+    <Requester>Lars</Requester>  
+    <Converter>Lars</Converter>
 	<FileTypes>
 		<Filename>png</Filename>
 		<Pronom>fmt/11</Pronom>
@@ -10,4 +10,17 @@
 		<Options> jpg, pdf, gif, tif, bmp </Options>
 		<Default> jpg </Default>
 	</FileTypes>
+	<FileTypes>
+        <Filename>jpg</Filename>
+        <Pronom>fmt/44</Pronom>
+        <ConvertTo></ConvertTo>
+        <!-- Type here to change the default format to be converted to-->
+        <Options> png, pdf, gif, tif, bmp </Options>
+        <Default> pdf </Default>
+    </FileTypes>
+	<FolderOverride>
+		<FolderPath></FolderPath> <!-- Path after input folder -->
+		<ConvertFrom></ConvertFrom>
+	    <ConvertTo></ConvertTo>
+	</FolderOverride>
 </root>
