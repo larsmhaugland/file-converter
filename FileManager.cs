@@ -54,7 +54,10 @@ public struct SiegfriedMatches
 
 public class FileManager
 {
+    private static FileManager? instance;
+    private static readonly object lockObject = new object();
     public Dictionary<string, SettingsData> FileSettings;
+    public Dictionary<string, SettingsData> FolderOverride;
     string SiegfriedVersion;
     string ScanDate;
 	string InputFolder;		        // Path to input folder
@@ -64,18 +67,36 @@ public class FileManager
     private FileManager()
     {
     }
+    public static FileManager Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                lock (lockObject)
+                {
+                    if (instance == null)
+                    {
+                        instance = new FileManager();
+                    }
+                }
+            }
+            return instance;
+        }
+    }
     //Test for gitlab runner
     public FileManager(string input, string output)
     {
         Files = new List<FileInfo>();
         FileSettings = new Dictionary<string, SettingsData>();
+        FolderOverride = new Dictionary<string, SettingsData>();
         InputFolder = input;
         OutputFolder = output;
     }
     public class SettingsData
     {
-        public string Pronom { get; set; }
-        public string ConvertTo { get; set; }
+        public string ConvertFrom { get; set; }
+        public string? ConvertTo { get; set; }
         public string DefaultType { get; set; }
     }
     public void DocumentFiles()
@@ -236,12 +257,33 @@ public class FileManager
                     string extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
                     SettingsData settings = new SettingsData
                     {
-                        Pronom = fileTypeNode.SelectSingleNode("Pronom")?.InnerText,
+                        ConvertFrom = fileTypeNode.SelectSingleNode("ConvertFrom")?.InnerText,
                         ConvertTo = fileTypeNode.SelectSingleNode("ConvertTo")?.InnerText,
                         DefaultType = fileTypeNode.SelectSingleNode("Default")?.InnerText
                     };
-
-                    FileSettings[extension] = settings;
+                    if (String.IsNullOrEmpty(settings.ConvertTo)) { settings.ConvertTo = null; }
+                    if (String.IsNullOrEmpty(extension)) { FileSettings[extension] = settings; }
+                    
+                }
+            }
+            XmlNodeList folderOverrideNodes = xmlDoc.SelectNodes("/root/FolderOverride");
+            if(folderOverrideNodes != null)
+            {
+                foreach(XmlNode folderOverrideNode in folderOverrideNodes)
+                {
+                    string folderPath = folderOverrideNode.SelectSingleNode("FolderPath")?.InnerText;
+                    SettingsData settings = new SettingsData
+                    {
+                        ConvertFrom = folderOverrideNode.SelectSingleNode("ConvertFrom")?.InnerText,
+                        ConvertTo = folderOverrideNode.SelectSingleNode("ConvertTo")?.InnerText,
+                    };
+                    bool folderPathEmpty = String.IsNullOrEmpty(folderPath);
+                    bool convertFromEmpty = String.IsNullOrEmpty(settings.ConvertFrom);
+                    bool convertToEmpty = String.IsNullOrEmpty(settings.ConvertTo);
+                    if (!folderPathEmpty && !convertFromEmpty && !convertToEmpty)
+                    { 
+                        FolderOverride[folderPath] = settings;
+                    }
                 }
             }
         }
