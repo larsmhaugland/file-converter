@@ -47,6 +47,13 @@ public class FileManager
         FileSettings = new Dictionary<string, SettingsData>();
         FolderOverride = new Dictionary<string, SettingsData>();
     }
+
+    public async void IdentifyFiles()
+    {
+        Siegfried sf = new Siegfried();
+        Files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Input);
+    }
+
     public class SettingsData
     {
         public string ConvertFrom { get; set; }

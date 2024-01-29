@@ -45,7 +45,8 @@ class Program
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
-		
+
+		fileManager.IdentifyFiles();
 		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		
