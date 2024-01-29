@@ -149,7 +149,7 @@ public class Siegfried
         // Wrap the file path in quotes
         string wrappedPath = "\"" + inputFolder + "\"";
         string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
-        string outputFile = "siegfried.json";
+        string outputFile = "siegfried/siegfried.json";
 
         //Create output file
         File.Create(outputFile).Close();
@@ -251,9 +251,7 @@ public class Siegfried
         {
             filename = fileElement.GetProperty("filename").GetString() ?? "",
             //Explicitly check if filesize exists and is a number, otherwise set to 0
-            filesize = fileElement.TryGetProperty("filesize", out var filesizeElement) && filesizeElement.ValueKind == JsonValueKind.Number
-            ? fileElement.GetInt64()
-            : 0,
+            filesize = fileElement.GetProperty("filesize").GetInt64(),
             modified = fileElement.GetProperty("modified").GetString() ?? "",
             errors = fileElement.GetProperty("errors").GetString() ?? "",
             matches = fileElement.GetProperty("matches").EnumerateArray()

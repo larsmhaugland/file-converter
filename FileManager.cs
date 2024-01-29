@@ -51,7 +51,7 @@ public class FileManager
 
     public async void IdentifyFiles()
     {
-        Siegfried sf = new Siegfried();
+        Siegfried sf = Siegfried.Instance;
         Files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Input);
     }
 
