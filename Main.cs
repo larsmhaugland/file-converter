@@ -13,7 +13,6 @@ public class Options
 {
     [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
     public string Input { get; set; }
-
     [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
     public string Output { get; set; }
 
@@ -64,6 +63,8 @@ class Program
                     }
 				}
             }
+			Siegfried sf = Siegfried.Instance;
+			sf.CompressFolders();
         }
     }
 }

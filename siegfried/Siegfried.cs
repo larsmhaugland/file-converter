@@ -3,6 +3,7 @@ using SharpCompress.Common;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
 public class SiegfriedJSON
 {
     [JsonPropertyName("siegfried")]
@@ -54,6 +55,7 @@ public class Siegfried
     public string ScanDate;
     private static readonly object lockObject = new object();
     private List<string> CompressedFolders;
+    private List<string> SupportedCompressionExtensions = new List<string>{ ".zip", ".tar", ".gz", ".rar", ".7z" };
 
     public static Siegfried Instance
     {
@@ -73,11 +75,20 @@ public class Siegfried
         }
     }
 
-    public Siegfried()
+    private Siegfried()
     {
-        CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-        UnpackCompressedFolders();
-    }   
+        Version = "Not Found";
+        ScanDate = "Not Found";
+        CompressedFolders = new List<string>();
+        try 
+        { 
+            CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+            UnpackCompressedFolders();
+        } catch (System.Exception e) 
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager CopyFiles " + e.Message, true); 
+        }
+    }
 
     /// <summary>
     /// Returns the pronom id of a specified file
@@ -88,7 +99,7 @@ public class Siegfried
     {
         // Wrap the file path in quotes
         string wrappedPath = "\"" + path + "\"";
-        string options = $"-home ConversionTools -multi 64 -json -sig pronom64k.sig ";
+        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
 
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
@@ -134,20 +145,19 @@ public class Siegfried
         }
     }
 
-
     /// <summary>
     /// Identifies all files in input directory and returns a list of FileInfo objects. 
     /// Siegfried output is put in a JSON file.
     /// </summary>
     /// <param name="inputFolder">Path to root folder for files to be identified</param>
-    /// <returns></returns>
+    /// <returns>List of all identified files or null</returns>
     public List<FileInfo> IdentifyFilesJSON(string inputFolder)
     {
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
         string wrappedPath = "\"" + inputFolder + "\"";
-        string options = $"-home ConversionTools -multi 64 -json -sig pronom64k.sig ";
-        string outputFile = "siegfried.json";
+        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
+        string outputFile = "siegfried/siegfried.json";
 
         //Create output file
         File.Create(outputFile).Close();
@@ -200,8 +210,17 @@ public class Siegfried
         for (int i = 0; i < parsedData.files.Length; i++)
         {
             var file = new FileInfo(parsedData.files[i]);
-            if (file != null)
+            if (file != null) 
+            {
                 files.Add(file);
+                SupportedCompressionExtensions.ForEach(ext =>
+                {
+                    if (Path.GetExtension(file.FileName) == ext)
+                    {
+                        CompressedFolders.Add(file.FilePath);
+                    }
+                });
+            }
         }
         return files;
     }
@@ -229,9 +248,9 @@ public class Siegfried
                     };
                     return siegfriedJson;
                 }
-            } else
+            }
+            else
             {
-
                 return JsonSerializer.Deserialize<SiegfriedJSON>(json);
             }
         }
@@ -249,9 +268,7 @@ public class Siegfried
         {
             filename = fileElement.GetProperty("filename").GetString() ?? "",
             //Explicitly check if filesize exists and is a number, otherwise set to 0
-            filesize = fileElement.TryGetProperty("filesize", out var filesizeElement) && filesizeElement.ValueKind == JsonValueKind.Number
-            ? fileElement.GetInt64()
-            : 0,
+            filesize = fileElement.GetProperty("filesize").GetInt64(),
             modified = fileElement.GetProperty("modified").GetString() ?? "",
             errors = fileElement.GetProperty("errors").GetString() ?? "",
             matches = fileElement.GetProperty("matches").EnumerateArray()
@@ -368,17 +385,26 @@ public class Siegfried
     }
 
     /// <summary>
-    /// Compresses a folder to a specified format
+    /// Compresses a folder to a specified format and deletes the unpacked folder
     /// </summary>
     /// <param name="archiveType">Format for compression</param>
     /// <param name="path">Path to folder to be compressed</param>
     private void CompressFolder(string path, ArchiveType archiveType)
     {
-        string fileExtension = path.Split('.').Last();
-        using (var archive = ArchiveFactory.Create(archiveType))
+        try
         {
-            archive.AddAllFromDirectory(path);
-            archive.SaveTo(path + fileExtension, CompressionType.None);
+            string fileExtension = Path.GetExtension(path);
+            string pathWithoutExtension = path.Replace(fileExtension, ""); //TODO: This might not work for paths with multiple file extensions
+            using (var archive = ArchiveFactory.Create(archiveType))
+            {
+                archive.AddAllFromDirectory(pathWithoutExtension);
+                archive.SaveTo(path, CompressionType.None);
+            }
+            // Delete the unpacked folder
+            Directory.Delete(pathWithoutExtension, true);
+        } catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager CompressFolder " + e.Message, true);
         }
     }
 
@@ -388,24 +414,30 @@ public class Siegfried
     /// <param name="path">Path to compressed folder</param>
     private void UnpackFolder(string path)
     {
-        // Get path to folder without extention
-        string pathWithoutExtension = path.Split('.')[0];
-        // Ensure the extraction directory exists
-        if (!Directory.Exists(pathWithoutExtension))
+        try
         {
-            Directory.CreateDirectory(pathWithoutExtension);
-        }
-
-        // Extract the contents of the tar file
-        using (var archive = ArchiveFactory.Open(path))
-        {
-            foreach (var entry in archive.Entries)
+            // Get path to folder without extention
+            string pathWithoutExtension = path.Split('.')[0];
+            // Ensure the extraction directory exists
+            if (!Directory.Exists(pathWithoutExtension))
             {
-                if (!entry.IsDirectory)
+                Directory.CreateDirectory(pathWithoutExtension);
+            }
+
+            // Extract the contents of the compressed file
+            using (var archive = ArchiveFactory.Open(path))
+            {
+                foreach (var entry in archive.Entries)
                 {
-                    entry.WriteToDirectory(pathWithoutExtension, new ExtractionOptions { ExtractFullPath = true, Overwrite = true });
+                    if (!entry.IsDirectory)
+                    {
+                        entry.WriteToDirectory(pathWithoutExtension, new ExtractionOptions { ExtractFullPath = true, Overwrite = true });
+                    }
                 }
             }
+        } catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager UnpackFolder " + e.Message, true);
         }
     }
 }
