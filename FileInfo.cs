@@ -106,6 +106,37 @@ public class FileInfo
                 break;
         }
     }
+    /// <summary>
+    /// 
+    /// </summary>
+    public void SetNewFields()
+    {
+        System.IO.FileInfo fileInfo = new System.IO.FileInfo(FileName);
+        NewSize = fileInfo.Length;
+
+        //Get checksum
+        switch (HashingAlgorithm)
+        {
+            case HashAlgorithms.MD5:
+                NewChecksum = CalculateFileChecksum(MD5.Create());
+                break;
+            default:
+                NewChecksum = CalculateFileChecksum(SHA256.Create());
+                break;
+        }
+
+        //Get new pronom
+        NewPronom = Siegfried.Instance.IdentifyPronom(FileName);
+        if(NewPronom == null)
+        {
+            NewPronom = "Could not fetch";
+        }
+    }
+
+    public void AddConversionTool(string tool)
+    {
+        ConversionTools.Add(tool);
+    }
 
     /// <summary>
     /// Parses the output from Siegfried and sets the properties of the FileInfo object
@@ -174,7 +205,7 @@ public class FileInfo
         {
             try
             {
-                using (var stream = File.OpenRead(FilePath))
+                using (var stream = File.OpenRead(FileName))
                 {
                     return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
                 }

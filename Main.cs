@@ -11,9 +11,10 @@ public static class GlobalVariables
 }
 public class Options
 {
+    // "C:/Users/larsm/Downloads"
     [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
     public string Input { get; set; }
-
+    // "HåperDetteFunkerHvisIkkeErJegSurPåPhilip"
     [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
     public string Output { get; set; }
 
@@ -54,6 +55,8 @@ class Program
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
             logger.SetUpDocumentation(fileManager.Files);
+			Siegfried sf = Siegfried.Instance;
+			sf.CompressFolders();
         }
     }
 }

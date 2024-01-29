@@ -14,17 +14,13 @@ public class FileManager
     private static readonly object lockObject = new object();
     public Dictionary<string, SettingsData> FileSettings;
     public Dictionary<string, SettingsData> FolderOverride;
-    string SiegfriedVersion;
-    string ScanDate;
-	string InputFolder;		        // Path to input folder
-	string OutputFolder;            // Path to output folder
 	public List<FileInfo> Files;	// List of files to be converted
 
     private FileManager()
     {
         Files = new List<FileInfo>();
         FileSettings = new Dictionary<string, SettingsData>();
-        FolderOverride = new Dictionary<string, SettingsData>();
+        FolderOverride = new Dictionary<string, SettingsData>(); 
     }
     public static FileManager Instance
     {
@@ -43,16 +39,15 @@ public class FileManager
             return instance;
         }
     }
-    //Test for gitlab runner
-    public FileManager(string input, string output)
-    {
-
-    }
 
     public async void IdentifyFiles()
     {
         Siegfried sf = Siegfried.Instance;
-        Files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Input);
+        Files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Output); //Search for files in output folder since they are copied there from input folder
+        if(Files == null)
+        {
+            Files = new List<FileInfo>();
+        }
     }
 
     public class SettingsData
@@ -66,9 +61,6 @@ public class FileManager
         Logger logger = Logger.Instance;
         logger.SetUpDocumentation(Files);
     }
-
-
-    
 
     public void ReadSettings(string pathToSettings)
     {
