@@ -40,7 +40,7 @@ public class ConversionManager
 
 	}
 
-	void ConvertFiles(FileInfo fileinfo, string pronom)
+	public void ConvertFiles(FileInfo fileinfo, string pronom)
 	{
 		Converter converter = new Converter();
 		Logger logger = Logger.Instance;
@@ -86,6 +86,7 @@ public class ConversionManager
             case "fmt/116":
             case "fmt/117":
                 // TODO: Put image converter here
+                break;
                 // TODO: Add convertername to fileinfo list
                 break;
             #endregion

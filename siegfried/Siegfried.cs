@@ -99,7 +99,7 @@ public class Siegfried
     {
         // Wrap the file path in quotes
         string wrappedPath = "\"" + path + "\"";
-        string options = $"-home ConversionTools -multi 64 -json -sig pronom64k.sig ";
+        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
 
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
@@ -126,15 +126,15 @@ public class Siegfried
             process.WaitForExit();
         }
         //TODO: Check error and possibly continue
-
+        
         if (error.Length > 0)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true); 
         }
         var parsedData = ParseJSONOutput(output, false);
         if (parsedData == null)
             return null; //TODO: Check error and possibly continue
-                            //Return pronom id
+        //Return pronom id
         if (parsedData.files.Length > 0)
         {
             return parsedData.files[0].matches[0].id;
@@ -291,7 +291,7 @@ public class Siegfried
             warning = matchElement.GetProperty("warning").GetString() ?? ""
         };
     }
-
+    
     /// <summary>
     /// Copies all files (while retaining file structure) from a source directory to a destination directory
     /// </summary>

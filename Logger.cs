@@ -181,7 +181,7 @@ public class Logger
         }
         else
         {
-            Console.WriteLine("the requester was found in the settings file");
+            Console.WriteLine("The requester " + JsonRoot.requester +" was found in the settings file.");
         }
         if(JsonRoot.converter == null || JsonRoot.converter == "")
         {
@@ -190,7 +190,7 @@ public class Logger
         }
         else
         {
-            Console.WriteLine("the converter was found in the settings file");
+            Console.WriteLine("The converter " + JsonRoot.converter + " was found in the settings file.");
         }
     }
 }
