@@ -1,8 +1,15 @@
 ﻿using System;
 using System.Runtime.Intrinsics.X86;
+using System.Text;
+using System.Collections.Generic;
 
 public class ConversionManager
 {
+    enum converters
+    {
+        IText7
+    }
+    Dictionary<KeyValuePair<string, string>,converters> supportedConversions = new Dictionary<KeyValuePair<string, string>, converters>();
 	List<FileInfo> Files;
     //TODO: ConversionMap
     Dictionary<KeyValuePair<string,string>,List<string>> ConversionMap;
@@ -15,7 +22,103 @@ public class ConversionManager
         "fmt/754", "x-fmt/393", "x-fmt/394", "fmt/892",
         "fmt/494"
         ];
+    List<string> ImagePronoms = [
+        "fmt/3", "fmt/4", "fmt/11", "fmt/12",
+		"fmt/13", "fmt/935", "fmt/41", "fmt/42",
+        "fmt/43", "fmt/44", "x-fmt/398", "x-fmt/390",
+        "x-fmt/391", "fmt/645", "fmt/1507", "fmt/112",
+        "fmt/367", "fmt/1917", "x-fmt/399", "x-fmt/388",
+        "x-fmt/387", "fmt/155", "fmt/353", "fmt/154",
+        "fmt/153", "fmt/156", "x-fmt/270","fmt/115",
+        "fmt/118", "fmt/119", "fmt/114", "fmt/116",
+        "fmt/117"
+    ];
+    List<string> HTMLPronoms = [
+        "fmt/103", "fmt/96", "fmt/97", "fmt/98",
+		"fmt/99", "fmt/100", "fmt/471", "fmt/1132",
+		"fmt/102", "fmt/583"
+    ];
+    List<string> PDFPronoms = [
+        "fmt/559", "fmt/560", "fmt/561", "fmt/562",
+        "fmt/563", "fmt/564", "fmt/565", "fmt/558",
+        "fmt/14", "fmt/15", "fmt/16", "fmt/17",
+        "fmt/18", "fmt/19", "fmt/20", "fmt/276",
+        "fmt/95", "fmt/354", "fmt/476", "fmt/477",
+        "fmt/478", "fmt/479", "fmt/480", "fmt/481",
+        "fmt/1910", "fmt/1911", "fmt/1912", "fmt/493",
+        "fmt/144", "fmt/145", "fmt/157", "fmt/146",
+        "fmt/147", "fmt/158", "fmt/148", "fmt/488",
+        "fmt/489", "fmt/490", "fmt/492", "fmt/491",
+        "fmt/1129", "fmt/1451"
+    ];
+    List<string> ExcelPronoms = [
+        "fmt/55", "fmt/56", "fmt/57", "fmt/61",
+        "fmt/595", "fmt/445", "fmt/214", "fmt/1828",
+        "fmt/494", "fmt/62", "fmt/59", "fmt/598"
+    ];
+    List<string> PPTPronoms = [
+        "fmt/1537", "fmt/1866", "fmt/181", "fmt/1867",
+        "fmt/179", "fmt/1747", "fmt/1748", "x-fmt/88",
+        "fmt/125", "fmt/126", "fmt/487", "fmt/215",
+        "fmt/1829", "fmt/494", "fmt/631"
+    ];
+    List<string> OpenDocPronoms = [
+        "fmt/140", "fmt/135", "fmt/136", "fmt/137",
+        "fmt/138", "fmt/139", "x-fmt/3", "fmt/1756",
+        "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
+        "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
+    ];
 
+    private void initSupportedConversions()
+    {
+        // ITex7
+        foreach(string pronom in ImagePronoms)
+        {
+            // PDF 1.0
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/14"), converters.IText7);
+            // PDF 1.1
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/15"), converters.IText7);
+            // PDF 1.2
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/16"), converters.IText7);
+            // PDF 1.3
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/17"), converters.IText7);
+            // PDF 1.4
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/18"), converters.IText7);
+            // PDF 1.5
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/19"), converters.IText7);
+            // PDF 1.6
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/20"), converters.IText7);
+            // PDF 1.7
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/276"), converters.IText7);
+            // PDF/A 1a
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/95"), converters.IText7);
+            // PDF/A 1b
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/354"), converters.IText7);
+            // PDF/A 2a
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/476"), converters.IText7);
+            // PDF/A 2b
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/477"), converters.IText7);
+            // PDF/A 2u
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/478"), converters.IText7);
+            // PDF/A 3a
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/479"), converters.IText7);
+            // PDF/A 3b
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/480"), converters.IText7);
+            // PDF/A 3u
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/481"), converters.IText7);
+            // PDF/A 4
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1910"), converters.IText7);
+            // PDF/A 4e
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1911"), converters.IText7);
+            // PDF/A 4f
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1912"), converters.IText7);
+            // PDF 2.0
+            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1129"), converters.IText7); 
+        }
+    }
+    /// <summary>
+    /// initializes the map for how to reach each format
+    /// </summary>
     private void initMap()
     {
         foreach (string pronom in WordPronoms)
@@ -32,21 +135,42 @@ public class ConversionManager
     }
 	public ConversionManager()
 	{
+        initSupportedConversions();
+        initMap();
+    }
 
-	}
-
-	void discoverFiles()
+    void discoverFiles()
 	{
 
 	}
-
-	void ConvertFiles(FileInfo fileinfo, string pronom)
+    /// <summary>
+    /// Sends files to the correct converter
+    /// </summary>
+    /// <param name="pronomFrom"> pronom the file is at </param>
+    /// <param name="pronomTo"> pronom the file wants to go to </param>
+	public void ConvertFiles(string pronomFrom, string pronomTo)
 	{
-		Converter converter = new Converter();
+		//Converter converter = new Converter();
 		Logger logger = Logger.Instance;
-        switch (pronom)
+        KeyValuePair<string, string> key = new KeyValuePair<string, string>(pronomFrom, pronomTo);
+        foreach(var converter in supportedConversions)
+        {
+            if(key.Key == converter.Key.Key && key.Value == converter.Key.Value)
+            {
+                switch(converter.Value)
+                {
+                    case converters.IText7: 
+                        // TODO: Add IText7 converter here
+                        break;
+                    default: logger.SetUpRunTimeLogMessage("No converters found for this path", true, filetype: key.Key); break;
+                }
+            }
+        }
+        /*
+        switch (key)
 		{
-            #region image
+            
+            #region imageToPDF
             // GIF
             case "fmt/3":
 			case "fmt/4":
@@ -179,6 +303,7 @@ public class ConversionManager
             case "fmt/892":
             case "fmt/494":
             // DOCX
+            */
             /* 
             case "fmt/473":
             case "fmt/1827":
@@ -188,6 +313,7 @@ public class ConversionManager
             // DOCM
             // case "fmt/523":
             // DOTX
+            /*
             case "fmt/597":
                 // TODO: Add word converter here
                 // TODO: Add convertername to fileinfo list
@@ -217,6 +343,7 @@ public class ConversionManager
             //case "fmt/445":
             
             // XLTX
+            /*
             case "fmt/598":
                 // TODO: add excel converter here
                 // TODO: Add convertername to fileinfo list
@@ -245,7 +372,7 @@ public class ConversionManager
             case "fmt/1829":
             case "fmt/494":
             */
-            
+            /*
             // PPTM
             // case "fmt/487":
             // POTX
@@ -254,35 +381,31 @@ public class ConversionManager
                 break;
             #endregion
             #region Open Document
-            #region ODF
+            //ODF
             case "fmt/140":
             case "fmt/135":
             case "fmt/136":
             case "fmt/137":
             case "fmt/138":
             case "fmt/139":
-            #endregion
-            #region ODT
+            // ODT
             case "x-fmt/3":
             case "fmt/1756":
             //case "fmt/136":
             case "fmt/290":
             case "fmt/291":
-            #endregion
-            #region ODS
+            // ODS
             case "fmt/1755":
             //case "fmt/137":
             case "fmt/294":
             case "fmt/295":
-            #endregion
-            #region ODP
+            // ODP
             case "fmt/1754":
             //case "fmt/138":
             case "fmt/292":
             case "fmt/293":
                 // TODO: Add open document converter here
                 break;
-            #endregion
             #endregion
             #region Rich Text Format
             case "fmt/969":
@@ -295,21 +418,18 @@ public class ConversionManager
                 break;
             #endregion
             #region E-Mail
-            #region PST
+            // PST
             case "x-fmt/248":
             case "x-fmt/249":
-            #endregion
-            #region MSG
+            // MSG
             case "x-fmt/430":
             case "fmt/1144":
-            #endregion
-            #region EML
+            // EML
             case "fmt/278":
             case "fmt/950":
-            #endregion
-            #region OLM
+            // OLM
             // OLM Region (Not Found)
-            #endregion
+                //TODO: Add Email converter here
             #endregion
             #region Compressed folder
             // ZIP 
@@ -330,9 +450,11 @@ public class ConversionManager
             case "fmt/613":
                 // Do Nothing
             #endregion
+                
             default:
-				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronom); 	
+				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronomFrom); 	
 				break;
 		}
+        */
 	}
 }
