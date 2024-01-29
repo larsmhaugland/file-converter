@@ -14,7 +14,18 @@ public class Converter
 	public virtual void CombineFiles()
 	{ }
 
+	public virtual void updateFileInfo(FileInfo fileinfo) {
+	}
+
+	public virtual void deleteOriginalFileFromOutputDirectory(FileInfo fileInfo) {
+		string outputDirectory = GlobalVariables.parsedOptions.Output;
+		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo.FileName));
+		if (File.Exists(fileToDelete))
+		{
+            File.Delete(fileToDelete);
+        }
+	}
+
 	//TODO: Implement base methods
-	//TODO: UpdateFileInfo
 	//TODO: Try again if files fail to convert
 }

@@ -22,6 +22,9 @@ public class FileManager
 
     private FileManager()
     {
+        Files = new List<FileInfo>();
+        FileSettings = new Dictionary<string, SettingsData>();
+        FolderOverride = new Dictionary<string, SettingsData>();
     }
     public static FileManager Instance
     {
@@ -43,10 +46,15 @@ public class FileManager
     //Test for gitlab runner
     public FileManager(string input, string output)
     {
-        Files = new List<FileInfo>();
-        FileSettings = new Dictionary<string, SettingsData>();
-        FolderOverride = new Dictionary<string, SettingsData>();
+
     }
+
+    public async void IdentifyFiles()
+    {
+        Siegfried sf = Siegfried.Instance;
+        Files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Input);
+    }
+
     public class SettingsData
     {
         public string ConvertFrom { get; set; }

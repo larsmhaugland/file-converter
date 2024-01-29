@@ -6,5 +6,5 @@
 /.vs
 /bin
 /obj
-/Output/logs/*.txt
-/Output/*.json
+/Output/*
+/siegfried/siegfried.json

@@ -86,8 +86,6 @@ public class ConversionManager
             case "fmt/116":
             case "fmt/117":
                 // TODO: Put image converter here
-                converter = new iTextConverter();
-                converter.ConvertFile(fileinfo);
                 break;
                 // TODO: Add convertername to fileinfo list
                 break;
