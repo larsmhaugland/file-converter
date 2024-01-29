@@ -105,8 +105,7 @@ public class FileManager
                         ConvertTo = fileTypeNode.SelectSingleNode("ConvertTo")?.InnerText,
                         DefaultType = fileTypeNode.SelectSingleNode("Default")?.InnerText
                     };
-                    if (String.IsNullOrEmpty(settings.ConvertTo)) { settings.ConvertTo = null; }
-                    if (String.IsNullOrEmpty(settings.ConvertFrom)) {
+                    if (!String.IsNullOrEmpty(settings.ConvertFrom)) {
                         FileSettings[settings.ConvertFrom] = settings;
                         logger.SetUpRunTimeLogMessage("No convertTo sepcified at " + settings.ConvertFrom,true);
                     }
