@@ -6,6 +6,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text.Json.Serialization;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
+using iText.Kernel.Geom;
 
 public class Logger
 {
@@ -63,12 +64,7 @@ public class Logger
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
 
-        path = GlobalVariables.parsedOptions.Output + "/";
-        docPath = path + "documentation.json";
-        using (StreamWriter outputFile = new StreamWriter(docPath))
-        {
-            outputFile.WriteAsync("\n");
-        }
+
 
     }
 	public static Logger Instance
@@ -131,7 +127,13 @@ public class Logger
     /// </summary>
     /// <param name="files"> list containing fileinfo about all files </param>
 	public void SetUpDocumentation(List<FileInfo> files)
-	{        
+	{
+        string path = GlobalVariables.parsedOptions.Output + "/";
+        docPath = path + "documentation.json";
+        using (StreamWriter outputFile = new StreamWriter(docPath))
+        {
+            outputFile.WriteAsync("\n");
+        }
         foreach (FileInfo file in files)
         {
             JsonData jsondata = new JsonData
@@ -181,7 +183,7 @@ public class Logger
         }
         else
         {
-            Console.WriteLine("the requester was found in the settings file");
+            Console.WriteLine("The requester " + JsonRoot.requester +" was found in the settings file.");
         }
         if(JsonRoot.converter == null || JsonRoot.converter == "")
         {
@@ -190,7 +192,7 @@ public class Logger
         }
         else
         {
-            Console.WriteLine("the converter was found in the settings file");
+            Console.WriteLine("The converter " + JsonRoot.converter + " was found in the settings file.");
         }
     }
 }

@@ -12,7 +12,7 @@ public class ConversionManager
     Dictionary<KeyValuePair<string, string>,converters> supportedConversions = new Dictionary<KeyValuePair<string, string>, converters>();
 	List<FileInfo> Files;
     //TODO: ConversionMap
-    Dictionary<KeyValuePair<string,string>,List<string>> ConversionMap;
+    Dictionary<KeyValuePair<string,string>,List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
     List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
         "x-fmt/275", "x-fmt/276", "fmt/1688", "fmt/37",
@@ -68,7 +68,9 @@ public class ConversionManager
         "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
         "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
     ];
-
+    /// <summary>
+    /// 
+    /// </summary>
     private void initSupportedConversions()
     {
         // ITex7
@@ -104,14 +106,6 @@ public class ConversionManager
             supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/479"), converters.IText7);
             // PDF/A 3b
             supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/480"), converters.IText7);
-            // PDF/A 3u
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/481"), converters.IText7);
-            // PDF/A 4
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1910"), converters.IText7);
-            // PDF/A 4e
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1911"), converters.IText7);
-            // PDF/A 4f
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1912"), converters.IText7);
             // PDF 2.0
             supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1129"), converters.IText7); 
         }
@@ -146,26 +140,29 @@ public class ConversionManager
     /// <summary>
     /// Sends files to the correct converter
     /// </summary>
-    /// <param name="pronomFrom"> pronom the file is at </param>
-    /// <param name="pronomTo"> pronom the file wants to go to </param>
-	public void ConvertFiles(string pronomFrom, string pronomTo)
-	{
-		//Converter converter = new Converter();
-		Logger logger = Logger.Instance;
+    /// <param name="fileInfo"> info about the file </param>
+    /// <param name="pronomFrom"> pronom before converting </param>
+    /// <param name="pronomTo"> pronom the file wants to be converted to </param>
+	public void ConvertFiles(FileInfo fileInfo, string pronomFrom, string pronomTo)
+    {
+        //Converter converter = new Converter();
+        Logger logger = Logger.Instance;
         KeyValuePair<string, string> key = new KeyValuePair<string, string>(pronomFrom, pronomTo);
-        foreach(var converter in supportedConversions)
+        foreach (var converter in supportedConversions)
         {
-            if(key.Key == converter.Key.Key && key.Value == converter.Key.Value)
+            if (key.Key == converter.Key.Key && key.Value == converter.Key.Value)
             {
-                switch(converter.Value)
+                switch (converter.Value)
                 {
-                    case converters.IText7: 
-                        // TODO: Add IText7 converter here
+                    case converters.IText7:
+                        iText7 itext7 = new iText7();
+                        itext7.ConvertFile(fileInfo);
                         break;
                     default: logger.SetUpRunTimeLogMessage("No converters found for this path", true, filetype: key.Key); break;
                 }
             }
         }
+    }
         /*
         switch (key)
 		{
@@ -210,6 +207,7 @@ public class ConversionManager
             case "fmt/116":
             case "fmt/117":
                 // TODO: Put image converter here
+                break;
                 // TODO: Add convertername to fileinfo list
                 break;
             #endregion
@@ -455,6 +453,7 @@ public class ConversionManager
 				logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronomFrom); 	
 				break;
 		}
-        */
+        
 	}
+    */
 }

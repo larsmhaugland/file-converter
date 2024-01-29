@@ -54,6 +54,16 @@ class Program
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
             logger.SetUpDocumentation(fileManager.Files);
+            foreach (FileInfo fileInfo in fileManager.Files)
+            {
+				foreach(var setting in fileManager.FileSettings)
+				{
+					if (setting.Key == fileInfo.OriginalPronom)
+					{
+                        cm.ConvertFiles(fileInfo, fileInfo.OriginalPronom, setting.Value.DefaultType);
+                    }
+				}
+            }
         }
     }
 }

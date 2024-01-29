@@ -3,8 +3,6 @@ using SharpCompress.Common;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
-
 public class SiegfriedJSON
 {
     [JsonPropertyName("siegfried")]
@@ -79,7 +77,7 @@ public class Siegfried
     {
         CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
         UnpackCompressedFolders();
-    }
+    }   
 
     /// <summary>
     /// Returns the pronom id of a specified file
@@ -117,15 +115,15 @@ public class Siegfried
             process.WaitForExit();
         }
         //TODO: Check error and possibly continue
-
+        
         if (error.Length > 0)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true); 
         }
         var parsedData = ParseJSONOutput(output, false);
         if (parsedData == null)
             return null; //TODO: Check error and possibly continue
-                            //Return pronom id
+        //Return pronom id
         if (parsedData.files.Length > 0)
         {
             return parsedData.files[0].matches[0].id;
@@ -148,8 +146,8 @@ public class Siegfried
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
         string wrappedPath = "\"" + inputFolder + "\"";
-        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
-        string outputFile = "siegfried/siegfried.json";
+        string options = $"-home ConversionTools -multi 64 -json -sig pronom64k.sig ";
+        string outputFile = "siegfried.json";
 
         //Create output file
         File.Create(outputFile).Close();
@@ -231,9 +229,9 @@ public class Siegfried
                     };
                     return siegfriedJson;
                 }
-            }
-            else
+            } else
             {
+
                 return JsonSerializer.Deserialize<SiegfriedJSON>(json);
             }
         }
@@ -251,7 +249,9 @@ public class Siegfried
         {
             filename = fileElement.GetProperty("filename").GetString() ?? "",
             //Explicitly check if filesize exists and is a number, otherwise set to 0
-            filesize = fileElement.GetProperty("filesize").GetInt64(),
+            filesize = fileElement.TryGetProperty("filesize", out var filesizeElement) && filesizeElement.ValueKind == JsonValueKind.Number
+            ? fileElement.GetInt64()
+            : 0,
             modified = fileElement.GetProperty("modified").GetString() ?? "",
             errors = fileElement.GetProperty("errors").GetString() ?? "",
             matches = fileElement.GetProperty("matches").EnumerateArray()
@@ -274,7 +274,7 @@ public class Siegfried
             warning = matchElement.GetProperty("warning").GetString() ?? ""
         };
     }
-
+    
     /// <summary>
     /// Copies all files (while retaining file structure) from a source directory to a destination directory
     /// </summary>
