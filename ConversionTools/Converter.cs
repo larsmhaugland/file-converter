@@ -9,5 +9,12 @@ public class Converter
 	{
 	}
 
+	public virtual void ConvertFile(FileInfo fileinfo)
+	{ }
+	public virtual void CombineFiles()
+	{ }
+
 	//TODO: Implement base methods
+	//TODO: UpdateFileInfo
+	//TODO: Try again if files fail to convert
 }
