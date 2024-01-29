@@ -47,7 +47,7 @@ public class Logger
 
     private Logger()
 	{
-        string path = GlobalVariables.parsedOptions.Output + "/logs";
+        string path = "/logs";
 
         if (!Directory.Exists(path))
         {
