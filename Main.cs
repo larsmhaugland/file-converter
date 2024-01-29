@@ -1,8 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using CommandLine;
+﻿using CommandLine;
 using System.Diagnostics;
 
 public static class GlobalVariables
@@ -44,8 +40,11 @@ class Program
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
-
+		Stopwatch stopwatch = new Stopwatch();
+		stopwatch.Start();
 		fileManager.IdentifyFiles();
+		stopwatch.Stop();
+		Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
 		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		

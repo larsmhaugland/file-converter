@@ -15,7 +15,7 @@ public class SiegfriedJSON
 
 }
 
-public struct SiegfriedFile
+public class SiegfriedFile
 {
     [JsonPropertyName("filename")]
     public string filename;
@@ -28,7 +28,7 @@ public struct SiegfriedFile
     [JsonPropertyName("matches")]
     public SiegfriedMatches[] matches;
 }
-public struct SiegfriedMatches
+public class SiegfriedMatches
 {
     [JsonPropertyName("ns")]
     public string ns;
@@ -95,11 +95,11 @@ public class Siegfried
     /// </summary>
     /// <param name="path">Path to file</param>
     /// <returns>Pronom id or null</returns>
-    public string IdentifyPronom(string path)
+    public SiegfriedFile IdentifyFile(string path)
     {
         // Wrap the file path in quotes
         string wrappedPath = "\"" + path + "\"";
-        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
+        string options = $"-home siegfried -json -sig pronom64k.sig ";
 
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
@@ -137,7 +137,7 @@ public class Siegfried
         //Return pronom id
         if (parsedData.files.Length > 0)
         {
-            return parsedData.files[0].matches[0].id;
+            return parsedData.files[0];
         }
         else
         {
