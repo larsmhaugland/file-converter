@@ -4,7 +4,7 @@
     <Converter>Lars</Converter>
 	<FileTypes>
 		<Filename>png</Filename>
-		<Pronom>fmt/11</Pronom>
+		<ConvertFrom>fmt/11</ConvertFrom>
 		<!-- 
 			Supported formats:
 			jpg: fmt/11 fmt/12 fmt/13 fmt/935
