@@ -1,5 +1,8 @@
 ﻿using System;
 
+/// <summary>
+/// Parent class for all converters
+/// </summary>
 public class Converter
 {
 	public string Name { get; set; } // Name of the converter
@@ -9,14 +12,33 @@ public class Converter
 	{
 	}
 
-	public virtual void ConvertFile(FileInfo fileinfo)
+	/// <summary>
+	/// Convert a file to a new format
+	/// </summary>
+	/// <param name="fileinfo">The file to be converted</param>
+	/// <param name="pronom">The file format to convert to</param>
+	public virtual void ConvertFile(FileInfo fileinfo, string pronom)
 	{ }
-	public virtual void CombineFiles()
+	
+	/// <summary>
+	/// Combine multiple files into one file
+	/// </summary>
+	/// <param name="files">Array of files that should be combined</param>
+	/// <param name="pronom">The file format to convert to</param>
+	public virtual void CombineFiles(FileInfo []files, string pronom)
 	{ }
 
-	public virtual void updateFileInfo(FileInfo fileinfo) {
+	/// <summary>
+	/// Update the fileinfo object with new information after conversion
+	/// </summary>
+	/// <param name="fileinfo">The file that gets updated information</param>
+	public virtual void UpdateFileInfo(FileInfo fileinfo) {
 	}
 
+	/// <summary>
+	/// Delete an original file, that has been converted, from the output directory
+	/// </summary>
+	/// <param name="fileInfo">The specific file to be deleted</param>
 	public virtual void deleteOriginalFileFromOutputDirectory(FileInfo fileInfo) {
 		string outputDirectory = GlobalVariables.parsedOptions.Output;
 		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo.FileName));
