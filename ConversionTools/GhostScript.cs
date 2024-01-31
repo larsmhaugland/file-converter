@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 //TODO: Check resolution settings when converting to image
+//TODO: Error check - only delete original file if conversion is completed successfully
 
 /// <summary>
 /// GhostScript is a subclass of the Converter class.   <br></br>
@@ -34,6 +35,8 @@ public class Ghostscript : Converter
         string outputDirectory = GlobalVariables.parsedOptions.Output;
         string outputFileName;
         string sDevice;
+
+        Logger log = Logger.Instance;
 
         switch (pronom)
         {
@@ -144,6 +147,9 @@ public class Ghostscript : Converter
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                 break;
             #endregion
+            default:
+                log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
+                break;
         }
     }
 
@@ -158,6 +164,8 @@ public class Ghostscript : Converter
     {
         string input = fileinfo.FilePath;
         string outputFilePath = Path.Combine(output, outputFileName);
+        Logger log = Logger.Instance;
+
         string gsArguments = "-dNOPAUSE -dBATCH -sDEVICE=" + sDevice + " -sOutputFile=" + outputFilePath + " " + input;
         Process gsProcess = new Process();
         gsProcess.StartInfo.FileName = "gswin64c.exe";
@@ -166,10 +174,15 @@ public class Ghostscript : Converter
         gsProcess.StartInfo.RedirectStandardOutput = true;
         gsProcess.StartInfo.RedirectStandardError = true;
         gsProcess.Start();
-        string outputString = gsProcess.StandardOutput.ReadToEnd();
-        string errorString = gsProcess.StandardError.ReadToEnd();
+
+        //TODO: Check if standard output is necessary (either w/ archive or by test running the program)
+        log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
+        log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
+
         gsProcess.WaitForExit();
         gsProcess.Close();
+
+        deleteOriginalFileFromOutputDirectory(fileinfo);
     }
 }
 
