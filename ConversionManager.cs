@@ -100,45 +100,43 @@ public class ConversionManager
         Logger logger = Logger.Instance;
 
         logger.SetUpRunTimeLogMessage("No converters found for this path", true, pronom: "");
-
-        bool allIsConverted()
+    }
+    bool allIsConverted()
+    {
+        foreach (FileInfo file in Files)
         {
-            foreach (FileInfo file in Files)
+            if (!file.IsConverted)
             {
-                if (!file.IsConverted)
+                return false;
+            }
+        }
+        return true;
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    public void ConvertFiles()
+    {
+        List<FileInfo> WorkingSet = Files;
+        do
+        {
+            List<FileInfo> modWorkingSet = WorkingSet;
+
+            // iText7
+            foreach (FileInfo file in modWorkingSet)
+            {
+                //TODO: Get supported input/ouput pronoms from Conversion tool
+            }
+
+            // Remove all files that are converted from WorkingSet
+            foreach (FileInfo file in WorkingSet)
+            {
+                if (file.IsConverted)
                 {
-                    return false;
+                    WorkingSet.Remove(file);
                 }
             }
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void ConvertFiles()
-        {
-            List<FileInfo> WorkingSet = Files;
-            do
-            {
-                List<FileInfo> modWorkingSet = WorkingSet;
-
-                // iText7
-                foreach (FileInfo file in modWorkingSet)
-                {
-                    //TODO: Get supported input/ouput pronoms from Conversion tool
-                }
-
-                // Remove all files that are converted from WorkingSet
-                foreach (FileInfo file in WorkingSet)
-                {
-                    if (file.IsConverted)
-                    {
-                        WorkingSet.Remove(file);
-                    }
-                }
-            } while (!allIsConverted());
-        }
+        } while (!allIsConverted());
     }
 }
 /*

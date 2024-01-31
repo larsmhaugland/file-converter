@@ -55,14 +55,7 @@ class Program
             foreach (FileInfo fileInfo in fileManager.Files)
             {
                 Debug.WriteLine(fileInfo.OriginalPronom);
-				foreach (var setting in fileManager.FileSettings)
-				{
-					
-					if (setting.Key == fileInfo.OriginalPronom)
-					{
-                        cm.ConvertFiles(fileInfo, fileInfo.OriginalPronom, setting.Value.DefaultType);
-                    }
-				}
+                cm.ConvertFiles();
             }
 			Siegfried sf = Siegfried.Instance;
 			sf.CompressFolders();
