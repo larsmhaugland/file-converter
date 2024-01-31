@@ -2,6 +2,26 @@
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Collections.Generic;
+using Org.BouncyCastle.Bcpg.OpenPgp;
+
+class FileToConvert
+{
+    public string FilePath { get; set; }            //From FileInfo
+    public string CurrentPronom { get; set; }       //From FileInfo
+    public string TargetPronom { get; set; }        //From Dictionary
+    public List<string> Converters { get; set; }    //From Dictionary
+    public bool IsConverted { get; set; }           //From FileInfo
+
+    public FileToConvert(FileInfo file)
+    {
+        FilePath = file.FilePath;
+        CurrentPronom = file.OriginalPronom;
+        IsConverted = false;
+        TargetPronom = "test";
+        Converters = new List<string>();
+    }
+
+}
 
 public class ConversionManager
 {
@@ -62,6 +82,7 @@ public class ConversionManager
         "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
         "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
     ];
+
     /// <summary>
     /// initializes the map for how to reach each format
     /// </summary>
@@ -83,24 +104,7 @@ public class ConversionManager
     {
         initMap();
     }
-
-    void discoverFiles()
-    {
-
-    }
-    /// <summary>
-    /// Sends files to the correct converter
-    /// </summary>
-    /// <param name="fileInfo"> info about the file </param>
-    /// <param name="pronomFrom"> pronom before converting </param>
-    /// <param name="pronomTo"> pronom the file wants to be converted to </param>
-	public void ConvertFiles(FileInfo fileInfo, string pronomFrom, string pronomTo)
-    {
-        //Converter converter = new Converter();
-        Logger logger = Logger.Instance;
-
-        logger.SetUpRunTimeLogMessage("No converters found for this path", true, pronom: "");
-    }
+    
     bool allIsConverted()
     {
         foreach (FileInfo file in Files)
@@ -112,6 +116,7 @@ public class ConversionManager
         }
         return true;
     }
+
     /// <summary>
     /// 
     /// </summary>
@@ -139,6 +144,9 @@ public class ConversionManager
         } while (!allIsConverted());
     }
 }
+
+
+
 /*
 	public void ConvertFiles_Old(FileInfo fileinfo, string pronom)
 	{
