@@ -97,7 +97,7 @@ public class iText7 : Converter
                 break;
             //Logger error-message
             default:
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, fileinfo);
+                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename : fileinfo);
                 break;
         }
     }

@@ -1,4 +1,5 @@
-﻿using SharpCompress.Archives;
+﻿using Org.BouncyCastle.Asn1.X509.SigI;
+using SharpCompress.Archives;
 using SharpCompress.Common;
 using System.Diagnostics;
 using System.Text.Json;
@@ -96,7 +97,7 @@ public class Siegfried
     /// </summary>
     /// <param name="path">Path to file</param>
     /// <returns>Pronom id or null</returns>
-    public SiegfriedFile IdentifyFile(string path)
+    public SiegfriedFile? IdentifyFile(string path)
     {
         // Wrap the file path in quotes
         string wrappedPath = "\"" + path + "\"";
@@ -133,9 +134,9 @@ public class Siegfried
             Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
         }
         var parsedData = ParseJSONOutput(output, false);
-        if (parsedData == null)
-            return null; //TODO: Check error and possibly continue
-                            //Return pronom id
+        if (parsedData == null || parsedData.files == null)
+            return null; 
+             
         if (parsedData.files.Length > 0)
         {
             return parsedData.files[0];
@@ -152,7 +153,7 @@ public class Siegfried
     /// </summary>
     /// <param name="inputFolder">Path to root folder for files to be identified</param>
     /// <returns>List of all identified files or null</returns>
-    public List<FileInfo> IdentifyFilesJSON(string inputFolder)
+    public List<FileInfo>? IdentifyFilesJSON(string inputFolder)
     {
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
@@ -226,7 +227,7 @@ public class Siegfried
         return files;
     }
 
-    SiegfriedJSON ParseJSONOutput(string json, bool file)
+    SiegfriedJSON? ParseJSONOutput(string json, bool file)
     {
 
         try
@@ -252,7 +253,15 @@ public class Siegfried
             }
             else
             {
-                return JsonSerializer.Deserialize<SiegfriedJSON>(json);
+                var siegfriedJSON = JsonSerializer.Deserialize<SiegfriedJSON>(json);
+                if(siegfriedJSON != null)
+                {
+                    return siegfriedJSON;
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
         catch (Exception e)

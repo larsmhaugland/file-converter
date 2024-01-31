@@ -36,16 +36,16 @@ class Program
 			return;
 
 		Directory.SetCurrentDirectory("../../../");
-		ConversionManager cm = new ConversionManager();
-
+		
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
 		Stopwatch stopwatch = new Stopwatch();
 		stopwatch.Start();
 		fileManager.IdentifyFiles();
-		stopwatch.Stop();
-		Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+        stopwatch.Stop();
+        ConversionManager cm = new ConversionManager();
+        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
 		fileManager.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		
@@ -54,10 +54,6 @@ class Program
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
             logger.SetUpDocumentation(fileManager.Files);
             cm.ConvertFiles();
-            foreach (FileInfo fileInfo in fileManager.Files)
-            {
-                Debug.WriteLine(fileInfo.OriginalPronom);
-            }
 			Siegfried sf = Siegfried.Instance;
 			sf.CompressFolders();
         }
