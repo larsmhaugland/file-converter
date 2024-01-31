@@ -5,13 +5,7 @@ using System.Collections.Generic;
 
 public class ConversionManager
 {
-    enum converters
-    {
-        IText7
-    }
-    Dictionary<KeyValuePair<string, string>,converters> supportedConversions = new Dictionary<KeyValuePair<string, string>, converters>();
 	List<FileInfo> Files;
-    //TODO: ConversionMap
     Dictionary<KeyValuePair<string,string>,List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
     List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
@@ -69,48 +63,6 @@ public class ConversionManager
         "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
     ];
     /// <summary>
-    /// 
-    /// </summary>
-    private void initSupportedConversions()
-    {
-        // ITex7
-        foreach(string pronom in ImagePronoms)
-        {
-            // PDF 1.0
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/14"), converters.IText7);
-            // PDF 1.1
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/15"), converters.IText7);
-            // PDF 1.2
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/16"), converters.IText7);
-            // PDF 1.3
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/17"), converters.IText7);
-            // PDF 1.4
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/18"), converters.IText7);
-            // PDF 1.5
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/19"), converters.IText7);
-            // PDF 1.6
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/20"), converters.IText7);
-            // PDF 1.7
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/276"), converters.IText7);
-            // PDF/A 1a
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/95"), converters.IText7);
-            // PDF/A 1b
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/354"), converters.IText7);
-            // PDF/A 2a
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/476"), converters.IText7);
-            // PDF/A 2b
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/477"), converters.IText7);
-            // PDF/A 2u
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/478"), converters.IText7);
-            // PDF/A 3a
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/479"), converters.IText7);
-            // PDF/A 3b
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/480"), converters.IText7);
-            // PDF 2.0
-            supportedConversions.Add(new KeyValuePair<string, string>(pronom, "fmt/1129"), converters.IText7); 
-        }
-    }
-    /// <summary>
     /// initializes the map for how to reach each format
     /// </summary>
     private void initMap()
@@ -129,7 +81,6 @@ public class ConversionManager
     }
 	public ConversionManager()
 	{
-        initSupportedConversions();
         initMap();
     }
 
@@ -147,9 +98,10 @@ public class ConversionManager
     {
         //Converter converter = new Converter();
         Logger logger = Logger.Instance;
-        KeyValuePair<string, string> key = new KeyValuePair<string, string>(pronomFrom, pronomTo);
-        foreach (var converter in supportedConversions)
-        {
+        
+        logger.SetUpRunTimeLogMessage("No converters found for this path", true, pronom: ""); 
+
+            /*
             if (key.Key == converter.Key.Key && key.Value == converter.Key.Value)
             {
                 switch (converter.Value)
@@ -158,10 +110,11 @@ public class ConversionManager
                         iText7 itext7 = new iText7();
                         itext7.ConvertFile(fileInfo);
                         break;
-                    default: logger.SetUpRunTimeLogMessage("No converters found for this path", true, filetype: key.Key); break;
+                    default: logger.SetUpRunTimeLogMessage("No converters found for this path", true, pronom: key.Key); break;
                 }
             }
-        }
+            */
+        
     }
         /*
         switch (key)

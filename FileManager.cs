@@ -12,15 +12,15 @@ public class FileManager
 {
     private static FileManager? instance;
     private static readonly object lockObject = new object();
-    public Dictionary<string, SettingsData> FileSettings;
-    public Dictionary<string, SettingsData> FolderOverride;
+    public Dictionary<string, string> FileSettings;
+    public Dictionary<string, KeyValuePair<string,string>> FolderOverride;
 	public List<FileInfo> Files;	// List of files to be converted
 
     private FileManager()
     {
         Files = new List<FileInfo>();
-        FileSettings = new Dictionary<string, SettingsData>();
-        FolderOverride = new Dictionary<string, SettingsData>(); 
+        FileSettings = new Dictionary<string, string>();
+        FolderOverride = new Dictionary<string, KeyValuePair<string,string>>(); 
     }
     public static FileManager Instance
     {
@@ -52,8 +52,8 @@ public class FileManager
 
     public class SettingsData
     {
-        public string ConvertFrom { get; set; }
-        public string? ConvertTo { get; set; }
+        public List<string>? PronomsList { get; set; }
+        public string ConvertTo { get; set; }
         public string DefaultType { get; set; }
     }
     public void DocumentFiles()
@@ -67,43 +67,54 @@ public class FileManager
         Logger logger = Logger.Instance;
         try
         {
-
-
             // Load the XML document from a file
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(pathToSettings);
-            // Uncomment the line below to simulate an error
-            //xmlDoc.Load("nonexistent_file.xml");
 
             // Access elements and attributes
-            XmlNode requesterNode = xmlDoc.SelectSingleNode("/root/Requester");
-            string requester = requesterNode?.InnerText;
-            Logger.JsonRoot.requester = requester;
-
-            XmlNode converterNode = xmlDoc.SelectSingleNode("/root/Converter");
-            string converter = converterNode?.InnerText;
-            Logger.JsonRoot.converter = converter;
-
-            // Access elements and attributes
-            XmlNodeList fileTypeNodes = xmlDoc.SelectNodes("/root/FileTypes");
+            XmlNode classNode = xmlDoc.SelectSingleNode("FileClass");
+            string className = classNode?.SelectSingleNode("ClassName")?.InnerText;
+            string defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
+            XmlNodeList fileTypeNodes = classNode.SelectNodes("FileTypes");
             if (fileTypeNodes != null)
             {
                 foreach (XmlNode fileTypeNode in fileTypeNodes)
                 {
                     string extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
+                    string pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
+                    string innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
+                    if (!String.IsNullOrEmpty(innerDefault))
+                    {
+                        defaultType = innerDefault;
+                    }
+
+                    // Remove whitespace and split pronoms string by commas into a list of strings
+                    List<string> pronomsList = new List<string>();
+                    if (!string.IsNullOrEmpty(pronoms))
+                    {
+                        pronomsList.AddRange(pronoms.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                     .Select(pronom => pronom.Trim()));
+                    }
                     SettingsData settings = new SettingsData
                     {
-                        ConvertFrom = fileTypeNode.SelectSingleNode("ConvertFrom")?.InnerText,
-                        ConvertTo = fileTypeNode.SelectSingleNode("ConvertTo")?.InnerText,
-                        DefaultType = fileTypeNode.SelectSingleNode("Default")?.InnerText
+                        PronomsList = pronomsList,
+                        DefaultType = defaultType
                     };
-                    if (!String.IsNullOrEmpty(settings.ConvertFrom)) {
-                        FileSettings[settings.ConvertFrom] = settings;
-                        logger.SetUpRunTimeLogMessage("No convertTo sepcified at " + settings.ConvertFrom,true);
-                    }
-                    
+                    if (settings.PronomsList.Count > 0)
+                    {
+                        foreach (string pronom in settings.PronomsList)
+                        {
+                            FileSettings[pronom] = defaultType;
+                        }
+                    }                       
+                    else
+                    {
+                        logger.SetUpRunTimeLogMessage("Could not find any pronoms to convert to " + extension, true);
+                    }  
                 }
             }
+            // ============ DO NOT DELETE ===============
+            /*
             XmlNodeList folderOverrideNodes = xmlDoc.SelectNodes("/root/FolderOverride");
             if(folderOverrideNodes != null)
             {
@@ -140,7 +151,7 @@ public class FileManager
                         FolderOverride[folderPath] = settings;
                     }
                 }
-            }
+            }*/
         }
         catch (Exception ex)
         {

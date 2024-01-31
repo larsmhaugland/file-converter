@@ -110,15 +110,15 @@ public class Logger
     /// </summary>
 	/// <param name="message"> the message to be sent </param>
     /// <param name="error"> true if it is an error </param>
-    /// <param name="format"> Optional: the fileformat </param>
-    /// <param name="filetype"> Optional: the filetype </param>
+    /// <param name="pronom"> Optional: the pronom of the file </param>
+    /// <param name="mime"> Optional: mime of the file </param>
     /// <param name="filename"> Optional: the filename </param>
     /// <returns> returns the message in the correct format </returns>
-    public void SetUpRunTimeLogMessage(string message, bool error, string format = "N/A", string filetype = "N/A", string filename = "N/A")
+    public void SetUpRunTimeLogMessage(string message, bool error, string pronom = "N/A", string mime = "N/A", string filename = "N/A")
     {
 		string errorM = "Message: ";
 		if (error) { errorM = "Error: "; }
-        string formattedMessage =  errorM + " | " + format + " | " + filetype + " | " + filename + " | " + message+"\n";
+        string formattedMessage =  errorM + " | " + pronom + " | " + mime + " | " + filename + " | " + message+"\n";
 		WriteLog(formattedMessage, logPath);
     }
 

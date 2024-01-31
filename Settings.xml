@@ -2,30 +2,29 @@
 <root>
     <Requester>Lars</Requester>  
     <Converter>Lars</Converter>
-	<FileTypes>
-		<Filename>png</Filename>
-		<ConvertFrom>fmt/11</ConvertFrom>
-		<!-- 
-			Supported formats:
-			jpg: fmt/11 fmt/12 fmt/13 fmt/935
+	<!-- 
+			Iamges supported formats:
+			png: fmt/11 fmt/12 fmt/13 fmt/935
+			jpg: fmt/41 fmt/42 fmt/43 fmt/44 x-fmt/398 x-fmt/390 x-fmt/391 fmt/645 fmt/1507 fmt/112 fmt/367
 			pdf/a: fmt/95 fmt/354 fmt/476 fmt/477 fmt/478 fmt/479 fmt/480 fmt/481 fmt/1910 fmt/1911 fmt/1912
 		    gif: fmt/3 fmt/4
 			tif: fmt/152 fmt/367 fmt/1917 x-fmt/399 x-fmt/388 x-fmt/387 fmt/155 fmt/353 fmt/154 fmt/153 fmt/156
 			bmp: x-fmt/270 fmt/115 fmt/118 fmt/119 fmt/114 fmt/116 fmt/117
 			-->
-		<!-- Type here to change from the default format to be converted to-->
-		<ConvertTo></ConvertTo> 
-		<!-- if ConvertTo is empty then the default is applied-->
-		<Default> fmt/41 </Default>
-	</FileTypes>
-	<FileTypes>
-        <Filename>jpg</Filename>
-		<ConvertFrom>fmt/44</ConvertFrom>
-        <ConvertTo></ConvertTo>
-        <!-- Type here to change the default format to be converted to-->
-        <Options> png, pdf, gif, tif, bmp </Options>
-        <Default> pdf </Default>
-    </FileTypes>
+	<FileClass>
+		<ClassName>images</ClassName>
+		<Default>fmt/14</Default> <!-- Must be filled -->
+		<FileTypes>
+			<Filename>png</Filename>
+			<Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>jpg</Filename>
+			<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
 	<FolderOverride>
 		<FolderPath>/apekatter</FolderPath> <!-- Path after input folder example: /documents -->
 		<ConvertFrom>fmt/11</ConvertFrom>
