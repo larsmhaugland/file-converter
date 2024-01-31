@@ -36,7 +36,7 @@ public class ConversionManager
         "x-fmt/44", "fmt/523", "fmt/1827", "fmt/412",
         "fmt/754", "x-fmt/393", "x-fmt/394", "fmt/892",
         "fmt/494"
-        ];
+    ];
     List<string> ImagePronoms = [
         "fmt/3", "fmt/4", "fmt/11", "fmt/12",
         "fmt/13", "fmt/935", "fmt/41", "fmt/42",
