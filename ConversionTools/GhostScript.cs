@@ -30,7 +30,7 @@ public class Ghostscript : Converter
     /// </summary>
     /// <param name="fileinfo">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-    public override void ConvertFile(FileInfo fileinfo, string pronom)
+    public override void ConvertFile(string fileinfo, string pronom)
     {
         string outputDirectory = GlobalVariables.parsedOptions.Output;
         string outputFileName;
@@ -46,7 +46,7 @@ public class Ghostscript : Converter
             case "fmt/12":
             case "fmt/13":
             case "fmt/935":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FileName) + ".png";
+                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".png";
                 sDevice = "png16m";
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                 break;
@@ -64,7 +64,7 @@ public class Ghostscript : Converter
             case "fmt/1507":
             case "fmt/112":
             case "fmt/367":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FileName) + ".jpg";
+                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".jpg";
                 sDevice = "jpeg";
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                  break;
@@ -80,7 +80,7 @@ public class Ghostscript : Converter
             case "fmt/154":
             case "fmt/153":
             case "fmt/156":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FileName) + ".tif";
+                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".tif";
                 sDevice = "tiff24nc";
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                 break;
@@ -94,7 +94,7 @@ public class Ghostscript : Converter
             case "fmt/114":
             case "fmt/116":
             case "fmt/117":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FileName) + ".bmp";
+                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".bmp";
                 sDevice = "bmp16m";
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                 break;
@@ -142,13 +142,13 @@ public class Ghostscript : Converter
             case "fmt/491":
             case "fmt/1129":
             case "fmt/1451":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FileName) + ".pdf";
+                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".pdf";
                 sDevice = "pdfwrite";
                 convert(fileinfo, outputDirectory, outputFileName, sDevice);
                 break;
             #endregion
             default:
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
+                log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo);
                 break;
         }
     }
@@ -160,9 +160,9 @@ public class Ghostscript : Converter
     /// <param name="output">The specified output directory</param>
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
-    void convert(FileInfo fileinfo, string output, string outputFileName, string sDevice)
+    void convert(string fileinfo, string output, string outputFileName, string sDevice)
     {
-        string input = fileinfo.FilePath;
+        string input = fileinfo;
         string outputFilePath = Path.Combine(output, outputFileName);
         Logger log = Logger.Instance;
 
@@ -176,8 +176,8 @@ public class Ghostscript : Converter
         gsProcess.Start();
 
         //TODO: Check if standard output is necessary (either w/ archive or by test running the program)
-        log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
-        log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo.OriginalPronom, fileinfo.OriginalMime, fileinfo.FileName);
+        log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo);
+        log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo);
 
         gsProcess.WaitForExit();
         gsProcess.Close();

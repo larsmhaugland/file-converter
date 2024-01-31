@@ -17,7 +17,7 @@ public class Converter
 
     public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
 	{
-		return null;
+		return new Dictionary<string, List<string>>();
 	}
 
     /// <summary>
@@ -25,7 +25,7 @@ public class Converter
     /// </summary>
     /// <param name="fileinfo">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-    public virtual void ConvertFile(FileInfo fileinfo, string pronom)
+    public virtual void ConvertFile(string fileinfo, string pronom)
 	{ }
 	
 	/// <summary>
@@ -33,16 +33,16 @@ public class Converter
 	/// </summary>
 	/// <param name="files">Array of files that should be combined</param>
 	/// <param name="pronom">The file format to convert to</param>
-	public virtual void CombineFiles(FileInfo []files, string pronom)
+	public virtual void CombineFiles(string []files, string pronom)
 	{ }
 
 	/// <summary>
 	/// Delete an original file, that has been converted, from the output directory
 	/// </summary>
 	/// <param name="fileInfo">The specific file to be deleted</param>
-	public virtual void deleteOriginalFileFromOutputDirectory(FileInfo fileInfo) {
+	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo) {
 		string outputDirectory = GlobalVariables.parsedOptions.Output;
-		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo.FileName));
+		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo));
 		if (File.Exists(fileToDelete))
 		{
             File.Delete(fileToDelete);

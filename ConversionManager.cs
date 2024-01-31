@@ -11,6 +11,7 @@ class FileToConvert
     public string TargetPronom { get; set; }        //From Dictionary
     public List<string> Route { get; set; }    //From Dictionary
     public bool IsConverted { get; set; }           //From FileInfo
+    public bool IsModified { get; set; }            
 
     public FileToConvert(FileInfo file)
     {
@@ -26,6 +27,7 @@ public class ConversionManager
 {
     List<FileInfo> Files;
     Dictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
+    List<Converter> Converters;
     List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
         "x-fmt/275", "x-fmt/276", "fmt/1688", "fmt/37",
@@ -113,6 +115,8 @@ public class ConversionManager
     public ConversionManager()
     {
         initMap();
+        Converters = new List<Converter>();
+        Files = FileManager.Instance.Files;
     }
     
     bool allIsConverted()
@@ -150,19 +154,61 @@ public class ConversionManager
             List<FileToConvert> modWorkingSet = WorkingSet;
 
             // iText7
+            var iText7 = new iText7();
+            var iText7SupportedInput = iText7.listOfSupportedConversions();
             foreach (FileToConvert file in modWorkingSet)
             {
+                if (iText7SupportedInput.ContainsKey(file.CurrentPronom))
+                {
+                    foreach (string output in iText7SupportedInput[file.CurrentPronom])
+                    {
+                        if(file.Route.First() == output)
+                        {
+                            //iText7.ConvertFile();
+                            file.IsModified = true; //File has been worked on
+                        }
+                    }
+                }
                 //TODO: Get supported input/ouput pronoms from Conversion tool
             }
-
+            
+            foreach (FileToConvert file in WorkingSet)
+            {
+                foreach(Converter converter in Converters)
+                {
+                    if(converter.listOfSupportedConversions().ContainsKey(file.CurrentPronom))
+                    {
+                        foreach (string outputFormat in converter.listOfSupportedConversions()[file.CurrentPronom])
+                        {
+                            if (file.Route.First() == outputFormat)
+                            {
+                                //converter.ConvertFile(file.Filename, outputFormat);
+                                file.IsModified = true; //File has been worked on TODO: We don't need this if this solution works
+                                file.Route.Remove(file.Route.First());
+                            }
+                        }
+                    }
+                }
+                if(file.Route.Count == 0)
+                {
+                    WorkingSet.Remove(file);
+                    //TODO: Confirm that file is converted
+                    //TODO: Delete original file
+                }
+            }
+            //TODO: Remove this if it works:
+            /*  
             // Remove all files that are converted from WorkingSet
             foreach (FileToConvert file in WorkingSet)
             {
-                if (file.IsConverted)
+                if (file.IsConverted || !file.IsModified)
                 {
                     WorkingSet.Remove(file);
+                } else if (file.IsModified)
+                {
+                    file.IsModified = false;
                 }
-            }
+            }*/
         } while (!allIsConverted());
     }
 }
