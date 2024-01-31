@@ -144,6 +144,7 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo.FileName));
                 document.Add(image);
             }
+        deleteOriginalFileFromOutputDirectory(fileinfo);
     }
 
     /// <summary>
@@ -250,6 +251,9 @@ public class iText7 : Converter
                 document.Add(image);
             }
         }
+        foreach (FileInfo file in files) { 
+            deleteOriginalFileFromOutputDirectory(file);
+        }
     }
 
     /// <summary>
@@ -276,6 +280,11 @@ public class iText7 : Converter
                 document.Add(image);
             }
         }
+        foreach (FileInfo file in files)
+        {
+            deleteOriginalFileFromOutputDirectory(file);
+        }
     }
+
 
 }

@@ -29,13 +29,6 @@ public class Converter
 	{ }
 
 	/// <summary>
-	/// Update the fileinfo object with new information after conversion
-	/// </summary>
-	/// <param name="fileinfo">The file that gets updated information</param>
-	public virtual void UpdateFileInfo(FileInfo fileinfo) {
-	}
-
-	/// <summary>
 	/// Delete an original file, that has been converted, from the output directory
 	/// </summary>
 	/// <param name="fileInfo">The specific file to be deleted</param>
