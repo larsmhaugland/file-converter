@@ -53,10 +53,10 @@ class Program
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
             logger.SetUpDocumentation(fileManager.Files);
+            cm.ConvertFiles();
             foreach (FileInfo fileInfo in fileManager.Files)
             {
                 Debug.WriteLine(fileInfo.OriginalPronom);
-                cm.ConvertFiles();
             }
 			Siegfried sf = Siegfried.Instance;
 			sf.CompressFolders();

@@ -41,6 +41,7 @@ public class FileInfo
 	public string NewChecksum { get; set; }             // New Checksum
 
 	[JsonPropertyName("")]
+	//TODO: This should be a list of conversion tools used
 	public List<string> ConversionTools { get; set; }   // List of conversion tools used
 
 	[JsonPropertyName("")]
@@ -103,6 +104,35 @@ public class FileInfo
 				break;
 		}
 	}
+
+	public bool CheckIfConverted()
+	{
+        //Get new pronom
+        var newInfo = Siegfried.Instance.IdentifyFile(FileName);
+        if (newInfo != null && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
+        {
+            NewPronom = newInfo.matches[0].id;
+            NewFormatName = newInfo.matches[0].format;
+            NewMime = newInfo.matches[0].mime;
+            NewSize = newInfo.filesize;
+
+            //Get checksum
+            switch (HashingAlgorithm)
+            {
+                case HashAlgorithms.MD5:
+                    NewChecksum = CalculateFileChecksum(MD5.Create());
+                    break;
+                default:
+                    NewChecksum = CalculateFileChecksum(SHA256.Create());
+                    break;
+            }
+			IsConverted = true;
+			return true;
+        }
+		return false;
+    }
+
+
 	/// <summary>
 	/// 
 	/// </summary>

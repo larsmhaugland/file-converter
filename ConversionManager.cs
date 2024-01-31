@@ -9,15 +9,13 @@ class FileToConvert
     public string FilePath { get; set; }            //From FileInfo
     public string CurrentPronom { get; set; }       //From FileInfo
     public string TargetPronom { get; set; }        //From Dictionary
-    public List<string> Route { get; set; }    //From Dictionary
-    public bool IsConverted { get; set; }           //From FileInfo
+    public List<string> Route { get; set; }         //From Dictionary
     public bool IsModified { get; set; }            
 
     public FileToConvert(FileInfo file)
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
-        IsConverted = false;
         TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
         Route = new List<string>();
     }
@@ -116,14 +114,27 @@ public class ConversionManager
     {
         initMap();
         Converters = new List<Converter>();
+        Converters.Add(new iText7());
         Files = FileManager.Instance.Files;
     }
     
-    bool allIsConverted()
+    void checkConversion()
     {
+        var sf = Siegfried.Instance;
+        bool allConverted = true;
         foreach (FileInfo file in Files)
         {
-            if (!file.IsConverted)
+            file.CheckIfConverted();
+            allConverted = allConverted && file.IsConverted;
+        }
+        Console.WriteLine("All files converted: " + allConverted);
+    }
+
+    bool allIsConverted(List<FileToConvert> files)
+    {
+        foreach (FileToConvert file in files)
+        {
+            if (file.CurrentPronom != file.TargetPronom)
             {
                 return false;
             }
@@ -151,8 +162,8 @@ public class ConversionManager
 
         do
         {
-            List<FileToConvert> modWorkingSet = WorkingSet;
-
+            /*
+             * List<FileToConvert> modWorkingSet = WorkingSet;
             // iText7
             var iText7 = new iText7();
             var iText7SupportedInput = iText7.listOfSupportedConversions();
@@ -170,8 +181,8 @@ public class ConversionManager
                     }
                 }
                 //TODO: Get supported input/ouput pronoms from Conversion tool
-            }
-            
+            }*/
+
             foreach (FileToConvert file in WorkingSet)
             {
                 foreach(Converter converter in Converters)
@@ -182,10 +193,14 @@ public class ConversionManager
                         {
                             if (file.Route.First() == outputFormat)
                             {
-                                //converter.ConvertFile(file.Filename, outputFormat);
+                                converter.ConvertFile(file.FilePath, outputFormat);
                                 file.IsModified = true; //File has been worked on TODO: We don't need this if this solution works
                                 file.Route.Remove(file.Route.First());
                             }
+                        }
+                        if(file.Route.Count == 0)
+                        {
+                            break;
                         }
                     }
                 }
@@ -196,20 +211,8 @@ public class ConversionManager
                     //TODO: Delete original file
                 }
             }
-            //TODO: Remove this if it works:
-            /*  
-            // Remove all files that are converted from WorkingSet
-            foreach (FileToConvert file in WorkingSet)
-            {
-                if (file.IsConverted || !file.IsModified)
-                {
-                    WorkingSet.Remove(file);
-                } else if (file.IsModified)
-                {
-                    file.IsModified = false;
-                }
-            }*/
-        } while (!allIsConverted());
+        } while (!allIsConverted(WorkingSet));
+        checkConversion();
     }
 }
 
