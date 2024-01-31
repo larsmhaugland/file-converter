@@ -109,20 +109,26 @@ public class iText7 : Converter
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
     void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion) {
 
-        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileinfo);
-        string output = Path.Combine(GlobalVariables.parsedOptions.Output, fileNameWithoutExtension + ".pdf");
-
-        using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-        using (var pdfDocument = new PdfDocument(pdfWriter))
-        using (var document = new Document(pdfDocument))
+        string filePathWithoutExtension = Path.Combine(Path.GetDirectoryName(fileinfo), Path.GetFileNameWithoutExtension(fileinfo));
+        string output = Path.Combine(filePathWithoutExtension + ".pdf");
+        try
         {
-            pdfDocument.SetTagged();
-            PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-            iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
-            document.Add(image);
+            using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+            using (var pdfDocument = new PdfDocument(pdfWriter))
+            using (var document = new Document(pdfDocument))
+            {
+                pdfDocument.SetTagged();
+                PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+                iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
+                document.Add(image);
+            }
+            //TODO: Check if file is converted correctly, only delete file if yes
+            deleteOriginalFileFromOutputDirectory(fileinfo);
         }
-        //TODO: Check if file is converted correctly, only delete file if yes
-        deleteOriginalFileFromOutputDirectory(fileinfo);
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted.", true, filename: fileinfo);
+        }
     }
 
     /// <summary>
