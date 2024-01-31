@@ -62,11 +62,21 @@ public class FileManager
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(pathToSettings);
 
+            
+            // Access the root element
+            XmlNode root = xmlDoc.SelectSingleNode("/root");
+
+            // Access the Requester and Converter elements
+            XmlNode requesterNode = root.SelectSingleNode("Requester");
+            XmlNode converterNode = root.SelectSingleNode("Converter");
+
+            Logger.JsonRoot.requester = requesterNode.InnerText;
+            Logger.JsonRoot.converter = converterNode.InnerText;
             // Access elements and attributes
-            XmlNode classNode = xmlDoc.SelectSingleNode("FileClass");
+            XmlNode classNode = root.SelectSingleNode("FileClass");
             string className = classNode?.SelectSingleNode("ClassName")?.InnerText;
             string defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
-            XmlNodeList fileTypeNodes = classNode?.SelectNodes("FileTypes");
+            XmlNodeList fileTypeNodes = classNode.SelectNodes("FileTypes");
             if (fileTypeNodes != null)
             {
                 foreach (XmlNode fileTypeNode in fileTypeNodes)

@@ -41,7 +41,7 @@ public class ConversionManager
         "x-fmt/44", "fmt/523", "fmt/1827", "fmt/412",
         "fmt/754", "x-fmt/393", "x-fmt/394", "fmt/892",
         "fmt/494"
-        ];
+    ];
     List<string> ImagePronoms = [
         "fmt/3", "fmt/4", "fmt/11", "fmt/12",
         "fmt/13", "fmt/935", "fmt/41", "fmt/42",
@@ -88,7 +88,18 @@ public class ConversionManager
         "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
         "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
     ];
-
+    List<string> RichTextPronoms = [
+            "fmt/969", "fmt/45", "fmt/50", "fmt/52",
+            "fmt/53", "fmt/355"
+    ];
+    List<string> EmailPronoms = [
+            "x-fmt/248", "x-fmt/249", "x-fmt/430", "fmt/1144",
+            "fmt/278", "fmt/950"
+    ];
+    List<string> CompressedFolderPronoms = [
+            "x-fmt/263", "x-fmt/265", "fmt/484", "fmt/266",
+            "x-fmt/264", "fmt/411", "fmt/613"
+    ];
     /// <summary>
     /// initializes the map for how to reach each format
     /// </summary>
@@ -100,7 +111,7 @@ public class ConversionManager
             {
                 if (pronom != otherpronom)
                 {
-                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/147", otherpronom]); // word to pdf other word
+                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/276", otherpronom]); // word to pdf 1.7 other word
                 }
             }
         }
