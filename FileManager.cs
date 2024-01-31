@@ -5,14 +5,12 @@ public class FileManager
 {
     private static FileManager? instance;
     private static readonly object lockObject = new object();
-    public Dictionary<string, string> FileSettings;
     public Dictionary<string, KeyValuePair<string,string>> FolderOverride;
 	public List<FileInfo> Files;	// List of files to be converted
 
     private FileManager()
     {
         Files = new List<FileInfo>();
-        FileSettings = new Dictionary<string, string>();
         FolderOverride = new Dictionary<string, KeyValuePair<string,string>>(); 
     }
     public static FileManager Instance
@@ -97,7 +95,7 @@ public class FileManager
                     {
                         foreach (string pronom in settings.PronomsList)
                         {
-                            FileSettings[pronom] = defaultType;
+                            GlobalVariables.FileSettings[pronom] = defaultType;
                         }
                     }                       
                     else
