@@ -6,16 +6,16 @@ using System;
 /// </summary>
 public class Converter
 {
-	public string Name { get; set; } // Name of the converter
-	public string Version { get; set; } // Version of the converter
-	public Dictionary<List<string>, List<string>> SupportedConversions { get; set; }
+	public string? Name { get; set; } // Name of the converter
+	public string? Version { get; set; } // Version of the converter
+	public Dictionary<string, List<string>>? SupportedConversions { get; set; }
 
 	public Converter()
 	{ }
 
 
 
-    public virtual Dictionary<List<string>, List<string>> listOfSupportedConversions()
+    public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
 	{
 		return null;
 	}
