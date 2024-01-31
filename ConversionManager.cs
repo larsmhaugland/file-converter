@@ -62,6 +62,7 @@ public class ConversionManager
         "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
         "fmt/295", "fmt/1754", "fmt/292", "fmt/293"
     ];
+
     /// <summary>
     /// initializes the map for how to reach each format
     /// </summary>

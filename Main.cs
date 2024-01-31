@@ -4,6 +4,7 @@ using System.Diagnostics;
 public static class GlobalVariables
 {
     public static Options parsedOptions = null;
+    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
 }
 public class Options
 {
