@@ -48,7 +48,7 @@ public class Logger
 
     private Logger()
 	{
-        string path = "/logs";
+        string path = "./logs";
 
         if (!Directory.Exists(path))
         {

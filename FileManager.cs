@@ -62,28 +62,29 @@ public class FileManager
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(pathToSettings);
 
-            
+            if(xmlDoc.DocumentElement == null){ logger.SetUpRunTimeLogMessage("Could not find settings file", true, filename: pathToSettings); return;}
+
             // Access the root element
             XmlNode root = xmlDoc.SelectSingleNode("/root");
-
+            if(root == null) { logger.SetUpRunTimeLogMessage("Could not find root", true, filename: pathToSettings); return; }
             // Access the Requester and Converter elements
             XmlNode requesterNode = root.SelectSingleNode("Requester");
             XmlNode converterNode = root.SelectSingleNode("Converter");
 
-            Logger.JsonRoot.requester = requesterNode.InnerText;
-            Logger.JsonRoot.converter = converterNode.InnerText;
+            Logger.JsonRoot.requester = requesterNode?.InnerText;
+            Logger.JsonRoot.converter = converterNode?.InnerText;
             // Access elements and attributes
             XmlNode classNode = root.SelectSingleNode("FileClass");
-            string className = classNode?.SelectSingleNode("ClassName")?.InnerText;
-            string defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
+            string className = classNode.SelectSingleNode("ClassName").InnerText;
+            string defaultType = classNode.SelectSingleNode("Default").InnerText;
             XmlNodeList fileTypeNodes = classNode.SelectNodes("FileTypes");
             if (fileTypeNodes != null)
             {
                 foreach (XmlNode fileTypeNode in fileTypeNodes)
                 {
-                    string extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
-                    string pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
-                    string innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
+                    string extension = fileTypeNode.SelectSingleNode("Filename").InnerText;
+                    string pronoms = fileTypeNode.SelectSingleNode("Pronoms").InnerText;
+                    string innerDefault = fileTypeNode.SelectSingleNode("Default").InnerText;
                     if (!String.IsNullOrEmpty(innerDefault))
                     {
                         defaultType = innerDefault;
@@ -101,7 +102,7 @@ public class FileManager
                         PronomsList = pronomsList,
                         DefaultType = defaultType
                     };
-                    if (settings.PronomsList.Count > 0)
+                    if (settings.PronomsList.Count > 0 && !String.IsNullOrEmpty(defaultType))
                     {
                         foreach (string pronom in settings.PronomsList)
                         {
