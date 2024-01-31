@@ -66,7 +66,7 @@ public class FileManager
             XmlNode classNode = xmlDoc.SelectSingleNode("FileClass");
             string className = classNode?.SelectSingleNode("ClassName")?.InnerText;
             string defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
-            XmlNodeList fileTypeNodes = classNode.SelectNodes("FileTypes");
+            XmlNodeList fileTypeNodes = classNode?.SelectNodes("FileTypes");
             if (fileTypeNodes != null)
             {
                 foreach (XmlNode fileTypeNode in fileTypeNodes)
