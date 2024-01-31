@@ -201,11 +201,12 @@ public class ConversionManager
                     {
                         foreach (string outputFormat in converter.listOfSupportedConversions()[file.CurrentPronom])
                         {
-                            if (file.Route.First() == outputFormat)
+                            if (file.Route.Count > 0 && file.Route.First() == outputFormat)
                             {
                                 converter.ConvertFile(file.FilePath, outputFormat);
                                 file.IsModified = true; //File has been worked on TODO: We don't need this if this solution works
                                 file.Route.Remove(file.Route.First());
+                                break;
                             }
                         }
                         if(file.Route.Count == 0)
@@ -214,13 +215,8 @@ public class ConversionManager
                         }
                     }
                 }
-                if(file.Route.Count == 0)
-                {
-                    WorkingSet.Remove(file);
-                    //TODO: Confirm that file is converted
-                    //TODO: Delete original file
-                }
             }
+
         } while (!allIsConverted(WorkingSet));
         checkConversion();
     }

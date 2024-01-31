@@ -229,7 +229,6 @@ public class Siegfried
 
     SiegfriedJSON? ParseJSONOutput(string json, bool file)
     {
-
         try
         {
             if (file)
