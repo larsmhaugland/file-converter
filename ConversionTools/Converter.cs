@@ -17,7 +17,7 @@ public class Converter
 
     public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
 	{
-		return null;
+		return new Dictionary<string, List<string>>();
 	}
 
     /// <summary>
