@@ -40,7 +40,46 @@ public class ConversionManager
 
 	}
 
-	public void ConvertFiles(FileInfo fileinfo, string pronom)
+    bool allIsConverted()
+    {
+        foreach (FileInfo file in Files)
+        {
+            if (!file.IsConverted)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public void ConvertFiles()
+    {
+        List<FileInfo> WorkingSet = Files;
+        do
+        {
+            List<FileInfo> modWorkingSet = WorkingSet;
+
+            // iText7
+            foreach (FileInfo file in modWorkingSet)
+            {
+                //TODO: Get supported input/ouput pronoms from Conversion tool
+            }
+
+            // Remove all files that are converted from WorkingSet
+            foreach (FileInfo file in WorkingSet)
+            {
+                if (file.IsConverted)
+                {
+                    WorkingSet.Remove(file);
+                }
+            }
+        } while (!allIsConverted());
+    }
+
+	public void ConvertFiles_Old(FileInfo fileinfo, string pronom)
 	{
 		Converter converter = new Converter();
 		Logger logger = Logger.Instance;
