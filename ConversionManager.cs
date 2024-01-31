@@ -9,7 +9,7 @@ class FileToConvert
     public string FilePath { get; set; }            //From FileInfo
     public string CurrentPronom { get; set; }       //From FileInfo
     public string TargetPronom { get; set; }        //From Dictionary
-    public List<string> Converters { get; set; }    //From Dictionary
+    public List<string> Route { get; set; }    //From Dictionary
     public bool IsConverted { get; set; }           //From FileInfo
 
     public FileToConvert(FileInfo file)
@@ -17,10 +17,9 @@ class FileToConvert
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
         IsConverted = false;
-        TargetPronom = "test";
-        Converters = new List<string>();
+        TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
+        Route = new List<string>();
     }
-
 }
 
 public class ConversionManager
@@ -133,19 +132,31 @@ public class ConversionManager
     /// </summary>
     public void ConvertFiles()
     {
-        List<FileInfo> WorkingSet = Files;
+        List<FileToConvert> WorkingSet = new List<FileToConvert>();
+        foreach (FileInfo file in Files)
+        {
+            WorkingSet.Add(new FileToConvert(file));
+            var last = WorkingSet.Last();
+            var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
+            last.Route = ConversionMap[key];
+            if(last.Route.Count == 0)
+            {
+                last.Route.Add(last.TargetPronom);
+            }
+        }
+
         do
         {
-            List<FileInfo> modWorkingSet = WorkingSet;
+            List<FileToConvert> modWorkingSet = WorkingSet;
 
             // iText7
-            foreach (FileInfo file in modWorkingSet)
+            foreach (FileToConvert file in modWorkingSet)
             {
                 //TODO: Get supported input/ouput pronoms from Conversion tool
             }
 
             // Remove all files that are converted from WorkingSet
-            foreach (FileInfo file in WorkingSet)
+            foreach (FileToConvert file in WorkingSet)
             {
                 if (file.IsConverted)
                 {

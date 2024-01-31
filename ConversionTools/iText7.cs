@@ -135,7 +135,7 @@ public class iText7 : Converter
         string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileinfo.FileName);
         string output = Path.Combine(GlobalVariables.parsedOptions.Output, fileNameWithoutExtension + ".pdf");
 
-        PdfOutputIntent outputIntent = null;
+        PdfOutputIntent? outputIntent = null;
         using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
             using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
             using (var document = new Document(pdfDocument))
@@ -268,7 +268,7 @@ public class iText7 : Converter
     {
         string output = Path.Combine(outputFolder, outputFileName);
 
-        PdfOutputIntent outputIntent = null;
+        PdfOutputIntent? outputIntent = null;
         using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)))
         using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
         using (var document = new Document(pdfDocument))
@@ -291,11 +291,17 @@ public class iText7 : Converter
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
     /// <returns>List of all conversions</returns>
-    public override Dictionary<List<string>, List<string>> listOfSupportedConversions()
+    public override Dictionary<string, List<string>> listOfSupportedConversions()
     {
-        var supportedConversions = new Dictionary<List<string>, List<string>>();
-        supportedConversions.Add(ImagePronoms, PDFPronoms);
-        supportedConversions.Add(HTMLPronoms, PDFPronoms);
+        var supportedConversions = new Dictionary<string, List<string>>();
+        foreach (string imagePronom in ImagePronoms)
+        {
+            supportedConversions.Add(imagePronom, PDFPronoms);
+        }
+        foreach(string htmlPronom in HTMLPronoms)
+        {
+            supportedConversions.Add(htmlPronom, PDFPronoms);
+        }
 
         return supportedConversions;
     }
