@@ -16,7 +16,14 @@ class FileToConvert
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
-        TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
+        if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
+        {
+            TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
+        }
+        else
+        {
+            TargetPronom = CurrentPronom;
+        }
         Route = new List<string>();
     }
 }
@@ -153,7 +160,10 @@ public class ConversionManager
             WorkingSet.Add(new FileToConvert(file));
             var last = WorkingSet.Last();
             var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
-            last.Route = ConversionMap[key];
+            if (ConversionMap.ContainsKey(key))
+            {
+                last.Route = ConversionMap[key];
+            }
             if(last.Route.Count == 0)
             {
                 last.Route.Add(last.TargetPronom);
