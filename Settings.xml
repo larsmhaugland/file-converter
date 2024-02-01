@@ -2,8 +2,9 @@
 <root>
     <Requester>Lars</Requester>  
     <Converter>Lars</Converter>
+	<ChecksumHashing>md5</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
 	<!-- 
-			Iamges supported formats:
+			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935
 			jpg: fmt/41 fmt/42 fmt/43 fmt/44 x-fmt/398 x-fmt/390 x-fmt/391 fmt/645 fmt/1507 fmt/112 fmt/367
 			pdf/a: fmt/95 fmt/354 fmt/476 fmt/477 fmt/478 fmt/479 fmt/480 fmt/481 fmt/1910 fmt/1911 fmt/1912
