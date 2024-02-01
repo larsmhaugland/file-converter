@@ -183,7 +183,7 @@ public class Siegfried
         string wrappedPath = "\"" + inputFolder + "\"";
         string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
         string outputFolder = "siegfried/JSONoutput/";
-        string dir = outputFolder + inputFolder;
+        string dir = Path.Combine(outputFolder,inputFolder);
         string outputFile = dir + ".json";
         string ?parentDir = Directory.GetParent(outputFile)?.FullName;
         
