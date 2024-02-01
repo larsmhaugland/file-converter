@@ -13,9 +13,11 @@ using System.Reflection;
 using iText.Kernel.Geom;
 using Ghostscript.NET;
 using iText.Layout.Splitting;
+using System.Runtime.Intrinsics.X86;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
+//TODO: 
 
 /// <summary>
 /// GhostScript is a subclass of the Converter class.   <br></br>
@@ -89,7 +91,7 @@ public class GhostscriptConverter : Converter
             case "fmt/154":
             case "fmt/153":
             case "fmt/156":
-                extension = ".tif";
+                extension = ".tiff";
                 sDevice = "tiff24nc";
                 convert(fileinfo, outputFileName, sDevice, extension);
                 break;
@@ -108,6 +110,7 @@ public class GhostscriptConverter : Converter
                 convert(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
+                //Check how to make the pronom correct
             #region pdf
             case "fmt/559":
             case "fmt/560":
@@ -216,7 +219,7 @@ public class GhostscriptConverter : Converter
                 return ImageFormat.Png;
             case ".jpg":
                 return ImageFormat.Jpeg;
-            case ".tif":
+            case ".tiff":
                 return ImageFormat.Tiff;
             case ".bmp":
                 return ImageFormat.Bmp;
@@ -253,12 +256,13 @@ public class GhostscriptConverter : Converter
 
     //TODO: Clean up PRONOM list, not all of these are supported by GhostScript
     List<string> ImagePronoms = [
-    "fmt/3",
-        "fmt/4",
+        //PNG
         "fmt/11",
         "fmt/12",
         "fmt/13",
         "fmt/935",
+
+        //JPG
         "fmt/41",
         "fmt/42",
         "fmt/43",
@@ -269,7 +273,7 @@ public class GhostscriptConverter : Converter
         "fmt/645",
         "fmt/1507",
         "fmt/112",
-        "fmt/367",
+        //TIFF
         "fmt/1917",
         "x-fmt/399",
         "x-fmt/388",
@@ -279,14 +283,15 @@ public class GhostscriptConverter : Converter
         "fmt/154",
         "fmt/153",
         "fmt/156",
+        //BMP
         "x-fmt/270",
         "fmt/115",
         "fmt/118",
         "fmt/119",
         "fmt/114",
         "fmt/116",
-        "fmt/117"
-];
+        "fmt/117",
+    ];
     List<string> HTMLPronoms = [
         "fmt/103",
         "fmt/96",
