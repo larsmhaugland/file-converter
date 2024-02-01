@@ -32,6 +32,10 @@ class Settings
             return instance;
         }
     }
+    /// <summary>
+    /// Reads settings from file
+    /// </summary>
+    /// <param name="pathToSettings"> the path to the settings file from working directory </param>
     public void ReadSettings(string pathToSettings)
     {
         Logger logger = Logger.Instance;
