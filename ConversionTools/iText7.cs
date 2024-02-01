@@ -124,6 +124,7 @@ public class iText7 : Converter
                 document.Add(image);
             }
             //TODO: Check if file is converted correctly, only delete file if yes
+            replaceFileInList(fileinfo, output);
             deleteOriginalFileFromOutputDirectory(fileinfo);
         }
         catch (Exception e)

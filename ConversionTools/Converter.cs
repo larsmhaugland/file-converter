@@ -10,6 +10,7 @@ public class Converter
 	public string? Version { get; set; } // Version of the converter
 	public Dictionary<string, List<string>>? SupportedConversions { get; set; }
 
+	private List<FileInfo> files = new List<FileInfo>( FileManager.Instance.Files);
 	public Converter()
 	{ }
 
@@ -41,12 +42,23 @@ public class Converter
 	/// </summary>
 	/// <param name="fileInfo">The specific file to be deleted</param>
 	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo) {
-		if (File.Exists(fileInfo))
+		string outputDirectory = GlobalVariables.parsedOptions.Output;
+		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo));
+		if (File.Exists(fileToDelete))
 		{
-            File.Delete(fileInfo);
+            File.Delete(fileToDelete);
         }
 	}
-
-	//TODO: Implement base methods
-	//TODO: Try again if files fail to convert
+	public virtual void replaceFileInList(string filepathBefore, string filepathAfter)
+	{
+		foreach (var file in FileManager.Instance.Files) 
+		{
+			if (filepathBefore.Equals(file.FilePath)) 
+			{
+				file.FilePath = filepathAfter;
+			}
+		}
+	}
+    //TODO: Implement base methods
+    //TODO: Try again if files fail to convert
 }

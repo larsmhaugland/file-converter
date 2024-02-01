@@ -58,12 +58,9 @@ public class FileManager
         return Files;
     }
 
-
     public void DocumentFiles()
     {
         Logger logger = Logger.Instance;
         logger.SetUpDocumentation(Files);
-    }
-
-    
+    } 
 }

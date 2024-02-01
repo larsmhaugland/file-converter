@@ -104,7 +104,7 @@ class Settings
                         SettingsData settings = new SettingsData
                         {
                             PronomsList = pronomsList,
-                            DefaultType = defaultType //TODO: Why is defaultType possibly null reference?
+                            DefaultType = defaultType
                         };
                         if (settings.PronomsList.Count > 0 && !String.IsNullOrEmpty(defaultType))
                         {

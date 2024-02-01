@@ -16,6 +16,7 @@ class FileToConvert
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
+
         if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
         {
             TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
@@ -24,6 +25,7 @@ class FileToConvert
         {
             TargetPronom = CurrentPronom;
         }
+
         Route = new List<string>();
     }
 }
@@ -32,6 +34,8 @@ public class ConversionManager
 {
     List<FileInfo> Files;
     Dictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
+    Dictionary<string,FileInfo> FileInfoMap = new Dictionary<string,FileInfo>();
+
     List<Converter> Converters;
     List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
@@ -118,6 +122,13 @@ public class ConversionManager
         }
         // TODO: Add more routes
     }
+    private void initFileMap()
+    {
+        foreach(FileInfo file in Files)
+        {
+            FileInfoMap.Add(file.FilePath, file);
+        }
+    }
 
     /// <summary>
     /// 
@@ -131,6 +142,8 @@ public class ConversionManager
         Converters.Add(new iText7());
         //Get files from FileManager
         Files = FileManager.Instance.GetFiles();
+        //Initialize FileMap
+        initFileMap();
     }
     
     /// <summary>
@@ -198,6 +211,7 @@ public class ConversionManager
                             {
                                 //Convert file using virtual function
                                 converter.ConvertFile(file.FilePath, outputFormat);           //TODO: This should be called in a thread with timeout and potential retry
+                                if (converter.Name != null) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
                                 file.IsModified = true; //File has been worked on               TODO: We maybe don't need this if this solution works
                                 break;
                             }
