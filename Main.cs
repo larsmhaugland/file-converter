@@ -5,6 +5,7 @@ public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
     public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
+	public static HashAlgorithms checksumHash;
 }
 public class Options
 {
@@ -41,12 +42,13 @@ class Program
 
 		FileManager fileManager = FileManager.Instance;
 		Stopwatch stopwatch = new Stopwatch();
+		Settings settings = Settings.Instance;
 		stopwatch.Start();
 		fileManager.IdentifyFiles();
         stopwatch.Stop();
         ConversionManager cm = new ConversionManager();
         Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
-		fileManager.ReadSettings("./Settings.xml");
+		settings.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		
         if (fileManager.Files.Count > 0)
