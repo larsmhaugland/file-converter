@@ -1,0 +1,3 @@
+[submodule "ghostscriptbinarywindows"]
+	path = ghostscriptbinarywindows
+	url = https://git.gvk.idi.ntnu.no/sei/ghostscriptbinarywindows.git

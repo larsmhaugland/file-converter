@@ -6,10 +6,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Ghostscript.NET;
 using Ghostscript.NET.Rasterizer;
 using System.Drawing.Imaging;
 using Org.BouncyCastle.Bcpg;
+using System.Reflection;
+using iText.Kernel.Geom;
+using Ghostscript.NET;
+using iText.Layout.Splitting;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
@@ -38,7 +41,7 @@ public class GhostscriptConverter : Converter
     public override void ConvertFile(string fileinfo, string pronom)
     {
         string outputDirectory = GlobalVariables.parsedOptions.Output;
-        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo);
+        string outputFileName = System.IO.Path.Combine(outputDirectory,System.IO.Path.GetFileNameWithoutExtension(fileinfo));
         string extension;
         string sDevice;
 
@@ -163,58 +166,44 @@ public class GhostscriptConverter : Converter
     /// Convert a file using GhostScript command line
     /// </summary>
     /// <param name="fileinfo">The file to be converted</param>
-    /// <param name="output">The specified output directory</param>
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
-    /* void convert(string fileinfo, string output, string outputFileName, string sDevice)
-     {
-         Logger log = Logger.Instance;
-
-         string gsArguments = "-dNOPAUSE -dBATCH -sDEVICE=" + sDevice + " -sOutputFile=" + outputFileName + " " + fileinfo;
-         Process gsProcess = new Process();
-         gsProcess.StartInfo.FileName = "gswin64c.exe";
-         gsProcess.StartInfo.Arguments = gsArguments;
-         gsProcess.StartInfo.UseShellExecute = false;
-         gsProcess.StartInfo.RedirectStandardOutput = true;
-         gsProcess.StartInfo.RedirectStandardError = true;
-         gsProcess.Start();
-
-         //TODO: Check if standard output is necessary (either w/ archive or by test running the program)
-         log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo);
-         log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo);
-
-         gsProcess.WaitForExit();
-         gsProcess.Close();
-
-         deleteOriginalFileFromOutputDirectory(fileinfo);
-     }*/
+    /// <param name="extension">Extension type for after the conversion</param>
     void convert(string fileinfo, string outputFileName, string sDevice, string extension)
     {
         Logger log = Logger.Instance;
-
+        string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ghostscriptbinarywindows", "gs10.02.1", "bin", "gsdll64.dll");
+        
         using (var rasterizer = new GhostscriptRasterizer())
         {
-            rasterizer.Open(fileinfo);
-            ImageFormat imageFormat = GetImageFormat(extension);
-
-            if (imageFormat != null)
+            GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0,0,0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
+            using (var stream = new FileStream(fileinfo, FileMode.Open, FileAccess.Read))
             {
+                rasterizer.Open(stream, versionInfo, false);
 
 
+                ImageFormat imageFormat = GetImageFormat(extension);
 
-                for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                if (imageFormat != null)
                 {
-                    string pageOutputFileName = outputFileName + pageNumber.ToString() + extension;
-                    using (var image = rasterizer.GetPage(300, pageNumber))
+
+
+
+                    for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
                     {
-                        image.Save(pageOutputFileName, imageFormat);
+                        string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
+                        using (var image = rasterizer.GetPage(300, pageNumber))
+                        {
+                            image.Save(pageOutputFileName, imageFormat);
+                        }
                     }
+                   // deleteOriginalFileFromOutputDirectory(fileinfo);
                 }
-                deleteOriginalFileFromOutputDirectory(fileinfo);
-            }
-            else
-            {
-                log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+
+                else
+                {
+                    log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+                }
             }
         }
     }
