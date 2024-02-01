@@ -16,6 +16,7 @@ using iText.Layout.Splitting;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
+//TODO: check binary
 
 /// <summary>
 /// GhostScript is a subclass of the Converter class.   <br></br>
