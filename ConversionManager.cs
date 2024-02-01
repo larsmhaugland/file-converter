@@ -130,7 +130,7 @@ public class ConversionManager
         Converters = new List<Converter>();
         Converters.Add(new iText7());
         //Get files from FileManager
-        Files = FileManager.Instance.GetFiles();
+        Files = FileManager.Instance.Files;
     }
     
     /// <summary>
@@ -168,9 +168,21 @@ public class ConversionManager
                 last.Route = ConversionMap[key];
             }
             //If the conversion map does not contain the key, set the route to the target pronom
-            else
+            else if (last.CurrentPronom != last.TargetPronom)
             {
                 last.Route.Add(last.TargetPronom);
+            } else
+            {
+                last.Route = new List<string>();
+            }
+        }
+
+        for(int i = WorkingSet.Count - 1; i >= 0; i--)
+        {
+            //If file is already at target pronom, remove it from the working set
+            if (WorkingSet[i].CurrentPronom == WorkingSet[i].TargetPronom)
+            {
+                WorkingSet.RemoveAt(i);
             }
         }
 
@@ -209,13 +221,17 @@ public class ConversionManager
             for(int i = WorkingSet.Count - 1; i >= 0; i--)
             {
                 //If file has been worked on in a converter, update data and reset IsModified "flag"
-                if (WorkingSet[i].IsModified)
+                if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count > 0)
                 {
                     WorkingSet[i].IsModified = false;
                     WorkingSet[i].CurrentPronom = WorkingSet[i].Route.First();
                     WorkingSet[i].Route.Remove(WorkingSet[i].Route.First());
                 }
                 //If file has not been worked on, remove it from the working set since the file is either fully converted or cannot be converted
+                else if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count == 0)
+                {
+                    WorkingSet.RemoveAt(i);
+                }
                 else
                 {
                     WorkingSet.RemoveAt(i);

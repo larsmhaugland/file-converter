@@ -1,7 +1,10 @@
-﻿using Org.BouncyCastle.Asn1.X509.SigI;
+﻿using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.X509.SigI;
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -78,18 +81,9 @@ public class Siegfried
 
     private Siegfried()
     {
-      
         Version = "Not Found";
         ScanDate = "Not Found";
         CompressedFolders = new List<string>();
-        try 
-        { 
-            CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-            UnpackCompressedFolders();
-        } catch (System.Exception e) 
-        {
-            Logger.Instance.SetUpRunTimeLogMessage("FileManager CopyFiles " + e.Message, true); 
-        }
     }
 
     /// <summary>
@@ -150,6 +144,33 @@ public class Siegfried
         }
     }
 
+
+    public Task<List<FileInfo>>? IdentifyCompressedFilesJSON(string input)
+    {
+        Logger logger = Logger.Instance;
+        UnpackCompressedFolders();
+        var fileBag = new ConcurrentBag<FileInfo>();
+        
+        Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, folder =>
+        {
+            var pathWithoutExtension = folder.Split('.')[0]; //TODO: This might not work for paths with multiple file extensions
+            var files = IdentifyFilesJSON(pathWithoutExtension);
+            if (files != null)
+            {
+                foreach (FileInfo file in files.Result)
+                {
+                    fileBag.Add(file);
+                }
+            } else
+            {
+                logger.SetUpRunTimeLogMessage(folder + " could not be identified", true); 
+            }
+        });
+
+        var files = fileBag.ToList();
+        return Task.FromResult(files);
+    }
+
     /// <summary>
     /// Identifies all files in input directory and returns a list of FileInfo objects. 
     /// Siegfried output is put in a JSON file.
@@ -158,14 +179,34 @@ public class Siegfried
     /// <returns>List of all identified files or null</returns>
     public Task<List<FileInfo>>? IdentifyFilesJSON(string inputFolder)
     {
+        Logger logger = Logger.Instance;
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
         string wrappedPath = "\"" + inputFolder + "\"";
         string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
-        string outputFile = "siegfried/siegfried.json";
-
+        string outputFolder = "siegfried/JSONoutput/";
+        string dir = outputFolder + inputFolder;
+        string outputFile = dir + ".json";
+        string ?parentDir = Directory.GetParent(outputFile)?.FullName;
+        
         //Create output file
-        File.Create(outputFile).Close();
+        try
+        {
+            if (parentDir != null && !Directory.Exists(parentDir))
+            {
+                Directory.CreateDirectory(parentDir);
+            } else if(parentDir == null)
+            {
+                logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile, true);
+                throw new Exception("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile);
+            }
+            File.Create(outputFile).Close();
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file " + e.Message, true);
+            throw new Exception("FileManager IdentifyFilesJSON could not create output file " + e.Message);
+        }
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
         {
@@ -218,13 +259,6 @@ public class Siegfried
             if (file != null) 
             {
                 files.Add(file);
-                SupportedCompressionExtensions.ForEach(ext =>
-                {
-                    if (Path.GetExtension(file.FileName) == ext)
-                    {
-                        CompressedFolders.Add(file.FilePath);
-                    }
-                });
             }
         }
         return Task.FromResult(files);
@@ -309,7 +343,7 @@ public class Siegfried
     /// </summary>
     /// <param name="source">source directory</param>
     /// <param name="destination">destination directory</param>
-    private void CopyFiles(string source, string destination)
+    public void CopyFiles(string source, string destination)
     {
         string[] files = Directory.GetFiles(source, "*.*", SearchOption.AllDirectories);
         foreach (string file in files)
@@ -362,38 +396,74 @@ public class Siegfried
     /// <summary>
     /// Unpacks all compressed folders in output directory
     /// </summary>
-    private void UnpackCompressedFolders()
+    public void UnpackCompressedFolders()
     {
-        //Identify all files in input directory
-        string[] filePaths = Directory.GetFiles(GlobalVariables.parsedOptions.Output, "*.*", SearchOption.AllDirectories);
+        //Identify all files in output directory
+        List<string> compressedFoldersOutput = new List<string>(Directory.GetFiles(GlobalVariables.parsedOptions.Output, "*.*", SearchOption.AllDirectories));
+        List<string> compressedFoldersInput = new List<string>(Directory.GetFiles(GlobalVariables.parsedOptions.Input, "*.*", SearchOption.AllDirectories));
 
-        //In Parallel: Run SF and parse output into FileInfo constructor
-        Parallel.ForEach(filePaths, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePath =>
+        List<string> outputFoldersWithoutRoot = new List<string>();
+        List<string> inputFoldersWithoutRoot = new List<string>();
+
+        //Remove root path from all paths
+        //TODO: Should not use replace, just remove first occurence
+        foreach (string compressedFolder in compressedFoldersOutput)
         {
-            var extention = Path.GetExtension(filePath);
+            string relativePath = compressedFolder.Replace(GlobalVariables.parsedOptions.Output, "");
+            outputFoldersWithoutRoot.Add(relativePath);
+        }
+
+        foreach (string compressedFolder in compressedFoldersInput)
+        {
+            string relativePath = compressedFolder.Replace(GlobalVariables.parsedOptions.Input, "");
+            inputFoldersWithoutRoot.Add(relativePath);
+        }
+
+        //Remove all folders that are not in input directory
+        foreach (string folder in outputFoldersWithoutRoot)
+        {
+            if (!inputFoldersWithoutRoot.Contains(folder))
+            {
+                compressedFoldersOutput.Remove(folder);
+            }
+        }
+        ConcurrentBag<string> unpackedFolders = new ConcurrentBag<string>();
+        //In Parallel: Unpack compressed folders and delete the compressed folder
+        Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePath =>
+        {
+            var extension = Path.GetExtension(filePath);
             //Switch for different compression formats
-            switch (extention)
+            switch (extension)
             {
                 case ".zip":
                     UnpackFolder(filePath);
+                    unpackedFolders.Add(filePath);
                     break;
                 case ".tar":
                     UnpackFolder(filePath);
+                    unpackedFolders.Add(filePath);
                     break;
                 case ".gz":
                     UnpackFolder(filePath);
+                    unpackedFolders.Add(filePath);
                     break;
                 case ".rar":
                     UnpackFolder(filePath);
+                    unpackedFolders.Add(filePath);
                     break;
                 case ".7z":
                     UnpackFolder(filePath);
+                    unpackedFolders.Add(filePath);
                     break;
                 default:
                     //Do nothing
                     break;
             }
         });
+        foreach (string folder in unpackedFolders)
+        {
+            CompressedFolders.Add(folder);
+        }
     }
 
     /// <summary>
@@ -428,6 +498,7 @@ public class Siegfried
     {
         try
         {
+            //TODO: There may be a problem with this method of getting the path
             // Get path to folder without extention
             string pathWithoutExtension = path.Split('.')[0];
             // Ensure the extraction directory exists

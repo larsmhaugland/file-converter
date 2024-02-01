@@ -69,6 +69,7 @@ public class FileInfo
 		FilePath = path;
 		ParseOutput(output);
 		//TODO: Hashing algorithm should be set in settings
+		//HashingAlgorithm = GlobalVariables.HashingAlgorithm;
 		//Get checksum
 		switch (HashingAlgorithm)
 		{
