@@ -1,10 +1,15 @@
 ﻿using iText.IO.Util;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ghostscript.NET;
+using Ghostscript.NET.Rasterizer;
+using System.Drawing.Imaging;
+using Org.BouncyCastle.Bcpg;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
@@ -17,9 +22,9 @@ using System.Threading.Tasks;
 /// - PDF to Image (png, jpg, tif, bmp)                 <br></br>
 /// - HTML to PDF                                       <br></br>
 /// </summary>
-public class Ghostscript : Converter
+public class GhostscriptConverter : Converter
 {
-    public Ghostscript()
+    public GhostscriptConverter()
     {
         Name = "Ghostscript";
         Version = "1.23.1";
@@ -33,7 +38,8 @@ public class Ghostscript : Converter
     public override void ConvertFile(string fileinfo, string pronom)
     {
         string outputDirectory = GlobalVariables.parsedOptions.Output;
-        string outputFileName;
+        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo);
+        string extension;
         string sDevice;
 
         Logger log = Logger.Instance;
@@ -46,9 +52,9 @@ public class Ghostscript : Converter
             case "fmt/12":
             case "fmt/13":
             case "fmt/935":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".png";
+                extension = ".png";
                 sDevice = "png16m";
-                convert(fileinfo, outputDirectory, outputFileName, sDevice);
+                convert(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region jpg
@@ -64,9 +70,9 @@ public class Ghostscript : Converter
             case "fmt/1507":
             case "fmt/112":
             case "fmt/367":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".jpg";
+                extension = ".jpg";
                 sDevice = "jpeg";
-                convert(fileinfo, outputDirectory, outputFileName, sDevice);
+                convert(fileinfo, outputFileName, sDevice, extension);
                  break;
             #endregion
             #region tif
@@ -80,9 +86,9 @@ public class Ghostscript : Converter
             case "fmt/154":
             case "fmt/153":
             case "fmt/156":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".tif";
+                extension = ".tif";
                 sDevice = "tiff24nc";
-                convert(fileinfo, outputDirectory, outputFileName, sDevice);
+                convert(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region bmp
@@ -94,9 +100,9 @@ public class Ghostscript : Converter
             case "fmt/114":
             case "fmt/116":
             case "fmt/117":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".bmp";
+                extension = ".bmp";
                 sDevice = "bmp16m";
-                convert(fileinfo, outputDirectory, outputFileName, sDevice);
+                convert(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region pdf
@@ -142,9 +148,9 @@ public class Ghostscript : Converter
             case "fmt/491":
             case "fmt/1129":
             case "fmt/1451":
-                outputFileName = Path.GetFileNameWithoutExtension(fileinfo) + ".pdf";
+                extension = ".pdf";
                 sDevice = "pdfwrite";
-                convert(fileinfo, outputDirectory, outputFileName, sDevice);
+                convert(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             default:
@@ -160,29 +166,74 @@ public class Ghostscript : Converter
     /// <param name="output">The specified output directory</param>
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
-    void convert(string fileinfo, string output, string outputFileName, string sDevice)
+    /* void convert(string fileinfo, string output, string outputFileName, string sDevice)
+     {
+         Logger log = Logger.Instance;
+
+         string gsArguments = "-dNOPAUSE -dBATCH -sDEVICE=" + sDevice + " -sOutputFile=" + outputFileName + " " + fileinfo;
+         Process gsProcess = new Process();
+         gsProcess.StartInfo.FileName = "gswin64c.exe";
+         gsProcess.StartInfo.Arguments = gsArguments;
+         gsProcess.StartInfo.UseShellExecute = false;
+         gsProcess.StartInfo.RedirectStandardOutput = true;
+         gsProcess.StartInfo.RedirectStandardError = true;
+         gsProcess.Start();
+
+         //TODO: Check if standard output is necessary (either w/ archive or by test running the program)
+         log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo);
+         log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo);
+
+         gsProcess.WaitForExit();
+         gsProcess.Close();
+
+         deleteOriginalFileFromOutputDirectory(fileinfo);
+     }*/
+    void convert(string fileinfo, string outputFileName, string sDevice, string extension)
     {
-        string input = fileinfo;
-        string outputFilePath = Path.Combine(output, outputFileName);
         Logger log = Logger.Instance;
 
-        string gsArguments = "-dNOPAUSE -dBATCH -sDEVICE=" + sDevice + " -sOutputFile=" + outputFilePath + " " + input;
-        Process gsProcess = new Process();
-        gsProcess.StartInfo.FileName = "gswin64c.exe";
-        gsProcess.StartInfo.Arguments = gsArguments;
-        gsProcess.StartInfo.UseShellExecute = false;
-        gsProcess.StartInfo.RedirectStandardOutput = true;
-        gsProcess.StartInfo.RedirectStandardError = true;
-        gsProcess.Start();
+        using (var rasterizer = new GhostscriptRasterizer())
+        {
+            rasterizer.Open(fileinfo);
+            ImageFormat imageFormat = GetImageFormat(extension);
 
-        //TODO: Check if standard output is necessary (either w/ archive or by test running the program)
-        log.SetUpRunTimeLogMessage(gsProcess.StandardOutput.ReadToEnd(), false, fileinfo);
-        log.SetUpRunTimeLogMessage(gsProcess.StandardError.ReadToEnd(), true, fileinfo);
+            if (imageFormat != null)
+            {
 
-        gsProcess.WaitForExit();
-        gsProcess.Close();
 
-        deleteOriginalFileFromOutputDirectory(fileinfo);
+
+                for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                {
+                    string pageOutputFileName = outputFileName + pageNumber.ToString() + extension;
+                    using (var image = rasterizer.GetPage(300, pageNumber))
+                    {
+                        image.Save(pageOutputFileName, imageFormat);
+                    }
+                }
+                deleteOriginalFileFromOutputDirectory(fileinfo);
+            }
+            else
+            {
+                log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+            }
+        }
+    }
+
+    private ImageFormat GetImageFormat(string extension)
+    {
+        switch(extension)
+        {
+            case ".png":
+                return ImageFormat.Png;
+            case ".jpg":
+                return ImageFormat.Jpeg;
+            case ".tif":
+                return ImageFormat.Tiff;
+            case ".bmp":
+                return ImageFormat.Bmp;
+            default:
+                return null;
+        }
     }
 
     /// <summary>
@@ -193,14 +244,14 @@ public class Ghostscript : Converter
     {
         var supportedConversions = new Dictionary<string, List<string>>();
         //Image to PDF
-        foreach (string imagePronom in ImagePronoms)
+        /*foreach (string imagePronom in ImagePronoms)
         {
             supportedConversions.Add(imagePronom, PDFPronoms);
-        }
+        }*/
         //PDF to Image
         foreach(string pdfPronom in PDFPronoms)
         {
-            supportedConversions.Add(pdfPronom, ImagePronoms);
+             supportedConversions.Add(pdfPronom, ImagePronoms);
         }
         //HTML to PDF
         foreach (string htmlPronom in HTMLPronoms)

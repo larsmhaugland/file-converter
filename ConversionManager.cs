@@ -129,6 +129,7 @@ public class ConversionManager
         //Initialize converters
         Converters = new List<Converter>();
         Converters.Add(new iText7());
+        Converters.Add(new GhostscriptConverter());
         //Get files from FileManager
         Files = FileManager.Instance.GetFiles();
     }

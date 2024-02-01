@@ -356,7 +356,7 @@ public class iText7 : Converter
         "fmt/114",
         "fmt/116",
         "fmt/117"
-];
+    ];
     List<string> HTMLPronoms = [
         "fmt/103",
         "fmt/96",
