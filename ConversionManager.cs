@@ -16,6 +16,7 @@ class FileToConvert
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
+
         if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
         {
             TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
@@ -24,6 +25,7 @@ class FileToConvert
         {
             TargetPronom = CurrentPronom;
         }
+
         Route = new List<string>();
     }
 }
@@ -32,6 +34,8 @@ public class ConversionManager
 {
     List<FileInfo> Files;
     Dictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
+    Dictionary<string,FileInfo> FileInfoMap = new Dictionary<string,FileInfo>();
+
     List<Converter> Converters;
     List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
@@ -118,6 +122,13 @@ public class ConversionManager
         }
         // TODO: Add more routes
     }
+    private void initFileMap()
+    {
+        foreach(FileInfo file in Files)
+        {
+            FileInfoMap.Add(file.FilePath, file);
+        }
+    }
 
     /// <summary>
     /// 
@@ -132,6 +143,8 @@ public class ConversionManager
         Converters.Add(new GhostscriptConverter());
         //Get files from FileManager
         Files = FileManager.Instance.GetFiles();
+        //Initialize FileMap
+        initFileMap();
     }
     
     /// <summary>
@@ -169,9 +182,21 @@ public class ConversionManager
                 last.Route = ConversionMap[key];
             }
             //If the conversion map does not contain the key, set the route to the target pronom
-            else
+            else if (last.CurrentPronom != last.TargetPronom)
             {
                 last.Route.Add(last.TargetPronom);
+            } else
+            {
+                last.Route = new List<string>();
+            }
+        }
+
+        for(int i = WorkingSet.Count - 1; i >= 0; i--)
+        {
+            //If file is already at target pronom, remove it from the working set
+            if (WorkingSet[i].CurrentPronom == WorkingSet[i].TargetPronom)
+            {
+                WorkingSet.RemoveAt(i);
             }
         }
 
@@ -199,6 +224,7 @@ public class ConversionManager
                             {
                                 //Convert file using virtual function
                                 converter.ConvertFile(file.FilePath, outputFormat);           //TODO: This should be called in a thread with timeout and potential retry
+                                if (converter.Name != null) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
                                 file.IsModified = true; //File has been worked on               TODO: We maybe don't need this if this solution works
                                 break;
                             }
@@ -210,13 +236,17 @@ public class ConversionManager
             for(int i = WorkingSet.Count - 1; i >= 0; i--)
             {
                 //If file has been worked on in a converter, update data and reset IsModified "flag"
-                if (WorkingSet[i].IsModified)
+                if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count > 0)
                 {
                     WorkingSet[i].IsModified = false;
                     WorkingSet[i].CurrentPronom = WorkingSet[i].Route.First();
                     WorkingSet[i].Route.Remove(WorkingSet[i].Route.First());
                 }
                 //If file has not been worked on, remove it from the working set since the file is either fully converted or cannot be converted
+                else if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count == 0)
+                {
+                    WorkingSet.RemoveAt(i);
+                }
                 else
                 {
                     WorkingSet.RemoveAt(i);

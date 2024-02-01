@@ -41,14 +41,14 @@ public class Logger
         public string? NewPronom { get; set; }
         public string? NewChecksum { get; set; }
         public long NewSize { get; set; }
-        public string[]? Converter { get; set; }
+        public List<string>? Converter { get; set; }
         public bool IsConverted { get; set; }
     }
     List<JsonData> data = [];
 
     private Logger()
 	{
-        string path = "./logs";
+        string path = "./logs/";
 
         if (!Directory.Exists(path))
         {
@@ -137,14 +137,14 @@ public class Logger
         {
             JsonData jsondata = new JsonData
             {
-                Filename = file.FileName,
+                Filename = file.FilePath,
                 OriginalPronom = file.OriginalPronom,
                 OriginalChecksum = file.OriginalChecksum,
                 OriginalSize = file.OriginalSize,
                 NewPronom = file.NewPronom,
                 NewChecksum = file.NewChecksum,
                 NewSize = file.NewSize,
-                Converter = ["converter"],
+                Converter = file.ConversionTools,
                 IsConverted = file.IsConverted
             };
             data.Add(jsondata);

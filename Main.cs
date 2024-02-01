@@ -41,23 +41,31 @@ class Program
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
-		Stopwatch stopwatch = new Stopwatch();
+		Siegfried sf = Siegfried.Instance;
+		//TODO: Check for malicous input files
+		try
+		{
+			//Copy and unpack files
+			sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+			//Identify files
+			fileManager.IdentifyFiles();
+		} catch (Exception e)
+		{
+			Console.WriteLine("Could not identify files: " + e.Message);
+			logger.SetUpRunTimeLogMessage("Error when copying/unpacking/identifying files: " + e.Message, true);
+			return;
+		}
 		Settings settings = Settings.Instance;
-		stopwatch.Start();
-		fileManager.IdentifyFiles();
-        stopwatch.Stop();
         ConversionManager cm = new ConversionManager();
-        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
 		settings.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
-            logger.SetUpDocumentation(fileManager.Files);
             cm.ConvertFiles();
-			Siegfried sf = Siegfried.Instance;
 			sf.CompressFolders();
+            logger.SetUpDocumentation(fileManager.Files);
         }
     }
 }
