@@ -5,6 +5,7 @@ public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
     public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
+	public static HashAlgorithms checksumHash;
 }
 public class Options
 {
@@ -54,16 +55,17 @@ class Program
 			logger.SetUpRunTimeLogMessage("Error when copying/unpacking/identifying files: " + e.Message, true);
 			return;
 		}
+		Settings settings = Settings.Instance;
         ConversionManager cm = new ConversionManager();
-		fileManager.ReadSettings("./Settings.xml");
+		settings.ReadSettings("./Settings.xml");
         logger.AskAboutReqAndConv();
 		
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
-			cm.ConvertFiles();
-            logger.SetUpDocumentation(fileManager.Files);
+            cm.ConvertFiles();
 			sf.CompressFolders();
+            logger.SetUpDocumentation(fileManager.Files);
         }
     }
 }

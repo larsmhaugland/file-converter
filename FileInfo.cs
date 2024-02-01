@@ -41,7 +41,6 @@ public class FileInfo
 	public string NewChecksum { get; set; } = "";             // New Checksum
 
 	[JsonPropertyName("conversionTools")]
-	//TODO: This should be a list of conversion tools used
 	public List<string> ConversionTools { get; set; } = new List<string>();   // List of conversion tools used
 
 	[JsonPropertyName("originalSize")]
