@@ -82,7 +82,7 @@ public class FileManager
             if(xmlDoc.DocumentElement == null){ logger.SetUpRunTimeLogMessage("Could not find settings file", true, filename: pathToSettings); return;}
 
             // Access the root element
-            XmlNode root = xmlDoc.SelectSingleNode("/root");
+            XmlNode ?root = xmlDoc.SelectSingleNode("/root");
             if(root == null) { logger.SetUpRunTimeLogMessage("Could not find root", true, filename: pathToSettings); return; }
             // Access the Requester and Converter elements
             XmlNode ?requesterNode = root?.SelectSingleNode("Requester");

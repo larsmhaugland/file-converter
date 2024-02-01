@@ -10,6 +10,9 @@ public enum HashAlgorithms
 
 public class FileInfo
 {
+	[JsonPropertyName("filePath")]
+	public string FilePath { get; set; } = "";                // TODO: Remove?
+
 	[JsonPropertyName("fileName")]
 	public string FileName { get; set; } = "";              // Filename with extention
 
