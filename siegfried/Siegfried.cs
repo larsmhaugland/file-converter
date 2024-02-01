@@ -81,6 +81,7 @@ public class Siegfried
 
     private Siegfried()
     {
+        //TODO: Should check Version and ScanDate here
         Version = "Not Found";
         ScanDate = "Not Found";
         CompressedFolders = new List<string>();
@@ -130,9 +131,6 @@ public class Siegfried
         var parsedData = ParseJSONOutput(output, false);
         if (parsedData == null || parsedData.files == null)
             return null; 
-
-        Version = parsedData.siegfriedVersion;
-        ScanDate = parsedData.scandate;
              
         if (parsedData.files.Length > 0)
         {
@@ -289,14 +287,21 @@ public class Siegfried
             }
             else
             {
-                var siegfriedJSON = JsonSerializer.Deserialize<SiegfriedJSON>(json);
-                if(siegfriedJSON != null)
+                using (JsonDocument document = JsonDocument.Parse(json))
                 {
-                    return siegfriedJSON;
-                }
-                else
-                {
-                    return null;
+                    // Access the root of the JSON document
+                    JsonElement root = document.RootElement;
+
+                    // Deserialize JSON into a SiegfriedJSON object
+                    SiegfriedJSON siegfriedJson = new SiegfriedJSON
+                    {
+                        siegfriedVersion = root.GetProperty("siegfried").GetString() ?? "",
+                        scandate = root.GetProperty("scandate").GetString() ?? "",
+                        files = root.GetProperty("files").EnumerateArray()
+                            .Select(fileElement => ParseSiegfriedFile(fileElement))
+                            .ToArray()
+                    };
+                    return siegfriedJson;
                 }
             }
         }
@@ -424,7 +429,7 @@ public class Siegfried
         {
             if (!inputFoldersWithoutRoot.Contains(folder))
             {
-                compressedFoldersOutput.Remove(folder);
+                compressedFoldersOutput.Remove(GlobalVariables.parsedOptions.Output + folder);
             }
         }
         ConcurrentBag<string> unpackedFolders = new ConcurrentBag<string>();
@@ -465,6 +470,7 @@ public class Siegfried
             CompressedFolders.Add(folder);
         }
     }
+
 
     /// <summary>
     /// Compresses a folder to a specified format and deletes the unpacked folder

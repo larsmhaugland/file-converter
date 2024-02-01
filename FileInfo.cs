@@ -107,57 +107,30 @@ public class FileInfo
 	{
         //Get new pronom
         var newInfo = Siegfried.Instance.IdentifyFile(FileName);
-        if (newInfo != null && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
+        if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
         {
-            NewPronom = newInfo.matches[0].id;
-            NewFormatName = newInfo.matches[0].format;
-            NewMime = newInfo.matches[0].mime;
-            NewSize = newInfo.filesize;
-
-            //Get checksum
-            switch (HashingAlgorithm)
-            {
-                case HashAlgorithms.MD5:
-                    NewChecksum = CalculateFileChecksum(MD5.Create());
-                    break;
-                default:
-                    NewChecksum = CalculateFileChecksum(SHA256.Create());
-                    break;
-            }
 			IsConverted = true;
-			return true;
+        } else if (newInfo == null)
+		{
+			return false;
+		}
+        NewPronom = newInfo.matches[0].id;
+        NewFormatName = newInfo.matches[0].format;
+        NewMime = newInfo.matches[0].mime;
+        NewSize = newInfo.filesize;
+
+        //Get checksum
+        switch (HashingAlgorithm)
+        {
+            case HashAlgorithms.MD5:
+                NewChecksum = CalculateFileChecksum(MD5.Create());
+                break;
+            default:
+                NewChecksum = CalculateFileChecksum(SHA256.Create());
+                break;
         }
-		return false;
+        return IsConverted;
     }
-
-
-	/// <summary>
-	/// 
-	/// </summary>
-	public void SetNewFields()
-	{
-		//Get checksum
-		switch (HashingAlgorithm)
-		{
-			case HashAlgorithms.MD5:
-				NewChecksum = CalculateFileChecksum(MD5.Create());
-				break;
-			default:
-				NewChecksum = CalculateFileChecksum(SHA256.Create());
-				break;
-		}
-
-		//Get new pronom
-		var newInfo = Siegfried.Instance.IdentifyFile(FileName);
-		if(newInfo != null)
-		{
-			NewPronom = newInfo.matches[0].id;
-			NewFormatName = newInfo.matches[0].format;
-			NewMime = newInfo.matches[0].mime;
-			NewSize = newInfo.filesize;
-		}
-		
-	}
 
 	public void AddConversionTool(string tool)
 	{
