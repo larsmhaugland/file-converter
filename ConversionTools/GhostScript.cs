@@ -17,15 +17,17 @@ using System.Runtime.Intrinsics.X86;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
-//TODO: 
+//TODO: Can add PDF to PDF conversion if needed
 
 /// <summary>
 /// GhostScript is a subclass of the Converter class.   <br></br>
 /// 
 /// GhostScript supports the following conversions:     <br></br>
-/// - Image (png, jpg, tif, bmp) to PDF                 <br></br>
 /// - PDF to Image (png, jpg, tif, bmp)                 <br></br>
-/// - HTML to PDF                                       <br></br>
+///                                                     <br></br>
+/// Conversions not added:                              <br></br>
+/// - PDF to PDF    (see iText7)                        <br></br>
+/// - Image to PDF  (see iText7)                        <br></br>
 /// </summary>
 public class GhostscriptConverter : Converter
 {
