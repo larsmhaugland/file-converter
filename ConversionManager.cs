@@ -100,6 +100,7 @@ public class ConversionManager
             "x-fmt/263", "x-fmt/265", "fmt/484", "fmt/266",
             "x-fmt/264", "fmt/411", "fmt/613"
     ];
+
     /// <summary>
     /// initializes the map for how to reach each format
     /// </summary>
@@ -117,14 +118,24 @@ public class ConversionManager
         }
         // TODO: Add more routes
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public ConversionManager()
     {
+        //Initialize conversion map
         initMap();
+        //Initialize converters
         Converters = new List<Converter>();
         Converters.Add(new iText7());
-        Files = FileManager.Instance.Files;
+        //Get files from FileManager
+        Files = FileManager.Instance.GetFiles();
     }
     
+    /// <summary>
+    /// 
+    /// </summary>
     void checkConversion()
     {
         var sf = Siegfried.Instance;
@@ -137,34 +148,27 @@ public class ConversionManager
         Console.WriteLine("All files converted: " + allConverted);
     }
 
-    bool allIsConverted(List<FileToConvert> files)
-    {
-        foreach (FileToConvert file in files)
-        {
-            if (file.CurrentPronom != file.TargetPronom)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /// <summary>
-    /// 
+    /// Responsible for converting all files
     /// </summary>
     public void ConvertFiles()
     {
+        //Initialize working set
         List<FileToConvert> WorkingSet = new List<FileToConvert>();
         foreach (FileInfo file in Files)
         {
+            //Add file using constructor that sets target pronom and route
             WorkingSet.Add(new FileToConvert(file));
+            //Use current and target pronom to create a key for the conversion map
             var last = WorkingSet.Last();
             var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
+            //If the conversion map contains the key, set the route to the value of the key
             if (ConversionMap.ContainsKey(key))
             {
                 last.Route = ConversionMap[key];
             }
-            if(last.Route.Count == 0)
+            //If the conversion map does not contain the key, set the route to the target pronom
+            else
             {
                 last.Route.Add(last.TargetPronom);
             }
@@ -172,52 +176,54 @@ public class ConversionManager
 
         do
         {
-            /*
-             * List<FileToConvert> modWorkingSet = WorkingSet;
-            // iText7
-            var iText7 = new iText7();
-            var iText7SupportedInput = iText7.listOfSupportedConversions();
-            foreach (FileToConvert file in modWorkingSet)
-            {
-                if (iText7SupportedInput.ContainsKey(file.CurrentPronom))
-                {
-                    foreach (string output in iText7SupportedInput[file.CurrentPronom])
-                    {
-                        if(file.Route.First() == output)
-                        {
-                            //iText7.ConvertFile();
-                            file.IsModified = true; //File has been worked on
-                        }
-                    }
-                }
-                //TODO: Get supported input/ouput pronoms from Conversion tool
-            }*/
-
+            //Loop through working set
             foreach (FileToConvert file in WorkingSet)
             {
-                foreach(Converter converter in Converters)
+                //Loop through converters
+                foreach (Converter converter in Converters)
                 {
-                    if(converter.listOfSupportedConversions().ContainsKey(file.CurrentPronom))
+                    //If file is at the end of the route, skip it
+                    if (file.Route.Count == 0)
                     {
-                        foreach (string outputFormat in converter.listOfSupportedConversions()[file.CurrentPronom])
+                        break;
+                    }
+                    var dict = converter.listOfSupportedConversions();
+                    //If the converter supports the current pronom, check if it can convert to the next pronom in the route
+                    if (dict != null && dict.ContainsKey(file.CurrentPronom))
+                    {
+                        foreach (string outputFormat in dict[file.CurrentPronom])
                         {
-                            if (file.Route.Count > 0 && file.Route.First() == outputFormat)
+                            //Check if the converter can convert to the next pronom in the route
+                            if (file.Route.First() == outputFormat)
                             {
-                                converter.ConvertFile(file.FilePath, outputFormat);
-                                file.IsModified = true; //File has been worked on TODO: We don't need this if this solution works
-                                file.Route.Remove(file.Route.First());
+                                //Convert file using virtual function
+                                converter.ConvertFile(file.FilePath, outputFormat);           //TODO: This should be called in a thread with timeout and potential retry
+                                file.IsModified = true; //File has been worked on               TODO: We maybe don't need this if this solution works
                                 break;
                             }
-                        }
-                        if(file.Route.Count == 0)
-                        {
-                            break;
                         }
                     }
                 }
             }
-
-        } while (!allIsConverted(WorkingSet));
+            //Remove files that have been worked on from the working set and update for the rest
+            for(int i = WorkingSet.Count - 1; i >= 0; i--)
+            {
+                //If file has been worked on in a converter, update data and reset IsModified "flag"
+                if (WorkingSet[i].IsModified)
+                {
+                    WorkingSet[i].IsModified = false;
+                    WorkingSet[i].CurrentPronom = WorkingSet[i].Route.First();
+                    WorkingSet[i].Route.Remove(WorkingSet[i].Route.First());
+                }
+                //If file has not been worked on, remove it from the working set since the file is either fully converted or cannot be converted
+                else
+                {
+                    WorkingSet.RemoveAt(i);
+                }
+            }
+            //Repeat until all files have been converted/checked
+        } while (WorkingSet.Count != 0);
+        //Update FileInfo list with new data
         checkConversion();
     }
 }

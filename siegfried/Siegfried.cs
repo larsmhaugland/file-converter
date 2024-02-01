@@ -8,45 +8,45 @@ using System.Text.Json.Serialization;
 public class SiegfriedJSON
 {
     [JsonPropertyName("siegfried")]
-    public string siegfriedVersion;
+    public string siegfriedVersion = "";
     [JsonPropertyName("scandate")]
-    public string scandate;
+    public string scandate = "";
     [JsonPropertyName("files")]
-    public SiegfriedFile[] files;
+    public SiegfriedFile[] files = [];
 
 }
 
 public class SiegfriedFile
 {
     [JsonPropertyName("filename")]
-    public string filename;
+    public string filename = "";
     [JsonPropertyName("filesize")]
-    public long filesize;
+    public long filesize = 0;
     [JsonPropertyName("modified")]
-    public string modified;
+    public string modified = "";
     [JsonPropertyName("errors")]
-    public string errors;
+    public string errors = "";
     [JsonPropertyName("matches")]
-    public SiegfriedMatches[] matches;
+    public SiegfriedMatches[] matches = [];
 }
 public class SiegfriedMatches
 {
     [JsonPropertyName("ns")]
-    public string ns;
+    public string ns = "";
     [JsonPropertyName("id")]
-    public string id;
+    public string id = "";
     [JsonPropertyName("format")]
-    public string format;
+    public string format = "";
     [JsonPropertyName("version")]
-    public string version;
+    public string version = "";
     [JsonPropertyName("mime")]
-    public string mime;
+    public string mime = "";
     [JsonPropertyName("class")]
-    public string class_;
+    public string class_ = "";
     [JsonPropertyName("basis")]
-    public string basis;
+    public string basis = "";
     [JsonPropertyName("warning")]
-    public string warning;
+    public string warning = "";
 }
 
 public class Siegfried
@@ -136,6 +136,9 @@ public class Siegfried
         var parsedData = ParseJSONOutput(output, false);
         if (parsedData == null || parsedData.files == null)
             return null; 
+
+        Version = parsedData.siegfriedVersion;
+        ScanDate = parsedData.scandate;
              
         if (parsedData.files.Length > 0)
         {
@@ -153,7 +156,7 @@ public class Siegfried
     /// </summary>
     /// <param name="inputFolder">Path to root folder for files to be identified</param>
     /// <returns>List of all identified files or null</returns>
-    public List<FileInfo>? IdentifyFilesJSON(string inputFolder)
+    public Task<List<FileInfo>>? IdentifyFilesJSON(string inputFolder)
     {
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
@@ -224,7 +227,7 @@ public class Siegfried
                 });
             }
         }
-        return files;
+        return Task.FromResult(files);
     }
 
     SiegfriedJSON? ParseJSONOutput(string json, bool file)
@@ -444,6 +447,8 @@ public class Siegfried
                     }
                 }
             }
+            //TODO: Delete the compressed folder
+
         } catch (Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("FileManager UnpackFolder " + e.Message, true);

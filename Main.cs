@@ -3,15 +3,15 @@ using System.Diagnostics;
 
 public static class GlobalVariables
 {
-    public static Options parsedOptions = null;
+    public static Options parsedOptions = new Options();
     public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
 }
 public class Options
 {
     [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
-    public string Input { get; set; }
+    public string Input { get; set; } = "";
     [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
-    public string Output { get; set; }
+    public string Output { get; set; } = "";
 
 }
 class Program
