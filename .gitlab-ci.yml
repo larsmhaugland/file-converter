@@ -1,43 +1,24 @@
-stages:
-    - sonarqube-check
-    - sonarqube-vulnerability-report
-
 sonarqube-check:
-  stage: sonarqube-check
-  image: mcr.microsoft.com/dotnet/sdk:7.0
-  tags: 
-    - RasPiRunner
+  image: mcr.microsoft.com/dotnet/core/sdk:latest
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache yay worked
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysiss tasks
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
   script: 
-      - "apt-get update"
-      - "apt-get install --yes --no-install-recommends openjdk-17-jre"
-      - "dotnet tool install --global dotnet-sonarscanner"
-      - "export PATH=\"$PATH:$HOME/.dotnet/tools\""
-      - "dotnet sonarscanner begin /k:\"larmha_file-converter-prog2900_AY07aEtiXy84ikyNYxme\" /d:sonar.token=\"$SONAR_TOKEN\" /d:\"sonar.host.url=$SONAR_HOST_URL\" "
+      - "sudo apt-get update"
+      - "sudo apt-get install --yes openjdk-11-jre"
+      - "echo 'Installed openJDK 11'"
+      - "cd /home/gitlab-runner"
+      - "cd file-converter-prog2900/"
+      - "git config --global --add safe.directory /home/gitlab-runner/file-converter-prog2900"
+      - "git checkout structure"
+      - "git pull https://aleksolh:dedmr3QjKE1nvBHt9zPt@git.gvk.idi.ntnu.no/larmha/file-converter-prog2900.git"
+      - dotnet sonarscanner begin /k:"larmha_file-converter-prog2900_AY1VVzDbCURw5i3AqO9H" /d:sonar.host.url="http://10.212.172.150:9000"  /d:sonar.login="sqp_f95a3dec09f7d55c4dcbfde4c5bb487005fbe278"
       - "dotnet build"
-      - "dotnet sonarscanner end /d:sonar.token=\"$SONAR_TOKEN\""
+      - dotnet sonarscanner end /d:sonar.login="sqp_f95a3dec09f7d55c4dcbfde4c5bb487005fbe278"
   allow_failure: true
   only:
-    - merge_requests
-    - master
-
-sonarqube-vulnerability-report:
-  stage: sonarqube-vulnerability-report
-  script:
-    - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=larmha_file-converter-prog2900_AY07aEtiXy84ikyNYxme&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
-  allow_failure: true
-  only:
-    - merge_requests
-    - master
-  artifacts:
-    expire_in: 1 day
-    reports:
-      sast: gl-sast-sonar-report.json
-  dependencies:
-    - sonarqube-check
+    - structure
