@@ -41,11 +41,9 @@ public class Converter
 	/// </summary>
 	/// <param name="fileInfo">The specific file to be deleted</param>
 	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo) {
-		string outputDirectory = GlobalVariables.parsedOptions.Output;
-		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo));
-		if (File.Exists(fileToDelete))
+		if (File.Exists(fileInfo))
 		{
-            File.Delete(fileToDelete);
+            File.Delete(fileInfo);
         }
 	}
 

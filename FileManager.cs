@@ -12,6 +12,7 @@ public class FileManager
     {
         Files = new List<FileInfo>();
         FolderOverride = new Dictionary<string, KeyValuePair<string,string>>(); 
+        Thread thread = new Thread(() => IdentifyFiles());
     }
     public static FileManager Instance
     {
@@ -30,22 +31,38 @@ public class FileManager
             return instance;
         }
     }
-
+    //NOTE: Since this function is async, it may not be finished before the conversion starts, what should we do?
     public async void IdentifyFiles()
     {
-        Siegfried sf = Siegfried.Instance;
-        var files = sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Output); //Search for files in output folder since they are copied there from input folder
+        Siegfried sf = Siegfried.Instance; 
+        //TODO: Why do I get a warning here (without '!')?
+        List<FileInfo> ?files = await sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Output)!; //Search for files in output folder since they are copied there from input folder
+        
         if(files != null)
         {
             Files = files;
+        } else
+        {
+            Logger logger = Logger.Instance;
+            logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
         }
+    }
+
+    public List<FileInfo> GetFiles()
+    {
+        if(Files.Count == 0)
+        {
+            //Should maybe wait?
+            IdentifyFiles();
+        }
+        return Files;
     }
 
     public class SettingsData
     {
         public List<string>? PronomsList { get; set; }
-        public string ConvertTo { get; set; }
-        public string DefaultType { get; set; }
+        public string ConvertTo { get; set; } = "";
+        public string DefaultType { get; set; } = "";
     }
     public void DocumentFiles()
     {
@@ -64,26 +81,31 @@ public class FileManager
 
             
             // Access the root element
-            XmlNode root = xmlDoc.SelectSingleNode("/root");
+            XmlNode ?root = xmlDoc.SelectSingleNode("/root");
 
             // Access the Requester and Converter elements
-            XmlNode requesterNode = root.SelectSingleNode("Requester");
-            XmlNode converterNode = root.SelectSingleNode("Converter");
+            XmlNode ?requesterNode = root?.SelectSingleNode("Requester");
+            XmlNode ?converterNode = root?.SelectSingleNode("Converter");
 
-            Logger.JsonRoot.requester = requesterNode.InnerText;
-            Logger.JsonRoot.converter = converterNode.InnerText;
+            Logger.JsonRoot.requester = requesterNode?.InnerText;
+            Logger.JsonRoot.converter = converterNode?.InnerText;
             // Access elements and attributes
-            XmlNode classNode = root.SelectSingleNode("FileClass");
-            string className = classNode?.SelectSingleNode("ClassName")?.InnerText;
-            string defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
-            XmlNodeList fileTypeNodes = classNode.SelectNodes("FileTypes");
+            XmlNode ?classNode = root?.SelectSingleNode("FileClass");
+            string ?className = classNode?.SelectSingleNode("ClassName")?.InnerText;
+            string ?defaultType = classNode?.SelectSingleNode("Default")?.InnerText;
+            if(defaultType == null)
+            {
+                //TODO: This should not be thrown, but rather ask the user for a default type
+                throw new Exception("No default type found in settings");
+            }
+            XmlNodeList? fileTypeNodes = classNode?.SelectNodes("FileTypes");
             if (fileTypeNodes != null)
             {
                 foreach (XmlNode fileTypeNode in fileTypeNodes)
                 {
-                    string extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
-                    string pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
-                    string innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
+                    string ?extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
+                    string ?pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
+                    string ?innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
                     if (!String.IsNullOrEmpty(innerDefault))
                     {
                         defaultType = innerDefault;
@@ -99,7 +121,7 @@ public class FileManager
                     SettingsData settings = new SettingsData
                     {
                         PronomsList = pronomsList,
-                        DefaultType = defaultType
+                        DefaultType = defaultType //TODO: Why is defaultType possibly null reference?
                     };
                     if (settings.PronomsList.Count > 0)
                     {
@@ -156,9 +178,7 @@ public class FileManager
         }
         catch (Exception ex)
         {
-
-            string exceptionMessage = ex.Message.ToString();
-            logger.SetUpRunTimeLogMessage(exceptionMessage, true);
+            logger.SetUpRunTimeLogMessage(ex.Message, true);
         }
     }
 }

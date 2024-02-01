@@ -63,9 +63,7 @@ public class Logger
         {
             outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
         }
-
-
-
+        docPath = "";
     }
 	public static Logger Instance
 	{
@@ -128,6 +126,7 @@ public class Logger
     /// <param name="files"> list containing fileinfo about all files </param>
 	public void SetUpDocumentation(List<FileInfo> files)
 	{
+        //TODO: Comment: Maybe find better place to put the file and set docPath earlier
         string path = GlobalVariables.parsedOptions.Output + "/";
         docPath = path + "documentation.json";
         using (StreamWriter outputFile = new StreamWriter(docPath))

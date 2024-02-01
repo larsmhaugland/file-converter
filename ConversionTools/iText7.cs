@@ -109,7 +109,8 @@ public class iText7 : Converter
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
     void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion) {
 
-        string filePathWithoutExtension = Path.Combine(Path.GetDirectoryName(fileinfo), Path.GetFileNameWithoutExtension(fileinfo));
+        string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
+        string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
         try
         {
@@ -127,7 +128,7 @@ public class iText7 : Converter
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted.", true, filename: fileinfo);
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: fileinfo);
         }
     }
 
@@ -138,20 +139,28 @@ public class iText7 : Converter
     /// <param name="conformanceLevel">What pdf-A version it is being converted to</param>
     void convertFromImageToPDFA(string fileinfo, PdfAConformanceLevel conformanceLevel) {
         PdfVersion pdfVersion = PdfVersion.PDF_2_0;
-        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileinfo);
-        string output = Path.Combine(GlobalVariables.parsedOptions.Output, fileNameWithoutExtension + ".pdf");
+        string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
+        string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
+        string output = Path.Combine(filePathWithoutExtension + ".pdf");
 
         PdfOutputIntent? outputIntent = null;
-        using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+        try
+        {
+            using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
             using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
             using (var document = new Document(pdfDocument))
-        {
+            {
                 pdfDocument.SetTagged();
                 PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
-        deleteOriginalFileFromOutputDirectory(fileinfo);
+            deleteOriginalFileFromOutputDirectory(fileinfo);
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: fileinfo);
+        }
     }
 
     /// <summary>

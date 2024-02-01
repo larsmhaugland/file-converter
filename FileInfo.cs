@@ -11,53 +11,50 @@ public enum HashAlgorithms
 public class FileInfo
 {
 	[JsonPropertyName("filePath")]
-	public string FilePath { get; set; }                // Relative path
+	public string FilePath { get; set; } = "";                // Relative path
 
-	[JsonPropertyName("filename")]
-	public string FileName { get; set; } 				// Filename with extention
+	[JsonPropertyName("fileName")]
+	public string FileName { get; set; } = "";              // Filename with extention
 
-	[JsonPropertyName("")]
-	public string OriginalPronom { get; set; }			// Original Pronom ID
+	[JsonPropertyName("originalPronom")]
+	public string OriginalPronom { get; set; } = "";            // Original Pronom ID
 
-	[JsonPropertyName("")]
-	public string NewPronom { get; set; }				// New Pronom ID
+	[JsonPropertyName("newPronom")]
+	public string NewPronom { get; set; } = "";             // New Pronom ID
 
-	[JsonPropertyName("")]
-	public string OriginalMime { get; set; }			// Original Mime Type
+	[JsonPropertyName("originalMime")]
+	public string OriginalMime { get; set; } = "";          // Original Mime Type
 
-	[JsonPropertyName("")]
-	public string NewMime { get; set; }                 // New Mime Type
+	[JsonPropertyName("newMime")]
+	public string NewMime { get; set; } = "";                 // New Mime Type
 
-	[JsonPropertyName("")]
-	public string OriginalFormatName { get; set; }      // Original Format Name
+	[JsonPropertyName("originalFormatName")]
+	public string OriginalFormatName { get; set; } = "";      // Original Format Name
 
-	[JsonPropertyName("")]
-	public string NewFormatName { get; set; }           // New Format Name
+	[JsonPropertyName("newFormatName")]
+	public string NewFormatName { get; set; } = "";           // New Format Name
 
-	[JsonPropertyName("")]
-	public string OriginalChecksum { get; set; }        // Original Checksum
+	[JsonPropertyName("originalChecksum")]
+	public string OriginalChecksum { get; set; } = "";        // Original Checksum
 
-	[JsonPropertyName("")]
-	public string NewChecksum { get; set; }             // New Checksum
+	[JsonPropertyName("newChecksum")]
+	public string NewChecksum { get; set; } = "";             // New Checksum
 
-	[JsonPropertyName("")]
+	[JsonPropertyName("conversionTools")]
 	//TODO: This should be a list of conversion tools used
-	public List<string> ConversionTools { get; set; }   // List of conversion tools used
+	public List<string> ConversionTools { get; set; } = new List<string>();   // List of conversion tools used
 
-	[JsonPropertyName("")]
-	public long OriginalSize { get; set; }              // Original file size (bytes)
+	[JsonPropertyName("originalSize")]
+	public long OriginalSize { get; set; } = 0;              // Original file size (bytes)
 
-	[JsonPropertyName("")]
-	public long NewSize { get; set; }                   // New file size (bytes)
+	[JsonPropertyName("newSize")]
+	public long NewSize { get; set; } = 0;                   // New file size (bytes)
 
-	[JsonPropertyName("")]
-	public bool IsConverted { get; set; }				// True if file is converted
-
-	[JsonPropertyName("")]
-	public bool SupportsConversion { get; set; }        // True if file supports conversion 
+	[JsonPropertyName("isConverted")]
+	public bool IsConverted { get; set; } = false;				// True if file is converted
 
 	[JsonPropertyName("hashingAlgorithm")]
-	private HashAlgorithms HashingAlgorithm;
+	private HashAlgorithms HashingAlgorithm = HashAlgorithms.SHA256;
 	public FileInfo()
 	{
 	}
@@ -71,6 +68,7 @@ public class FileInfo
 	{
 		FilePath = path;
 		ParseOutput(output);
+		//TODO: Hashing algorithm should be set in settings
 		//Get checksum
 		switch (HashingAlgorithm)
 		{
