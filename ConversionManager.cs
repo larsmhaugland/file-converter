@@ -225,7 +225,8 @@ public class ConversionManager
                                 //Convert file using virtual function
                                 converter.ConvertFile(file.FilePath, outputFormat);           //TODO: This should be called in a thread with timeout and potential retry
                                 if (converter.Name != null) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
-                                file.IsModified = true; //File has been worked on               TODO: We maybe don't need this if this solution works
+                                file.IsModified = true; //File has been worked on
+                                file.Route.Remove(file.Route.First());                      //Remove the pronom from the route
                                 break;
                             }
                         }

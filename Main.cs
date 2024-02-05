@@ -10,7 +10,7 @@ public static class GlobalVariables
 }
 public class Options
 {
-    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "C:/Users/larsm/Downloads")]
+    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
     public string Input { get; set; } = "";
     [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
     public string Output { get; set; } = "";
