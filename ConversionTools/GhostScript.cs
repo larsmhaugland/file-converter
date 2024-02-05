@@ -177,7 +177,7 @@ public class GhostscriptConverter : Converter
     void convert(string fileinfo, string outputFileName, string sDevice, string extension)
     {
         Logger log = Logger.Instance;
-        string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ghostscriptbinarywindows", "gs10.02.1", "bin", "gsdll64.dll");
+        string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
         try
         {
             using (var rasterizer = new GhostscriptRasterizer())
