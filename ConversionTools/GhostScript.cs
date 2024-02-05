@@ -178,38 +178,40 @@ public class GhostscriptConverter : Converter
     {
         Logger log = Logger.Instance;
         string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ghostscriptbinarywindows", "gs10.02.1", "bin", "gsdll64.dll");
-        
-        using (var rasterizer = new GhostscriptRasterizer())
+        try
         {
-            GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0,0,0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
-            using (var stream = new FileStream(fileinfo, FileMode.Open, FileAccess.Read))
+            using (var rasterizer = new GhostscriptRasterizer())
             {
-                rasterizer.Open(stream, versionInfo, false);
-
-
-                ImageFormat imageFormat = GetImageFormat(extension);
-
-                if (imageFormat != null)
+                GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
+                using (var stream = new FileStream(fileinfo, FileMode.Open, FileAccess.Read))
                 {
+                    rasterizer.Open(stream, versionInfo, false);
 
+                    ImageFormat imageFormat = GetImageFormat(extension);
 
-
-                    for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                    if (imageFormat != null)
                     {
-                        string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
-                        using (var image = rasterizer.GetPage(300, pageNumber))
-                        {
-                            image.Save(pageOutputFileName, imageFormat);
-                        }
-                    }
-                   // deleteOriginalFileFromOutputDirectory(fileinfo);
-                }
 
-                else
-                {
-                    log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+                        for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                        {
+                            string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
+                            using (var image = rasterizer.GetPage(300, pageNumber))
+                            {
+                                image.Save(pageOutputFileName, imageFormat);
+                            }
+                        }
+                        // deleteOriginalFileFromOutputDirectory(fileinfo);
+                    }
+                    else
+                    {
+                        log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+                    }
                 }
             }
+        }
+        catch (Exception e)
+        {
+            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true,filename:fileinfo);
         }
     }
 

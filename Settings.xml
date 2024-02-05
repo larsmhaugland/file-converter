@@ -2,7 +2,7 @@
 <root>
     <Requester>Lars</Requester>  
     <Converter>Lars</Converter>
-	<ChecksumHashing>md5</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
+	<ChecksumHashing>sha256</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
 	<!-- 
 			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935

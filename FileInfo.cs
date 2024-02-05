@@ -91,7 +91,7 @@ public class FileInfo
 		OriginalMime = siegfriedFile.matches[0].mime;
 		FilePath = siegfriedFile.filename;
 
-
+		/*
 		switch(HashingAlgorithm)
 		{
 			case HashAlgorithms.MD5:
@@ -100,7 +100,7 @@ public class FileInfo
 			default:
 				OriginalChecksum = CalculateFileChecksum(SHA256.Create());
 				break;
-		}
+		}*/
 	}
 
 	public bool CheckIfConverted()

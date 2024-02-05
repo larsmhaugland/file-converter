@@ -40,7 +40,7 @@ public class FileManager
 
         //Identifying all uncompressed files
         //TODO: Why do I get a warning here (without '!')?
-        List<FileInfo> ?files = await sf.IdentifyFilesJSON(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
+        List<FileInfo> ?files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
         
         if(files != null)
         {

@@ -1,4 +1,7 @@
-﻿using Org.BouncyCastle.Asn1;
+﻿using Ghostscript.NET;
+using iText.IO.Source;
+using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509.SigI;
 using SharpCompress.Archives;
 using SharpCompress.Common;
@@ -7,6 +10,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 public class SiegfriedJSON
 {
@@ -29,6 +33,7 @@ public class SiegfriedFile
     public string modified = "";
     [JsonPropertyName("errors")]
     public string errors = "";
+    public string hash = "";
     [JsonPropertyName("matches")]
     public SiegfriedMatches[] matches = [];
 }
@@ -55,8 +60,8 @@ public class SiegfriedMatches
 public class Siegfried
 {
     private static Siegfried? instance;
-    public string Version;
-    public string ScanDate;
+    public string ?Version = null;
+    public string ?ScanDate = null;
     private static readonly object lockObject = new object();
     private List<string> CompressedFolders;
     private List<string> SupportedCompressionExtensions = new List<string>{ ".zip", ".tar", ".gz", ".rar", ".7z" };
@@ -82,8 +87,6 @@ public class Siegfried
     private Siegfried()
     {
         //TODO: Should check Version and ScanDate here
-        Version = "Not Found";
-        ScanDate = "Not Found";
         CompressedFolders = new List<string>();
     }
 
@@ -95,7 +98,7 @@ public class Siegfried
     public SiegfriedFile? IdentifyFile(string path)
     {
         // Wrap the file path in quotes
-        string wrappedPath = "\"" + path + "\"";
+        string wrappedPath = Path.Combine(path);
         string options = $"-home siegfried -json -sig pronom64k.sig ";
 
         // Define the process start info
@@ -142,6 +145,176 @@ public class Siegfried
         }
     }
 
+    /// <summary>
+    /// Returns a SiegfriedFile list of a specified file array
+    /// </summary>
+    /// <param name="paths">Array of file paths to </param>
+    /// <returns>Pronom id or null</returns>
+    public List<FileInfo>? IdentifyList(string[] paths)
+    {
+        string hashAlgorithm;
+        switch (GlobalVariables.checksumHash)
+        {
+            case HashAlgorithms.MD5:
+                hashAlgorithm = "md5";
+                break;
+            default:
+                hashAlgorithm = "sha256";
+                break;
+        }
+        Logger logger = Logger.Instance;
+        var files = new List<FileInfo>();
+
+        if(paths.Length < 1)
+        {
+            return null;
+        }
+        string[] tempPaths = new string[paths.Length];
+        // Wrap the file paths in quotes
+        for (int i = 0; i < paths.Length; i++)
+        {
+            tempPaths[i] = Path.GetFullPath(paths[i]);
+            tempPaths[i] = "\"" + paths[i] + "\"";
+        }
+        string wrappedPaths = String.Join(" ",tempPaths);
+        string options = $"-home siegfried -multi 64 -json -coe -hash " +  hashAlgorithm + " -sig pronom64k.sig ";
+
+        string outputFolder = "siegfried/JSONoutput/";
+        string dir = Path.Combine(outputFolder);
+        string outputFile = dir + Guid.NewGuid().ToString() + ".json";
+        string? parentDir = Directory.GetParent(outputFile)?.FullName;
+
+        //Create output file
+        try
+        {
+            if (parentDir != null && !Directory.Exists(parentDir))
+            {
+                Directory.CreateDirectory(parentDir);
+            }
+            else if (parentDir == null)
+            {
+                logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile, true);
+                throw new Exception("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile);
+            }
+            File.Create(outputFile).Close();
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file " + e.Message, true);
+            throw new Exception("FileManager IdentifyFilesJSON could not create output file " + e.Message);
+        }
+
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
+        {
+            FileName = @"siegfried/sf.exe", // or any other command you want to run
+            Arguments = options + wrappedPaths,
+            RedirectStandardInput = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        string error = "";
+        // Create the process
+        using (Process process = new Process { StartInfo = psi })
+        {
+            // Create the StreamWriter to write to the file
+            using (StreamWriter sw = new StreamWriter(outputFile))
+            {
+                // Set the output stream for the process
+                process.OutputDataReceived += (sender, e) => { if (e.Data != null) sw.WriteLine(e.Data); };
+
+                // Start the process
+                process.Start();
+
+                // Begin asynchronous read operations for output and error streams
+                process.BeginOutputReadLine();
+                error = process.StandardError.ReadToEnd();
+
+                // Wait for the process to exit
+                process.WaitForExit();
+            }
+        }
+        //TODO: Check error and possibly continue
+        if (error.Length > 0)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
+            //return; 
+        }
+        var parsedData = ParseJSONOutput(outputFile, true);
+        if (parsedData == null)
+            return null; //TODO: Check error and possibly continue
+        if (Version == null || ScanDate == null)
+        {
+            Version = parsedData.siegfriedVersion;
+            ScanDate = parsedData.scandate;
+        }
+        for (int i = 0; i < parsedData.files.Length; i++)
+        {
+            var file = new FileInfo(parsedData.files[i]);
+            if (file != null)
+            {
+                file.OriginalChecksum = parsedData.files[i].hash;
+                if (paths.Length - 1 >= i)
+                {
+                    file.FilePath = paths[i];
+                    file.FileName = Path.GetFileName(file.FileName);
+                }
+                files.Add(file);
+            }
+        }
+        return files;
+    }
+
+
+    public Task<List<FileInfo>>? IdentifyFilesIndividually(string input)
+    {
+        Logger logger = Logger.Instance;
+        var files = new ConcurrentBag<FileInfo>();
+        List<string> filePaths = new List<string>(Directory.GetFiles(input, "*.*", SearchOption.AllDirectories));
+        ConcurrentBag<string[]> filePathGroups = new ConcurrentBag<string[]>(GroupPaths(filePaths));
+
+        Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePaths =>
+        {
+            var output = IdentifyList(filePaths);
+            if (output == null)
+            {
+                logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesIndividually could not identify files", true);
+                return; //Skip current group
+            }
+            //Print what files didn't get returned to output
+            var diff = filePaths.Except(output.Select(f => f.FileName)).ToList();
+            foreach (var file in diff)
+            {
+                logger.SetUpRunTimeLogMessage(file + " could not be identified", true);
+            }
+
+            foreach (var f in output)
+            {
+                files.Add(f);
+            }
+        });
+       
+        return Task.FromResult(files.ToList());
+    }
+
+    List<string[]> GroupPaths(List<string> paths)
+    {
+        int groupSize = 128; //Number of files to be identified in each group
+        int groupCount = paths.Count / groupSize;
+        var filePathGroups = new List<string[]>();
+        if (paths.Count % groupSize != 0)
+        {
+            groupCount++;
+        }
+        for (int i = 0; i < groupCount; i++)
+        {
+            filePathGroups.Add(paths.GetRange(i * groupSize, Math.Min(groupSize, paths.Count - i * groupSize)).ToArray());
+        }
+        return filePathGroups;
+    }
 
     public Task<List<FileInfo>>? IdentifyCompressedFilesJSON(string input)
     {
@@ -149,24 +322,31 @@ public class Siegfried
         UnpackCompressedFolders();
         var fileBag = new ConcurrentBag<FileInfo>();
         
+        //For eaccompressed folder, identify all files
         Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, folder =>
         {
-            var pathWithoutExtension = folder.Split('.')[0]; //TODO: This might not work for paths with multiple file extensions
-            var files = IdentifyFilesJSON(pathWithoutExtension);
-            if (files != null)
+            //Identify all file paths in compressed folder and group them
+            var pathWithoutExt = folder.Split('.')[0]; //TODO: This might not work for paths with multiple file extensions
+            var paths = Directory.GetFiles(pathWithoutExt, "*.*", SearchOption.AllDirectories);
+            var filePathGroups = GroupPaths(new List<string>(paths));
+            //Identify all files in each group
+            Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, paths =>
             {
-                foreach (FileInfo file in files.Result)
+                var files = IdentifyList(paths);
+                if (files != null)
                 {
-                    fileBag.Add(file);
+                    foreach (FileInfo file in files)
+                    {
+                        fileBag.Add(file);
+                    }
                 }
-            } else
-            {
-                logger.SetUpRunTimeLogMessage(folder + " could not be identified", true); 
-            }
+                else
+                {
+                    logger.SetUpRunTimeLogMessage(folder + " could not be identified", true);
+                }
+            });
         });
-
-        var files = fileBag.ToList();
-        return Task.FromResult(files);
+        return Task.FromResult(fileBag.ToList());
     }
 
     /// <summary>
@@ -181,7 +361,7 @@ public class Siegfried
         var files = new List<FileInfo>();
         // Wrap the file path in quotes
         string wrappedPath = "\"" + inputFolder + "\"";
-        string options = $"-home siegfried -multi 64 -json -sig pronom64k.sig ";
+        string options = $"-home siegfried -multi 64 -hash sha256 -json -sig pronom64k.sig ";
         string outputFolder = "siegfried/JSONoutput/";
         string dir = Path.Combine(outputFolder,inputFolder);
         string outputFile = dir + ".json";
@@ -315,10 +495,23 @@ public class Siegfried
 
     static SiegfriedFile ParseSiegfriedFile(JsonElement fileElement)
     {
+        string hashMethod;
+        switch (GlobalVariables.checksumHash)
+        {
+            case HashAlgorithms.MD5:
+                hashMethod = "md5";
+                break;
+            default:
+                hashMethod = "sha256";
+                break;
+        }
+        JsonElement jsonElement;
         return new SiegfriedFile
         {
+            
             filename = fileElement.GetProperty("filename").GetString() ?? "",
-            //Explicitly check if filesize exists and is a number, otherwise set to 0
+            
+            hash = fileElement.TryGetProperty(hashMethod,out jsonElement) ? fileElement.GetProperty(hashMethod).GetString() ?? "" : "",
             filesize = fileElement.GetProperty("filesize").GetInt64(),
             modified = fileElement.GetProperty("modified").GetString() ?? "",
             errors = fileElement.GetProperty("errors").GetString() ?? "",
