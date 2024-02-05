@@ -240,10 +240,10 @@ public class GhostscriptConverter : Converter
     {
         var supportedConversions = new Dictionary<string, List<string>>();
         //Image to PDF
-        /*foreach (string imagePronom in ImagePronoms)
+        foreach (string imagePronom in ImagePronoms)
         {
             supportedConversions.Add(imagePronom, PDFPronoms);
-        }*/
+        }
         //PDF to Image
         foreach(string pdfPronom in PDFPronoms)
         {
