@@ -47,15 +47,6 @@ public class FileManager
             //Change path from input to output directory
             foreach(FileInfo file in files)
             {
-                int index = file.FilePath.IndexOf(GlobalVariables.parsedOptions.Input);
-                if (index != -1)
-                {
-                    file.FilePath = Path.Combine(file.FilePath.Substring(0, index) , GlobalVariables.parsedOptions.Output , file.FilePath.Substring(index + GlobalVariables.parsedOptions.Input.Length));
-                    file.FileName = file.FilePath;
-                } else
-                {
-                    logger.SetUpRunTimeLogMessage("Error when switching filepath from input to output: " + file.FilePath, true);
-                }
                 //Replace first occurence of input path with output path
                 file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
             }

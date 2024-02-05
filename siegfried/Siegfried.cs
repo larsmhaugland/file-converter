@@ -90,6 +90,17 @@ public class Siegfried
         CompressedFolders = new List<string>();
     }
 
+    static string HashEnumToString(HashAlgorithms hash)
+    {
+        switch (hash)
+        {
+            case HashAlgorithms.MD5:
+                return "md5";
+            default:
+                return "sha256";
+        }
+    }
+
     /// <summary>
     /// Returns the pronom id of a specified file
     /// </summary>
@@ -99,7 +110,7 @@ public class Siegfried
     {
         // Wrap the file path in quotes
         string wrappedPath = Path.Combine(path);
-        string options = $"-home siegfried -json -sig pronom64k.sig ";
+        string options = $"-home siegfried -json -hash " + HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
 
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo
@@ -152,16 +163,6 @@ public class Siegfried
     /// <returns>Pronom id or null</returns>
     public List<FileInfo>? IdentifyList(string[] paths)
     {
-        string hashAlgorithm;
-        switch (GlobalVariables.checksumHash)
-        {
-            case HashAlgorithms.MD5:
-                hashAlgorithm = "md5";
-                break;
-            default:
-                hashAlgorithm = "sha256";
-                break;
-        }
         Logger logger = Logger.Instance;
         var files = new List<FileInfo>();
 
@@ -177,7 +178,7 @@ public class Siegfried
             tempPaths[i] = "\"" + paths[i] + "\"";
         }
         string wrappedPaths = String.Join(" ",tempPaths);
-        string options = $"-home siegfried -multi 64 -json -coe -hash " +  hashAlgorithm + " -sig pronom64k.sig ";
+        string options = $"-home siegfried -multi 64 -json -coe -hash " +  HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
 
         string outputFolder = "siegfried/JSONoutput/";
         string dir = Path.Combine(outputFolder);
@@ -284,12 +285,7 @@ public class Siegfried
                 logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesIndividually could not identify files", true);
                 return; //Skip current group
             }
-            //Print what files didn't get returned to output
-            var diff = filePaths.Except(output.Select(f => f.FileName)).ToList();
-            foreach (var file in diff)
-            {
-                logger.SetUpRunTimeLogMessage(file + " could not be identified", true);
-            }
+            //TODO: Check if all files were identified
 
             foreach (var f in output)
             {
@@ -495,16 +491,7 @@ public class Siegfried
 
     static SiegfriedFile ParseSiegfriedFile(JsonElement fileElement)
     {
-        string hashMethod;
-        switch (GlobalVariables.checksumHash)
-        {
-            case HashAlgorithms.MD5:
-                hashMethod = "md5";
-                break;
-            default:
-                hashMethod = "sha256";
-                break;
-        }
+        string hashMethod = HashEnumToString(GlobalVariables.checksumHash);
         JsonElement jsonElement;
         return new SiegfriedFile
         {

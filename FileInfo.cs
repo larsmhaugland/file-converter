@@ -106,7 +106,7 @@ public class FileInfo
 	public bool CheckIfConverted()
 	{
         //Get new pronom
-        var newInfo = Siegfried.Instance.IdentifyFile(FileName);
+        var newInfo = Siegfried.Instance.IdentifyFile(FilePath);
         if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
         {
 			IsConverted = true;
@@ -118,17 +118,8 @@ public class FileInfo
         NewFormatName = newInfo.matches[0].format;
         NewMime = newInfo.matches[0].mime;
         NewSize = newInfo.filesize;
+		NewChecksum = newInfo.hash;
 
-        //Get checksum
-        switch (HashingAlgorithm)
-        {
-            case HashAlgorithms.MD5:
-                NewChecksum = CalculateFileChecksum(MD5.Create());
-                break;
-            default:
-                NewChecksum = CalculateFileChecksum(SHA256.Create());
-                break;
-        }
         return IsConverted;
     }
 
