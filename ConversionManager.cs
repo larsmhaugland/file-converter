@@ -10,12 +10,14 @@ class FileToConvert
     public string CurrentPronom { get; set; }       //From FileInfo
     public string TargetPronom { get; set; }        //From Dictionary
     public List<string> Route { get; set; }         //From Dictionary
-    public bool IsModified { get; set; }            
+    public bool IsModified { get; set; }
+    public int NumTries { get; set; }
 
     public FileToConvert(FileInfo file)
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
+        NumTries = 0;
 
         if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
         {
@@ -165,10 +167,12 @@ public class ConversionManager
     /// <summary>
     /// Responsible for converting all files
     /// </summary>
-    public void ConvertFiles()
+    public async void ConvertFiles()
     {
         //Initialize working set
         List<FileToConvert> WorkingSet = new List<FileToConvert>();
+        Siegfried sf = Siegfried.Instance;
+        Logger logger = Logger.Instance;
         foreach (FileInfo file in Files)
         {
             //Add file using constructor that sets target pronom and route
@@ -199,20 +203,20 @@ public class ConversionManager
                 WorkingSet.RemoveAt(i);
             }
         }
-
+        ThreadManager threadManager = ThreadManager.Instance;
         do
         {
             //Loop through working set
             foreach (FileToConvert file in WorkingSet)
             {
+                //If file is already worked on, skip it
+                if (file.IsModified)
+                {
+                    break;
+                }
                 //Loop through converters
                 foreach (Converter converter in Converters)
                 {
-                    //If file is at the end of the route, skip it
-                    if (file.Route.Count == 0)
-                    {
-                        break;
-                    }
                     var dict = converter.listOfSupportedConversions();
                     //If the converter supports the current pronom, check if it can convert to the next pronom in the route
                     if (dict != null && dict.ContainsKey(file.CurrentPronom))
@@ -223,25 +227,55 @@ public class ConversionManager
                             if (file.Route.First() == outputFormat)
                             {
                                 //Convert file using virtual function
-                                converter.ConvertFile(file.FilePath, outputFormat);           //TODO: This should be called in a thread with timeout and potential retry
-                                if (converter.Name != null) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
+                                threadManager.StartTask(() => converter.ConvertFile(file.FilePath, outputFormat));
+                                file.NumTries++;
+                                if (converter.Name != null && FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
                                 file.IsModified = true; //File has been worked on
-                                file.Route.Remove(file.Route.First());                      //Remove the pronom from the route
                                 break;
                             }
                         }
                     }
                 }
             }
+            threadManager.WaitAll();
             //Remove files that have been worked on from the working set and update for the rest
             for(int i = WorkingSet.Count - 1; i >= 0; i--)
             {
+                if (!WorkingSet[i].IsModified)
+                {
+                    WorkingSet.RemoveAt(i);
+                    continue;
+                }
+
+                WorkingSet[i].IsModified = false;
+                //Check if file was converted correctly
+                var file = sf.IdentifyFile(WorkingSet[i].FilePath, false);
+                if(file == null)
+                {
+                    logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + WorkingSet[i].FilePath, true);
+                    continue;
+                }
+                WorkingSet[i].CurrentPronom = file.matches[0].id;
+                if (WorkingSet[i].CurrentPronom == WorkingSet[i].Route.First())
+                {
+                    WorkingSet[i].Route.RemoveAt(0);
+                    WorkingSet[i].NumTries = 0;
+                } else
+                {
+                    WorkingSet[i].NumTries++;
+                }
+                //Remove if no more steps in route
+                if (WorkingSet[i].Route.Count == 0 || WorkingSet[i].NumTries > 2)
+                {
+                    WorkingSet.RemoveAt(i);
+                }
+
+                
+                /*
                 //If file has been worked on in a converter, update data and reset IsModified "flag"
                 if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count > 0)
                 {
                     WorkingSet[i].IsModified = false;
-                    WorkingSet[i].CurrentPronom = WorkingSet[i].Route.First();
-                    WorkingSet[i].Route.Remove(WorkingSet[i].Route.First());
                 }
                 //If file has not been worked on, remove it from the working set since the file is either fully converted or cannot be converted
                 else if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count == 0)
@@ -252,9 +286,11 @@ public class ConversionManager
                 {
                     WorkingSet.RemoveAt(i);
                 }
+                */
             }
             //Repeat until all files have been converted/checked
         } while (WorkingSet.Count != 0);
+        threadManager = null;
         //Update FileInfo list with new data
         checkConversion();
     }

@@ -48,54 +48,54 @@ public class iText7 : Converter
         {
         //PDF-A
             case "fmt/95":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A, pronom);
                 break;
             case "fmt/354":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1B);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1B, pronom);
                 break;
             case "fmt/476":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2A);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2A, pronom);
                 break;
             case "fmt/477":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2B);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2B, pronom);
                 break;
             case "fmt/478":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2U);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2U, pronom);
                 break;
             case "fmt/479":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3A);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3A, pronom);
                 break;
             case "fmt/480":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3B);
+                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3B, pronom);
                 break;
         //PDF 1.x
             case "fmt/14":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0, pronom);
                 break;
             case "fmt/15":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1, pronom);
                 break;
             case "fmt/16":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2, pronom);
                 break;
             case "fmt/17":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3, pronom);
                 break;
             case "fmt/18":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4, pronom);
                 break;
             case "fmt/19":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5, pronom);
                 break;
             case "fmt/20":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6, pronom);
                 break;
             case "fmt/276":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7, pronom);
                 break;
             //PDF 2.x
             case "fmt/1129":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0);
+                convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom);
                 break;
             //Logger error-message
             default:
@@ -109,7 +109,8 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="fileinfo">The file being converted</param>
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
-    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion) {
+    /// <param name="pronom">The file format to convert to</param>
+    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, string pronom) {
 
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
@@ -125,9 +126,11 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
-            //TODO: Check if file is converted correctly, only delete file if yes
-            replaceFileInList(fileinfo, output);
-            deleteOriginalFileFromOutputDirectory(fileinfo);
+            int count = 1;
+            while (!CheckConversionStatus(fileinfo,output,pronom) && count < 4)
+            {
+                count++;
+            }
         }
         catch (Exception e)
         {
@@ -140,7 +143,8 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="fileinfo">The file being converted</param>
     /// <param name="conformanceLevel">What pdf-A version it is being converted to</param>
-    void convertFromImageToPDFA(string fileinfo, PdfAConformanceLevel conformanceLevel) {
+    /// <param name="pronom">The file format to convert to</param>
+    void convertFromImageToPDFA(string fileinfo, PdfAConformanceLevel conformanceLevel, string pronom) {
         PdfVersion pdfVersion = PdfVersion.PDF_2_0;
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
@@ -158,7 +162,11 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
-            deleteOriginalFileFromOutputDirectory(fileinfo);
+            int count = 1;
+            while (!CheckConversionStatus(fileinfo, output, pronom) && count < 4)
+            {
+                count++;
+            }
         }
         catch (Exception e)
         {
@@ -170,7 +178,7 @@ public class iText7 : Converter
     /// Update the fileinfo object with new information after conversion
     /// </summary>
     /// <param name="fileinfo">The file that gets updated information</param>
-    /// 	/// <param name="pronom">The file format to convert to</param>
+    /// <param name="pronom">The file format to convert to</param>
     public override void CombineFiles(string[] files, string pronom)
     {
         if (files == null || files.Length == 0)

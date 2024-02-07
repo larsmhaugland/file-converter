@@ -69,7 +69,7 @@ class Program
 
         ConversionManager cm = new ConversionManager();
         logger.AskAboutReqAndConv();
-		
+
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);

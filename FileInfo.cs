@@ -106,7 +106,7 @@ public class FileInfo
 	public bool CheckIfConverted()
 	{
         //Get new pronom
-        var newInfo = Siegfried.Instance.IdentifyFile(FilePath);
+        var newInfo = Siegfried.Instance.IdentifyFile(FilePath, true);
         if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
         {
 			IsConverted = true;
