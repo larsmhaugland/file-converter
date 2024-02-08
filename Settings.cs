@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Xml;
 public class SettingsData
 {
-    public List<string>? PronomsList { get; set; }
+    public List<string> PronomsList { get; set; } = new List<string>();
     public string ConvertTo { get; set; } = "";
     public string DefaultType { get; set; } = "";
 }
