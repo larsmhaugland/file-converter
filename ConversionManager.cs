@@ -37,7 +37,7 @@ public class ConversionManager
     Dictionary<string,FileInfo> FileInfoMap = new Dictionary<string,FileInfo>();
 
     List<Converter> Converters;
-    List<string> WordPronoms = [
+    public List<string> WordPronoms = [
         "x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
         "x-fmt/275", "x-fmt/276", "fmt/1688", "fmt/37",
         "fmt/38", "fmt/1282", "fmt/1283", "x-fmt/131",
@@ -75,18 +75,18 @@ public class ConversionManager
         "fmt/489", "fmt/490", "fmt/492", "fmt/491",
         "fmt/1129", "fmt/1451"
     ];
-    List<string> ExcelPronoms = [
+    public List<string> ExcelPronoms = [
         "fmt/55", "fmt/56", "fmt/57", "fmt/61",
         "fmt/595", "fmt/445", "fmt/214", "fmt/1828",
         "fmt/494", "fmt/62", "fmt/59", "fmt/598"
     ];
-    List<string> PPTPronoms = [
+    public List<string> PPTPronoms = [
         "fmt/1537", "fmt/1866", "fmt/181", "fmt/1867",
         "fmt/179", "fmt/1747", "fmt/1748", "x-fmt/88",
         "fmt/125", "fmt/126", "fmt/487", "fmt/215",
         "fmt/1829", "fmt/494", "fmt/631"
     ];
-    List<string> OpenDocPronoms = [
+    public List<string> OpenDocPronoms = [
         "fmt/140", "fmt/135", "fmt/136", "fmt/137",
         "fmt/138", "fmt/139", "x-fmt/3", "fmt/1756",
         "fmt/290", "fmt/291", "fmt/1755", "fmt/294",
