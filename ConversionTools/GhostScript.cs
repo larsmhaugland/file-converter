@@ -215,7 +215,7 @@ public class GhostscriptConverter : Converter
         }
     }
 
-    private ImageFormat GetImageFormat(string extension)
+    private ImageFormat ?GetImageFormat(string extension)
     {
         switch (extension)
         {

@@ -190,9 +190,8 @@ public class ConversionManager
         {
             var newFile = new FileToConvert(file);
 
-            //Use current and target pronom to create a key for the conversion map
-            var last = WorkingSet.Last();
-            string parentDirName = Directory.GetParent(file.FilePath).Name;
+            
+            string parentDirName = Directory.GetParent(file.FilePath)?.Name ?? "";
             //check if there is a folderoverride on the folder this file is in  
             if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
             {
@@ -200,14 +199,13 @@ public class ConversionManager
                 {
                     if(file.OriginalPronom == pronom)
                     {
-                        last.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+                        newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
                     }
                 }
-                
             }
+            //Use current and target pronom to create a key for the conversion map
+            var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
 
-            var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
-          
             //If the conversion map contains the key, set the route to the value of the key
             if (ConversionMap.ContainsKey(key))
             {
@@ -223,6 +221,7 @@ public class ConversionManager
             }
             WorkingSet.Add(newFile);
         }
+
         List<Task> tasks = new List<Task>();
         ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
         do

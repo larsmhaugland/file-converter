@@ -22,6 +22,7 @@ class Program
 	
 	static void Main(string[] args)
 	{
+		
 		Stopwatch stopwatch = new Stopwatch();
 		stopwatch.Start();
 		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
@@ -76,7 +77,13 @@ class Program
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
 			Console.WriteLine("Converting files...");
-            cm.ConvertFiles().Wait();
+			try
+			{
+				cm.ConvertFiles().Wait();
+			} catch (Exception e)
+			{
+				logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
+			}
 			Console.WriteLine("Done!");
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();

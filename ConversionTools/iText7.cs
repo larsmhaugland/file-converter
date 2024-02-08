@@ -150,54 +150,54 @@ public class iText7 : Converter
             {
                 //PDF-A
                 case "fmt/95":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1A);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_1A);
                     break;
                 case "fmt/354":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1B);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom,  PdfAConformanceLevel.PDF_A_1B);
                     break;
                 case "fmt/476":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2A);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_2A);
                     break;
                 case "fmt/477":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2B);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_2B);
                     break;
                 case "fmt/478":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2U);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_2U);
                     break;
                 case "fmt/479":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3A);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_3A);
                     break;
                 case "fmt/480":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3B);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom, PdfAConformanceLevel.PDF_A_3B);
                     break;
                 //PDF 1.x
                 case "fmt/14":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0, pronom);
                     break;
                 case "fmt/15":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1, pronom);
                     break;
                 case "fmt/16":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2, pronom);
                     break;
                 case "fmt/17":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3, pronom);
                     break;
                 case "fmt/18":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4, pronom);
                     break;
                 case "fmt/19":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5, pronom);
                     break;
                 case "fmt/20":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6, pronom);
                     break;
                 case "fmt/276":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7, pronom);
                     break;
                 //PDF 2.x
                 case "fmt/1129":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0);
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom);
                     break;
                 //Logger error-message
                 default:
@@ -214,12 +214,12 @@ public class iText7 : Converter
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
     /// <param name="conformanceLevel"></param>
     /// <param name="pronom">The file format to convert to</param>
-    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, PdfAConformanceLevel? conformanceLevel = null, string pronom) {
+    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, string pronom, PdfAConformanceLevel? conformanceLevel = null) {
     
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
-        
+
         try
         {
             using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
@@ -231,7 +231,7 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
-            if(conformanceLevel != null)
+            if (conformanceLevel != null)
             {
                 convertFromPDFToPDFA(output, conformanceLevel, fileinfo);
             }
@@ -249,6 +249,8 @@ public class iText7 : Converter
             if (!converted)
             {
                 throw new Exception("File was not converted");
+            }
+
         }
         catch (Exception e)
         {
