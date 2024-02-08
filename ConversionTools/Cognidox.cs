@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 
 public class CogniddoxConverter : Converter
 {
-    Dictionary<string, List<string>> supportedConversions; 
     public CogniddoxConverter()
     {
         Name = "";
         Version = "";
-        supportedConversions = listOfSupportedConversions();
+        SupportedConversions = listOfSupportedConversions();
     }
 
     /// <summary>
