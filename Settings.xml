@@ -14,7 +14,7 @@
 			-->
 	<FileClass>
 		<ClassName>images</ClassName>
-		<Default>fmt/477</Default> <!-- Must be filled -->
+		<Default>fmt/14</Default> <!-- Must be filled -->
 		<FileTypes>
 			<Filename>png</Filename>
 			<Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
@@ -182,7 +182,7 @@
 	<FolderOverride>
 		<FolderPath>apekatter</FolderPath><!-- Path after input folder example: /documents -->
 		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
-		<ConvertTo>fmt/11</ConvertTo>
+		<ConvertTo>fmt/477</ConvertTo>
 		<MergeImages></MergeImages><!-- Yes, No -->
 	</FolderOverride>
 </root>
