@@ -6,7 +6,8 @@ public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
     public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
-	public static HashAlgorithms checksumHash;
+    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>();
+    public static HashAlgorithms checksumHash;
 }
 public class Options
 {
@@ -56,6 +57,7 @@ class Program
 			//Copy and unpack files
 			sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 			Console.WriteLine("Done! Elapsed: {0}", stopwatch.Elapsed);
+			settings.SetUpFolderOverride("./Settings.xml");
 			Console.WriteLine("Identifying files...");
 			//Identify files
 			fileManager.IdentifyFiles();

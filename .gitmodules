@@ -1,6 +1,3 @@
-[submodule "ghostscriptbinarywindows"]
-	path = ghostscriptbinarywindows
-	url = https://git.gvk.idi.ntnu.no/sei/ghostscriptbinarywindows.git
 [submodule "GhostscriptBinaryFiles"]
 	path = GhostscriptBinaryFiles
 	url = https://github.com/seigmenn/GhostscriptBinaryFiles.git
