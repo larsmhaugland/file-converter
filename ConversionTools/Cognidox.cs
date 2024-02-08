@@ -22,8 +22,10 @@ public class CogniddoxConverter : Converter
     public override void ConvertFile(string filePath, string pronom)
     {   
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
+        string parentDirectory = Directory.GetParent(filePath).ToString();
         string fileName = Path.GetFileNameWithoutExtension(filePath);
-        string fileNameWithExtension = fileName + ".pdf";
+        string fileNameWithExtension = Path.Combine(parentDirectory, fileName + ".pdf");
+
         RunOfficeToPdfConversion(covnersionExePath, filePath, fileNameWithExtension); 
     }
 
