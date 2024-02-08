@@ -72,8 +72,19 @@ public class CogniddoxConverter : Converter
         process.Start();
         process.WaitForExit();
 
-        // Optionally, you can read the output or handle errors here.
+        // Capture standard output and standard error
         string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+
+        // Print standard output and standard error to the console or log it
+        Console.WriteLine("Conversion Output:");
+        Console.WriteLine(output);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            Console.WriteLine("Conversion Error:");
+            Console.WriteLine(error);
+        }
 
         process.Close();
     }
