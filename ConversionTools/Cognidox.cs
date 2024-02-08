@@ -26,6 +26,7 @@ public class CogniddoxConverter : Converter
         string fileNameWithExtension = fileName + ".pdf";
         RunOfficeToPdfConversion(covnersionExePath, filePath, fileNameWithExtension); 
     }
+
     /// <summary>
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
