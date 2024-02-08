@@ -14,7 +14,7 @@
 			-->
 	<FileClass>
 		<ClassName>images</ClassName>
-		<Default>fmt/14</Default> <!-- Must be filled -->
+		<Default>fmt/477</Default> <!-- Must be filled -->
 		<FileTypes>
 			<Filename>png</Filename>
 			<Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
@@ -28,7 +28,7 @@
 	</FileClass>
 	<FileClass>
 		<ClassName>pdf</ClassName>
-		<Default>fmt/476</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>pdf</Filename>
 			<Pronoms>
