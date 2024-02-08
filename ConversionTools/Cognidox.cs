@@ -74,11 +74,8 @@ public class CogniddoxConverter : Converter
 
         // Optionally, you can read the output or handle errors here.
         string output = process.StandardOutput.ReadToEnd();
-        // ...
 
         process.Close();
-
-        Console.WriteLine("Conversion completed.");
     }
 
     List<string> PDFPronoms =
