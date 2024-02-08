@@ -105,12 +105,20 @@ public class Siegfried
     /// Returns the pronom id of a specified file
     /// </summary>
     /// <param name="path">Path to file</param>
-    /// <returns>Pronom id or null</returns>
-    public SiegfriedFile? IdentifyFile(string path)
+    /// <param name="hash">True if file should be hashed</param>
+    /// <returns>Parsed SiegfriedFile or null</returns>
+    public SiegfriedFile? IdentifyFile(string path, bool hash)
     {
         // Wrap the file path in quotes
         string wrappedPath = Path.Combine(path);
-        string options = $"-home siegfried -json -hash " + HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
+        string options;
+        if (hash)
+        {
+            options = $"-home siegfried -json -hash " + HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
+        } else
+        {
+            options = $"-home siegfried -json -sig pronom64k.sig ";
+        }
 
         // Define the process start info
         ProcessStartInfo psi = new ProcessStartInfo

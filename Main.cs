@@ -71,12 +71,12 @@ class Program
 
         ConversionManager cm = new ConversionManager();
         logger.AskAboutReqAndConv();
-		
+
         if (fileManager.Files.Count > 0)
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
 			Console.WriteLine("Converting files...");
-            cm.ConvertFiles();
+            cm.ConvertFiles().Wait();
 			Console.WriteLine("Done!");
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();

@@ -52,8 +52,14 @@ public class FileInfo
 	[JsonPropertyName("isConverted")]
 	public bool IsConverted { get; set; } = false;				// True if file is converted
 
+
+	public bool IsModified { get; set; } = false;				// True if file is modified
+	public List<string> Route { get; set; } = new List<string>();   // List of modification tools used
+	public string TargetPronom { get; set; } = "";				// The pronom the file should be converted to
 	[JsonPropertyName("hashingAlgorithm")]
 	private HashAlgorithms HashingAlgorithm = HashAlgorithms.SHA256;
+
+
 	public FileInfo()
 	{
 	}
@@ -90,23 +96,12 @@ public class FileInfo
 		OriginalFormatName = siegfriedFile.matches[0].format;
 		OriginalMime = siegfriedFile.matches[0].mime;
 		FilePath = siegfriedFile.filename;
-
-		/*
-		switch(HashingAlgorithm)
-		{
-			case HashAlgorithms.MD5:
-				OriginalChecksum = CalculateFileChecksum(MD5.Create());
-				break;
-			default:
-				OriginalChecksum = CalculateFileChecksum(SHA256.Create());
-				break;
-		}*/
 	}
 
 	public bool CheckIfConverted()
 	{
         //Get new pronom
-        var newInfo = Siegfried.Instance.IdentifyFile(FilePath);
+        var newInfo = Siegfried.Instance.IdentifyFile(FilePath, true);
         if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
         {
 			IsConverted = true;

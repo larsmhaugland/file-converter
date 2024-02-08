@@ -212,11 +212,14 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="fileinfo">The file being converted</param>
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
-    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, PdfAConformanceLevel? conformanceLevel = null) {
-
+    /// <param name="conformanceLevel"></param>
+    /// <param name="pronom">The file format to convert to</param>
+    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, PdfAConformanceLevel? conformanceLevel = null, string pronom) {
+    
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
+        
         try
         {
             using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
@@ -228,21 +231,31 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
-            //TODO: Check if file is converted correctly, only delete file if yes
-            replaceFileInList(fileinfo, output);
             if(conformanceLevel != null)
             {
                 convertFromPDFToPDFA(output, conformanceLevel, fileinfo);
             }
-            else
+            int count = 1;
+            bool converted = false;
+            do
             {
-                deleteOriginalFileFromOutputDirectory(fileinfo);
-            }
+                converted = CheckConversionStatus(fileinfo, output, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertFromImageToPDF(fileinfo, pdfVersion, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
         }
         catch (Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: fileinfo);
+            throw;
         }
+        
     }
 
     /// <summary>
@@ -268,7 +281,6 @@ public class iText7 : Converter
                 {
                     HtmlConverter.ConvertToPdf(htmlSource, pdfDocument);
                     document.Close();
-            
                 }
                 pdfDocument.Close();
                 pdfWriter.Close();
@@ -337,6 +349,7 @@ public class iText7 : Converter
         catch(Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: fileinfo);
+            throw;
         }
     }
 
@@ -345,7 +358,7 @@ public class iText7 : Converter
     /// Update the fileinfo object with new information after conversion
     /// </summary>
     /// <param name="fileinfo">The file that gets updated information</param>
-    /// 	/// <param name="pronom">The file format to convert to</param>
+    /// <param name="pronom">The file format to convert to</param>
     public override void CombineFiles(string[] files, string pronom)
     {
         if (files == null || files.Length == 0)
