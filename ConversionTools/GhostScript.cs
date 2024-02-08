@@ -17,7 +17,7 @@ using System.Runtime.Intrinsics.X86;
 
 //TODO: Check resolution settings when converting to image
 //TODO: Error check - only delete original file if conversion is completed successfully
-//TODO: Can add PDF to PDF conversion if needed
+//TODO: Put all images in a folder with original name and delete original file
 
 /// <summary>
 /// GhostScript is a subclass of the Converter class.   <br></br>
@@ -26,7 +26,6 @@ using System.Runtime.Intrinsics.X86;
 /// - PDF to Image (png, jpg, tif, bmp)                 <br></br>
 ///                                                     <br></br>
 /// Conversions not added:                              <br></br>
-/// - PDF to PDF    (see iText7)                        <br></br>
 /// - Image to PDF  (see iText7)                        <br></br>
 /// </summary>
 public class GhostscriptConverter : Converter
@@ -45,7 +44,7 @@ public class GhostscriptConverter : Converter
     public override void ConvertFile(string fileinfo, string pronom)
     {
         string outputDirectory = GlobalVariables.parsedOptions.Output;
-        string outputFileName = System.IO.Path.Combine(outputDirectory,System.IO.Path.GetFileNameWithoutExtension(fileinfo));
+        string outputFileName = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileNameWithoutExtension(fileinfo));
         string extension;
         string sDevice;
 
@@ -61,7 +60,7 @@ public class GhostscriptConverter : Converter
             case "fmt/935":
                 extension = ".png";
                 sDevice = "png16m";
-                convert(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region jpg
@@ -79,8 +78,8 @@ public class GhostscriptConverter : Converter
             case "fmt/367":
                 extension = ".jpg";
                 sDevice = "jpeg";
-                convert(fileinfo, outputFileName, sDevice, extension);
-                 break;
+                convertToImage(fileinfo, outputFileName, sDevice, extension);
+                break;
             #endregion
             #region tif
             // TIF
@@ -95,7 +94,7 @@ public class GhostscriptConverter : Converter
             case "fmt/156":
                 extension = ".tiff";
                 sDevice = "tiff24nc";
-                convert(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region bmp
@@ -109,10 +108,10 @@ public class GhostscriptConverter : Converter
             case "fmt/117":
                 extension = ".bmp";
                 sDevice = "bmp16m";
-                convert(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(fileinfo, outputFileName, sDevice, extension);
                 break;
             #endregion
-                //Check how to make the pronom correct
+            //Check how to make the pronom correct
             #region pdf
             case "fmt/559":
             case "fmt/560":
@@ -158,7 +157,8 @@ public class GhostscriptConverter : Converter
             case "fmt/1451":
                 extension = ".pdf";
                 sDevice = "pdfwrite";
-                convert(fileinfo, outputFileName, sDevice, extension);
+                string pdfVersion = pdfVersionMap[pronom].ToString();
+                convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion);
                 break;
             #endregion
             default:
@@ -174,7 +174,7 @@ public class GhostscriptConverter : Converter
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
     /// <param name="extension">Extension type for after the conversion</param>
-    void convert(string fileinfo, string outputFileName, string sDevice, string extension)
+    void convertToImage(string fileinfo, string outputFileName, string sDevice, string extension)
     {
         Logger log = Logger.Instance;
         string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
@@ -211,13 +211,13 @@ public class GhostscriptConverter : Converter
         }
         catch (Exception e)
         {
-            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true,filename:fileinfo);
+            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo);
         }
     }
 
     private ImageFormat GetImageFormat(string extension)
     {
-        switch(extension)
+        switch (extension)
         {
             case ".png":
                 return ImageFormat.Png;
@@ -232,6 +232,35 @@ public class GhostscriptConverter : Converter
         }
     }
 
+    void convertToPDF(string fileinfo, string outputFileName, string sDevice, string extension, string pdfVersion)
+    {
+        Logger log = Logger.Instance;
+        string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
+        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFileName + extension + " " + fileinfo;
+
+        try
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = gsExecutable;
+            startInfo.Arguments = arguments;
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            using (Process? exeProcess = Process.Start(startInfo))
+            {
+                exeProcess?.WaitForExit();
+            }
+
+            deleteOriginalFileFromOutputDirectory(fileinfo);
+        }
+        catch (Exception e)
+        {
+            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo);
+        }
+    }
+
+
     /// <summary>
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
@@ -245,14 +274,14 @@ public class GhostscriptConverter : Converter
             supportedConversions.Add(imagePronom, PDFPronoms);
         }
         //PDF to Image
-        foreach(string pdfPronom in PDFPronoms)
+        foreach (string pdfPronom in PDFPronoms)
         {
-             supportedConversions.Add(pdfPronom, ImagePronoms);
+            supportedConversions.Add(pdfPronom, ImagePronoms);
         }
-        //HTML to PDF
-        foreach (string htmlPronom in HTMLPronoms)
+        //PostScript to PDF
+        foreach (string postScriptPronom in PostScriptPronoms)
         {
-            supportedConversions.Add(htmlPronom, PDFPronoms);
+            supportedConversions.Add(postScriptPronom, PDFPronoms);
         }
 
         return supportedConversions;
@@ -296,18 +325,6 @@ public class GhostscriptConverter : Converter
         "fmt/116",
         "fmt/117",
     ];
-    List<string> HTMLPronoms = [
-        "fmt/103",
-        "fmt/96",
-        "fmt/97",
-        "fmt/98",
-        "fmt/99",
-        "fmt/100",
-        "fmt/471",
-        "fmt/1132",
-        "fmt/102",
-        "fmt/583"
-    ];
     List<string> PDFPronoms = [
         "fmt/95",
         "fmt/354",
@@ -326,5 +343,29 @@ public class GhostscriptConverter : Converter
         "fmt/276",
         "fmt/1129"
     ];
+    List<string> PostScriptPronoms = [
+        "fmt/124",
+        "x-fmt/91",
+        "x-fmt/406",
+        "x-fmt/407",
+        "x-fmt/408",
+        "fmt/501"
+        ];
+
+    Dictionary<string, double> pdfVersionMap = new Dictionary<string, double>()
+    {
+        {"fmt/14", 1},
+        {"fmt/15", 1.1},
+        {"fmt/16", 1.2},
+        {"fmt/17", 1.3},
+        {"fmt/18", 1.4},
+        {"fmt/19", 1.5},
+        {"fmt/20", 1.6},
+        {"fmt/276", 1.7},
+        {"fmt/1129", 2 }
+}; 
+
+
 }
+
 

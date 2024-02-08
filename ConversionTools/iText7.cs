@@ -25,12 +25,12 @@ using iText.Html2pdf.Attach.Impl.Layout;
 /// iText7 supports the following conversions:                                                       <br></br>
 /// - Image (jpg, png, gif, tiff, bmp) to PDF 1.0-2.0                                                <br></br>
 /// - Image (jpg, png, gif, tiff, bmp) to PDF-A 1A-3B                                                <br></br>
+/// - HTML to PDF 1.0-2.0                                                                            <br></br>
+/// - PDF 1.0-2.0 to PDF-A 1A-3B                                                                     <br></br>
 ///                                                                                                  <br></br>
 /// iText7 can also combine the following file formats into one PDF (1.0-2.0) or PDF-A (1A-3B):      <br></br>
 /// - Image (jpg, png, gif, tiff, bmp)                                                               <br></br>
 ///                                                                                                  <br></br>
-/// Conversions not added:                                                                           <br></br>
-/// - HTML to PDF                                                                                    <br></br>
 /// </summary>
 public class iText7 : Converter
 {
@@ -327,7 +327,6 @@ public class iText7 : Converter
                     pdfADocument.Close();
                 }
             }
-            //deleteOriginalFileFromOutputDirectory(fileinfo);
             File.Delete(fileinfo);
             File.Move(newFileName, fileinfo);
             if (originalFile != null)
