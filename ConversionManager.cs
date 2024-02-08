@@ -125,6 +125,16 @@ public class ConversionManager
                 }
             }
         }
+        foreach (string pronom in ImagePronoms)
+        {
+            foreach(string otherpronom in ImagePronoms)
+            {
+                if (pronom != otherpronom)
+                {
+                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/18", otherpronom]); // Image to pdf 1.4 other Image
+                }
+            }
+        }
         // TODO: Add more routes
     }
     private void initFileMap()
@@ -181,7 +191,23 @@ public class ConversionManager
             var newFile = new FileToConvert(file);
 
             //Use current and target pronom to create a key for the conversion map
-            var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
+            var last = WorkingSet.Last();
+            string parentDirName = Directory.GetParent(file.FilePath).Name;
+            //check if there is a folderoverride on the folder this file is in  
+            if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
+            {
+                foreach(string pronom in GlobalVariables.FolderOverride[parentDirName].PronomsList)
+                {
+                    if(file.OriginalPronom == pronom)
+                    {
+                        last.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+                    }
+                }
+                
+            }
+
+            var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
+          
             //If the conversion map contains the key, set the route to the value of the key
             if (ConversionMap.ContainsKey(key))
             {

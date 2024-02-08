@@ -11,7 +11,13 @@ using iText.IO.Image;
 using System.Reflection;
 using iText.Kernel.Font;
 using iText.Pdfa;
+using iText.Html2pdf;
+using iText.Commons;
 using System.Runtime.CompilerServices;
+using iText.Kernel.Pdf.Xobject;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Tagutils;
+using iText.Html2pdf.Attach.Impl.Layout;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -19,12 +25,12 @@ using System.Runtime.CompilerServices;
 /// iText7 supports the following conversions:                                                       <br></br>
 /// - Image (jpg, png, gif, tiff, bmp) to PDF 1.0-2.0                                                <br></br>
 /// - Image (jpg, png, gif, tiff, bmp) to PDF-A 1A-3B                                                <br></br>
+/// - HTML to PDF 1.0-2.0                                                                            <br></br>
+/// - PDF 1.0-2.0 to PDF-A 1A-3B                                                                     <br></br>
 ///                                                                                                  <br></br>
 /// iText7 can also combine the following file formats into one PDF (1.0-2.0) or PDF-A (1A-3B):      <br></br>
 /// - Image (jpg, png, gif, tiff, bmp)                                                               <br></br>
 ///                                                                                                  <br></br>
-/// Conversions not added:                                                                           <br></br>
-/// - HTML to PDF                                                                                    <br></br>
 /// </summary>
 public class iText7 : Converter
 {
@@ -43,64 +49,161 @@ public class iText7 : Converter
     public override void ConvertFile(string fileinfo, string pronom)
     {
         Logger log = Logger.Instance;
+        string extension = Path.GetExtension(fileinfo).ToLower();
 
-        switch (pronom)
+        if (extension == ".html" || extension == ".htm")
         {
-        //PDF-A
-            case "fmt/95":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A, pronom);
+            switch (pronom)
+            {
+                //PDF-A
+                case "fmt/95":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_1A);
+                    break;
+                case "fmt/354":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_1B);
+                    break;
+                case "fmt/476":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2A);
+                    break;
+                case "fmt/477":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2B);
+                    break;
+                case "fmt/478":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2U);
+                    break;
+                case "fmt/479":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_3A);
+                    break;
+                case "fmt/480":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_3B);
+                    break;
+                //PDF 1.x
+                case "fmt/14":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_0, false);
+                    break;
+                case "fmt/15":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_1, false);
+                    break;
+                case "fmt/16":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, false);
+                    break;
+                case "fmt/17":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_3, false);
+                    break;
+                case "fmt/18":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_4, false);
+                    break;
+                case "fmt/19":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_5, false);
+                    break;
+                case "fmt/20":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_6, false);
+                    break;
+                case "fmt/276":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_7, false);
+                    break;
+                //PDF 2.x
+                case "fmt/1129":
+                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_2_0, false);
+                    break;
+                //Logger error-message
+                default:
+                    log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
+                    break;
+            }
+
+        }
+        else if(extension == ".pdf")
+        {
+            switch (pronom)
+            {
+                //PDF-A
+                case "fmt/95":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A);
+                    break;
+                case "fmt/354":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1B);
+                    break;
+                case "fmt/476":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2A);
+                    break;
+                case "fmt/477":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2B);
+                    break;
+                case "fmt/478":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2U);
+                    break;
+                case "fmt/479":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3A);
+                    break;
+                case "fmt/480":
+                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3B);
+                    break;
+                default:
+                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
                 break;
-            case "fmt/354":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1B, pronom);
-                break;
-            case "fmt/476":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2A, pronom);
-                break;
-            case "fmt/477":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2B, pronom);
-                break;
-            case "fmt/478":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2U, pronom);
-                break;
-            case "fmt/479":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3A, pronom);
-                break;
-            case "fmt/480":
-                convertFromImageToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3B, pronom);
-                break;
-        //PDF 1.x
-            case "fmt/14":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0, pronom);
-                break;
-            case "fmt/15":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1, pronom);
-                break;
-            case "fmt/16":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2, pronom);
-                break;
-            case "fmt/17":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3, pronom);
-                break;
-            case "fmt/18":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4, pronom);
-                break;
-            case "fmt/19":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5, pronom);
-                break;
-            case "fmt/20":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6, pronom);
-                break;
-            case "fmt/276":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7, pronom);
-                break;
-            //PDF 2.x
-            case "fmt/1129":
-                convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, pronom);
-                break;
-            //Logger error-message
-            default:
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename : fileinfo);
-                break;
+            }
+        }
+        else
+        {
+            switch (pronom)
+            {
+                //PDF-A
+                case "fmt/95":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1A);
+                    break;
+                case "fmt/354":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1B);
+                    break;
+                case "fmt/476":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2A);
+                    break;
+                case "fmt/477":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2B);
+                    break;
+                case "fmt/478":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2U);
+                    break;
+                case "fmt/479":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3A);
+                    break;
+                case "fmt/480":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3B);
+                    break;
+                //PDF 1.x
+                case "fmt/14":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0);
+                    break;
+                case "fmt/15":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1);
+                    break;
+                case "fmt/16":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2);
+                    break;
+                case "fmt/17":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3);
+                    break;
+                case "fmt/18":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4);
+                    break;
+                case "fmt/19":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5);
+                    break;
+                case "fmt/20":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6);
+                    break;
+                case "fmt/276":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7);
+                    break;
+                //PDF 2.x
+                case "fmt/1129":
+                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0);
+                    break;
+                //Logger error-message
+                default:
+                    log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
+                    break;
+            }
         }
     }
 
@@ -109,9 +212,10 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="fileinfo">The file being converted</param>
     /// <param name="pdfVersion">What pdf version it is being converted to</param>
+    /// <param name="conformanceLevel"></param>
     /// <param name="pronom">The file format to convert to</param>
-    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, string pronom) {
-
+    void convertFromImageToPDF(string fileinfo, PdfVersion pdfVersion, PdfAConformanceLevel? conformanceLevel = null, string pronom) {
+    
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
@@ -127,6 +231,10 @@ public class iText7 : Converter
                 iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
                 document.Add(image);
             }
+            if(conformanceLevel != null)
+            {
+                convertFromPDFToPDFA(output, conformanceLevel, fileinfo);
+            }
             int count = 1;
             bool converted = false;
             do
@@ -141,7 +249,6 @@ public class iText7 : Converter
             if (!converted)
             {
                 throw new Exception("File was not converted");
-            }
         }
         catch (Exception e)
         {
@@ -152,51 +259,100 @@ public class iText7 : Converter
     }
 
     /// <summary>
-    /// Convert from any image file to pdf-A version 1A-3B
+    /// Convert from any html file to pdf 1.0-2.0
     /// </summary>
-    /// <param name="fileinfo">The file being converted</param>
-    /// <param name="conformanceLevel">What pdf-A version it is being converted to</param>
-    /// <param name="pronom">The file format to convert to</param>
-    void convertFromImageToPDFA(string fileinfo, PdfAConformanceLevel conformanceLevel, string pronom) {
-        PdfVersion pdfVersion = PdfVersion.PDF_2_0;
+    /// <param name="fileinfo">Name of the file to be converted</param>
+    /// <param name="pdfVersion">Specific pdf version to be converted to</param>
+    void convertFromHTMLToPDF(string fileinfo, PdfVersion pdfVersion, bool pdfA, PdfAConformanceLevel? conformanceLevel = null)
+    {
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
 
-        PdfOutputIntent? outputIntent = null;
         try
         {
             using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-            using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
+            using (var pdfDocument = new PdfDocument(pdfWriter))
             using (var document = new Document(pdfDocument))
             {
                 pdfDocument.SetTagged();
                 PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-                iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(fileinfo));
-                document.Add(image);
-            }
-            int count = 1;
-            bool converted = false;
-            do
-            {
-                converted = CheckConversionStatus(fileinfo, output, pronom);
-                count++;
-                if (!converted)
+                using(var htmlSource = new FileStream(fileinfo, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
-                    convertFromImageToPDF(fileinfo, pdfVersion, pronom);
+                    HtmlConverter.ConvertToPdf(htmlSource, pdfDocument);
+                    document.Close();
                 }
-            } while (!converted && count < 4);
-            if (!converted)
+                pdfDocument.Close();
+                pdfWriter.Close();
+                pdfWriter.Dispose();
+            }
+            
+            if (conformanceLevel != null)
             {
-                throw new Exception("File was not converted");
+                convertFromPDFToPDFA(output, conformanceLevel, fileinfo);
+            }
+            else
+            {
+                deleteOriginalFileFromOutputDirectory(fileinfo);
             }
         }
         catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: fileinfo);
+        }
+
+    }
+
+    /// <summary>
+    /// Convert from any pdf file to pdf-A version 1A-3B
+    /// </summary>
+    /// <param name="fileinfo">The filename to convert</param>
+    /// <param name="conformanceLevel">The type of PDF-A to convert to</param>
+    /// <param name="originalFile">Original file that should be deleted</param>
+    void convertFromPDFToPDFA(string fileinfo, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
+    {
+        try
+        {
+            string newFileName = Path.Combine(Path.GetDirectoryName(fileinfo) ?? "", Path.GetFileNameWithoutExtension(fileinfo) + "_PDFA.pdf");
+            using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
+            {
+                PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
+
+                using (PdfReader reader = new PdfReader(fileinfo))
+                using (PdfWriter writer = new PdfWriter(newFileName))
+                {
+
+                    PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
+                    PdfDocument pdfDocument = new PdfDocument(reader);
+
+                    for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
+                    {
+
+                        PdfPage page = pdfADocument.AddNewPage();
+                        PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
+                        PdfCanvas canvas = new PdfCanvas(page);
+                        canvas.AddXObject(pageCopy);
+                    }
+
+
+                    pdfDocument.Close();
+                    pdfADocument.Close();
+                }
+            }
+            File.Delete(fileinfo);
+            File.Move(newFileName, fileinfo);
+            if (originalFile != null)
+            {
+                deleteOriginalFileFromOutputDirectory(originalFile);
+            }
+        }
+        catch(Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: fileinfo);
             throw;
         }
     }
+
 
     /// <summary>
     /// Update the fileinfo object with new information after conversion
@@ -351,6 +507,10 @@ public class iText7 : Converter
         foreach(string htmlPronom in HTMLPronoms)
         {
             supportedConversions.Add(htmlPronom, PDFPronoms);
+        }
+        foreach(string pdfPronom in PDFPronoms)
+        {
+            supportedConversions.Add(pdfPronom, PDFPronoms);
         }
 
         return supportedConversions;
