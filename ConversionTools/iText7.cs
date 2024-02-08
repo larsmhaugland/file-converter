@@ -313,15 +313,14 @@ public class iText7 : Converter
                     PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
                     PdfDocument pdfDocument = new PdfDocument(reader);
 
+                    
                     for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
                     {
-
                         PdfPage page = pdfADocument.AddNewPage();
                         PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
                         PdfCanvas canvas = new PdfCanvas(page);
                         canvas.AddXObject(pageCopy);
                     }
-
 
                     pdfDocument.Close();
                     pdfADocument.Close();

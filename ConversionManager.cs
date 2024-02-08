@@ -116,7 +116,7 @@ public class ConversionManager
             {
                 if (pronom != otherpronom)
                 {
-                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/276", otherpronom]); // word to pdf 1.7 other word
+                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/276", otherpronom]); // word to pdf 1.7 to other word
                 }
             }
         }
@@ -126,7 +126,7 @@ public class ConversionManager
             {
                 if (pronom != otherpronom)
                 {
-                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/18", otherpronom]); // Image to pdf 1.4 other Image
+                    ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/18", otherpronom]); // Image to pdf 1.4 to other Image
                 }
             }
         }
@@ -185,7 +185,7 @@ public class ConversionManager
             WorkingSet.Add(new FileToConvert(file));
             //Use current and target pronom to create a key for the conversion map
             var last = WorkingSet.Last();
-            string parentDirName = Directory.GetParent(file.FilePath).Name;
+            string parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
             //check if there is a folderoverride on the folder this file is in  
             if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
             {
