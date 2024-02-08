@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
 class ThreadManager
 {
-    private static ThreadManager instance = null;
+    private static ThreadManager ?instance = null;
     private static List<Thread> threads = new List<Thread>();
     private static readonly object padlock = new object();
     private static SemaphoreSlim semaphore = new SemaphoreSlim(0, int.MaxValue);

@@ -74,7 +74,7 @@ class Program
         {
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
 			Console.WriteLine("Converting files...");
-            cm.ConvertFiles();
+            cm.ConvertFiles().Wait();
 			Console.WriteLine("Done!");
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();

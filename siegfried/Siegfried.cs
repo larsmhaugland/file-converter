@@ -105,7 +105,8 @@ public class Siegfried
     /// Returns the pronom id of a specified file
     /// </summary>
     /// <param name="path">Path to file</param>
-    /// <returns>Pronom id or null</returns>
+    /// <param name="hash">True if file should be hashed</param>
+    /// <returns>Parsed SiegfriedFile or null</returns>
     public SiegfriedFile? IdentifyFile(string path, bool hash)
     {
         // Wrap the file path in quotes

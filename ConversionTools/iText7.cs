@@ -115,6 +115,7 @@ public class iText7 : Converter
         string dir = Path.GetDirectoryName(fileinfo)?.ToString() ?? "";
         string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(fileinfo));
         string output = Path.Combine(filePathWithoutExtension + ".pdf");
+        
         try
         {
             using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
@@ -127,15 +128,27 @@ public class iText7 : Converter
                 document.Add(image);
             }
             int count = 1;
-            while (!CheckConversionStatus(fileinfo,output,pronom) && count < 4)
+            bool converted = false;
+            do
             {
+                converted = CheckConversionStatus(fileinfo, output, pronom);
                 count++;
+                if (!converted)
+                {
+                    convertFromImageToPDF(fileinfo, pdfVersion, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
             }
         }
         catch (Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: fileinfo);
+            throw;
         }
+        
     }
 
     /// <summary>
@@ -163,14 +176,25 @@ public class iText7 : Converter
                 document.Add(image);
             }
             int count = 1;
-            while (!CheckConversionStatus(fileinfo, output, pronom) && count < 4)
+            bool converted = false;
+            do
             {
+                converted = CheckConversionStatus(fileinfo, output, pronom);
                 count++;
+                if (!converted)
+                {
+                    convertFromImageToPDF(fileinfo, pdfVersion, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
             }
         }
         catch (Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: fileinfo);
+            throw;
         }
     }
 

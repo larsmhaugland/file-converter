@@ -3,6 +3,11 @@ using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Collections.Generic;
 using Org.BouncyCastle.Bcpg.OpenPgp;
+using System.Collections.Concurrent;
+using Org.BouncyCastle.Asn1;
+using System.IO;
+using System.Threading;
+using iText.Layout.Splitting;
 
 class FileToConvert
 {
@@ -10,14 +15,12 @@ class FileToConvert
     public string CurrentPronom { get; set; }       //From FileInfo
     public string TargetPronom { get; set; }        //From Dictionary
     public List<string> Route { get; set; }         //From Dictionary
-    public bool IsModified { get; set; }
-    public int NumTries { get; set; }
+    public bool IsModified { get; set; } = false;   //True if file has been worked on
 
     public FileToConvert(FileInfo file)
     {
         FilePath = file.FilePath;
         CurrentPronom = file.OriginalPronom;
-        NumTries = 0;
 
         if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
         {
@@ -167,45 +170,39 @@ public class ConversionManager
     /// <summary>
     /// Responsible for converting all files
     /// </summary>
-    public async void ConvertFiles()
+    public async Task ConvertFiles()
     {
         //Initialize working set
-        List<FileToConvert> WorkingSet = new List<FileToConvert>();
+        ConcurrentBag<FileToConvert> WorkingSet = new ConcurrentBag<FileToConvert>();
         Siegfried sf = Siegfried.Instance;
         Logger logger = Logger.Instance;
         foreach (FileInfo file in Files)
         {
-            //Add file using constructor that sets target pronom and route
-            WorkingSet.Add(new FileToConvert(file));
+            var newFile = new FileToConvert(file);
+
             //Use current and target pronom to create a key for the conversion map
-            var last = WorkingSet.Last();
-            var key = new KeyValuePair<string, string>(last.CurrentPronom, last.TargetPronom);
+            var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
             //If the conversion map contains the key, set the route to the value of the key
             if (ConversionMap.ContainsKey(key))
             {
-                last.Route = ConversionMap[key];
+                newFile.Route = ConversionMap[key];
             }
             //If the conversion map does not contain the key, set the route to the target pronom
-            else if (last.CurrentPronom != last.TargetPronom)
+            else if (newFile.CurrentPronom != newFile.TargetPronom)
             {
-                last.Route.Add(last.TargetPronom);
+                newFile.Route.Add(newFile.TargetPronom);
             } else
             {
-                last.Route = new List<string>();
+                continue;
             }
+            WorkingSet.Add(newFile);
         }
-
-        for(int i = WorkingSet.Count - 1; i >= 0; i--)
-        {
-            //If file is already at target pronom, remove it from the working set
-            if (WorkingSet[i].CurrentPronom == WorkingSet[i].TargetPronom)
-            {
-                WorkingSet.RemoveAt(i);
-            }
-        }
-        ThreadManager threadManager = ThreadManager.Instance;
+        List<Task> tasks = new List<Task>();
+        ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
         do
         {
+            //threadManager.StartAll();
+            Dictionary<string,CountdownEvent> countdownEvents = new Dictionary<string,CountdownEvent>();
             //Loop through working set
             foreach (FileToConvert file in WorkingSet)
             {
@@ -217,382 +214,111 @@ public class ConversionManager
                 //Loop through converters
                 foreach (Converter converter in Converters)
                 {
+                    if (file.IsModified)
+                    {
+                        break;
+                    }
                     var dict = converter.listOfSupportedConversions();
                     //If the converter supports the current pronom, check if it can convert to the next pronom in the route
-                    if (dict != null && dict.ContainsKey(file.CurrentPronom))
+                    if (dict == null || !dict.ContainsKey(file.CurrentPronom))
                     {
-                        foreach (string outputFormat in dict[file.CurrentPronom])
+                        continue;
+                    }
+                    foreach (string outputFormat in dict[file.CurrentPronom])
+                    {
+                        //Check if the converter can convert to the next pronom in the route
+                        if (file.Route.First() != outputFormat)
                         {
-                            //Check if the converter can convert to the next pronom in the route
-                            if (file.Route.First() == outputFormat)
+                            continue;
+                        }
+                        //Create a countdown event for the current file
+                        file.IsModified = true;
+                        //Try to queue converting file using virtual function
+                        if (ThreadPool.QueueUserWorkItem(state =>
                             {
-                                //Convert file using virtual function
-                                threadManager.StartTask(() => converter.ConvertFile(file.FilePath, outputFormat));
-                                file.NumTries++;
-                                if (converter.Name != null && FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name) { FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name); }
-                                file.IsModified = true; //File has been worked on
-                                break;
-                            }
+                                try
+                                {
+                                    converter.ConvertFile(file.FilePath, outputFormat);
+                                    if (converter.Name != null && 
+                                        (FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name))
+                                    {
+                                        FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name);
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
+                                    file.IsModified = false;
+                                } finally
+                                {
+                                    countdownEvents[file.FilePath].Signal();
+                                }
+                            }))
+                        {
+                            if (!countdownEvents.ContainsKey(file.FilePath))
+                            {
+                                countdownEvents.Add(file.FilePath, new CountdownEvent(1));
+                            } 
+                            break;
                         }
                     }
                 }
             }
-            threadManager.WaitAll();
-            //Remove files that have been worked on from the working set and update for the rest
-            for(int i = WorkingSet.Count - 1; i >= 0; i--)
+            
+            await Task.Run(() =>
             {
-                if (!WorkingSet[i].IsModified)
+                foreach (var countdownEvent in countdownEvents)
                 {
-                    WorkingSet.RemoveAt(i);
+                    countdownEvent.Value.Wait();
+                    countdownEvent.Value.Dispose(); // Dispose after completion
+                }
+                countdownEvents.Clear();
+            });
+
+            //Remove files that have been worked on from the working set and update for the rest
+            var itemsToRemove = new List<FileToConvert>();
+
+            foreach (var item in WorkingSet)
+            {
+                if (!item.IsModified)
+                {
+                    itemsToRemove.Add(item);
                     continue;
                 }
 
-                WorkingSet[i].IsModified = false;
-                //Check if file was converted correctly
-                var file = sf.IdentifyFile(WorkingSet[i].FilePath, false);
-                if(file == null)
+                item.IsModified = false;
+
+                // Check if file was converted correctly
+                var file = sf.IdentifyFile(item.FilePath, false);
+
+                if (file == null)
                 {
-                    logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + WorkingSet[i].FilePath, true);
+                    logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + item.FilePath, true);
                     continue;
                 }
-                WorkingSet[i].CurrentPronom = file.matches[0].id;
-                if (WorkingSet[i].CurrentPronom == WorkingSet[i].Route.First())
+
+                item.CurrentPronom = file.matches[0].id;
+
+                if (item.CurrentPronom == item.Route.First())
                 {
-                    WorkingSet[i].Route.RemoveAt(0);
-                    WorkingSet[i].NumTries = 0;
-                } else
-                {
-                    WorkingSet[i].NumTries++;
-                }
-                //Remove if no more steps in route
-                if (WorkingSet[i].Route.Count == 0 || WorkingSet[i].NumTries > 2)
-                {
-                    WorkingSet.RemoveAt(i);
+                    item.Route.RemoveAt(0);
                 }
 
-                
-                /*
-                //If file has been worked on in a converter, update data and reset IsModified "flag"
-                if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count > 0)
+                // Remove if no more steps in route
+                if (item.Route.Count == 0)
                 {
-                    WorkingSet[i].IsModified = false;
+                    itemsToRemove.Add(item);
                 }
-                //If file has not been worked on, remove it from the working set since the file is either fully converted or cannot be converted
-                else if (WorkingSet[i].IsModified && WorkingSet[i].Route.Count == 0)
-                {
-                    WorkingSet.RemoveAt(i);
-                }
-                else
-                {
-                    WorkingSet.RemoveAt(i);
-                }
-                */
             }
+
+            foreach (var itemToRemove in itemsToRemove)
+            {
+                WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
+            }
+
             //Repeat until all files have been converted/checked
-        } while (WorkingSet.Count != 0);
-        threadManager = null;
+        } while (WorkingSet.Count > 0);
         //Update FileInfo list with new data
         checkConversion();
     }
 }
-
-
-
-/*
-	public void ConvertFiles_Old(FileInfo fileinfo, string pronom)
-	{
-		Converter converter = new Converter();
-		Logger logger = Logger.Instance;
-        switch (pronom)
-		{
-            
-            #region imageToPDF
-            // GIF
-            case "fmt/3":
-			case "fmt/4":
-            // PNG
-            case "fmt/11":
-			case "fmt/12":
-			case "fmt/13":
-			case "fmt/935":
-            // JPG/JPEG
-            case "fmt/41":
-            case "fmt/42":
-            case "fmt/43":
-            case "fmt/44":
-            case "x-fmt/398":
-            case "x-fmt/390":
-            case "x-fmt/391":
-            case "fmt/645":
-            case "fmt/1507":
-            case "fmt/112":
-            case "fmt/367":
-            // TIF
-            case "fmt/1917":
-            case "x-fmt/399":
-            case "x-fmt/388":
-            case "x-fmt/387":
-            case "fmt/155":
-            case "fmt/353":
-            case "fmt/154":
-            case "fmt/153":
-            case "fmt/156":
-            // BMP
-            case "x-fmt/270":
-            case "fmt/115":
-            case "fmt/118":
-            case "fmt/119":
-            case "fmt/114":
-            case "fmt/116":
-            case "fmt/117":
-                // TODO: Put image converter here
-                break;
-                // TODO: Add convertername to fileinfo list
-                break;
-            #endregion
-            #region HTML
-            case "fmt/103":
-			case "fmt/96":
-			case "fmt/97":
-			case "fmt/98":
-			case "fmt/99":
-			case "fmt/100":
-			case "fmt/471":
-			case "fmt/1132":
-			case "fmt/102":
-			case "fmt/583":
-                // TODO: Put HTML converter here
-                // TODO: Add convertername to fileinfo list
-                break;
-            #endregion
-            #region PDF
-            case "fmt/559":
-            case "fmt/560":
-            case "fmt/561":
-            case "fmt/562":
-            case "fmt/563":
-            case "fmt/564":
-            case "fmt/565":
-            case "fmt/558":
-            case "fmt/14":
-            case "fmt/15":
-            case "fmt/16":
-            case "fmt/17":
-            case "fmt/18":
-            case "fmt/19":
-            case "fmt/20":
-            case "fmt/276":
-            case "fmt/95":
-            case "fmt/354":
-            case "fmt/476":
-            case "fmt/477":
-            case "fmt/478":
-            case "fmt/479":
-            case "fmt/480":
-            case "fmt/481":
-            case "fmt/1910":
-            case "fmt/1911":
-            case "fmt/1912":
-            case "fmt/493":
-            case "fmt/144":
-            case "fmt/145":
-            case "fmt/157":
-            case "fmt/146":
-            case "fmt/147":
-            case "fmt/158":
-            case "fmt/148":
-            case "fmt/488":
-            case "fmt/489":
-            case "fmt/490":
-            case "fmt/492":
-            case "fmt/491":
-            case "fmt/1129":
-            case "fmt/1451":
-                // converter.PDFConverter
-                // TODO: Add convertername to fileinfo list
-                break;
-            #endregion
-            #region Word
-            // DOC
-            case "x-fmt/329":
-            case "fmt/609":
-            case "fmt/39":
-            case "x-fmt/274":
-            case "x-fmt/275":
-            case "x-fmt/276":
-            case "fmt/1688":
-            case "fmt/37":
-            case "fmt/38":
-            case "fmt/1282":
-            case "fmt/1283":
-            case "x-fmt/131":
-            case "x-fmt/42":
-            case "x-fmt/43":
-            case "fmt/473":
-            case "fmt/40":
-            case "x-fmt/44":
-            case "fmt/523":
-            case "fmt/1827":
-            case "fmt/412":
-            case "fmt/754":
-            case "x-fmt/393":
-            case "x-fmt/394":
-            case "fmt/892":
-            case "fmt/494":
-            // DOCX
-            */
-            /* 
-            case "fmt/473":
-            case "fmt/1827":
-            case "fmt/412":
-            case "fmt/494":    
-            */
-                    // DOCM
-                    // case "fmt/523":
-                    // DOTX
-                    /*
-                    case "fmt/597":
-                        // TODO: Add word converter here
-                        // TODO: Add convertername to fileinfo list
-                        break;
-                    #endregion
-                    #region Excel
-                    // XLS
-                    case "fmt/55":
-                    case "fmt/56":
-                    case "fmt/57":
-                    case "fmt/61":
-                    case "fmt/595":
-                    case "fmt/445":
-                    case "fmt/214":
-                    case "fmt/1828":
-                    // case "fmt/494":
-                    case "fmt/62":
-                    case "fmt/59":
-
-                    // XLSX
-                    /*
-                    case "fmt/214":
-                    case "fmt/1828":
-                    case "fmt/494":
-                    */
-                    // XLSM
-                    //case "fmt/445":
-
-                    // XLTX
-                    /*
-                    case "fmt/598":
-                        // TODO: add excel converter here
-                        // TODO: Add convertername to fileinfo list
-                        break;
-                    #endregion
-                    #region PowerPoint
-                    // PPT
-                    case "fmt/1537":
-                    case "fmt/1866":
-                    case "fmt/181":
-                    case "fmt/1867":
-                    case "fmt/179":
-                    case "fmt/1747":
-                    case "fmt/1748":
-                    case "x-fmt/88":
-                    case "fmt/125":
-                    case "fmt/126":
-                    case "fmt/487":
-                    case "fmt/215":
-                    case "fmt/1829":
-                    //case "fmt/494":
-
-                    // PPTX
-                    /*
-                    case "fmt/215":
-                    case "fmt/1829":
-                    case "fmt/494":
-                    */
-                    /*
-                    // PPTM
-                    // case "fmt/487":
-                    // POTX
-                    case "fmt/631":
-                        // TODO: add powerpoint converter here
-                        break;
-                    #endregion
-                    #region Open Document
-                    //ODF
-                    case "fmt/140":
-                    case "fmt/135":
-                    case "fmt/136":
-                    case "fmt/137":
-                    case "fmt/138":
-                    case "fmt/139":
-                    // ODT
-                    case "x-fmt/3":
-                    case "fmt/1756":
-                    //case "fmt/136":
-                    case "fmt/290":
-                    case "fmt/291":
-                    // ODS
-                    case "fmt/1755":
-                    //case "fmt/137":
-                    case "fmt/294":
-                    case "fmt/295":
-                    // ODP
-                    case "fmt/1754":
-                    //case "fmt/138":
-                    case "fmt/292":
-                    case "fmt/293":
-                        // TODO: Add open document converter here
-                        break;
-                    #endregion
-                    #region Rich Text Format
-                    case "fmt/969":
-                    case "fmt/45":
-                    case "fmt/50":
-                    case "fmt/52":
-                    case "fmt/53":
-                    case "fmt/355":
-                        // TODO: add RTF converter here
-                        break;
-                    #endregion
-                    #region E-Mail
-                    // PST
-                    case "x-fmt/248":
-                    case "x-fmt/249":
-                    // MSG
-                    case "x-fmt/430":
-                    case "fmt/1144":
-                    // EML
-                    case "fmt/278":
-                    case "fmt/950":
-                    // OLM
-                    // OLM Region (Not Found)
-                        //TODO: Add Email converter here
-                    #endregion
-                    #region Compressed folder
-                    // ZIP 
-                    case "x-fmt/263":
-
-                    // TAR 
-                    case "x-fmt/265":
-
-                    // 7ZIP
-                    case "fmt/484":
-
-                    // GZ
-                    case "fmt/266":
-
-                    // RAR
-                    case "x-fmt/264":
-                    case "fmt/411":
-                    case "fmt/613":
-                        // Do Nothing
-                    #endregion
-
-                    default:
-                        logger.SetUpRunTimeLogMessage("Cant convert from that format",true,filetype:pronomFrom); 	
-                        break;
-                }
-
-            }
-}
-            */
