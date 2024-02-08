@@ -37,6 +37,17 @@
 			<Default></Default>
 		</FileTypes>
 	</FileClass>
+	<FileClass>
+		<ClassName>ps</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>ps</Filename>
+			<Pronoms>
+				fmt/124,x-fmt/91,x-fmt/406,x-fmt/407,x-fmt/408,fmt/501
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
 	<FolderOverride>
 		<FolderPath>apekatter</FolderPath><!-- Path after input folder example: /documents -->
 		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>

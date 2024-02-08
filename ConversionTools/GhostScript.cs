@@ -34,17 +34,18 @@ public class GhostscriptConverter : Converter
     {
         Name = "Ghostscript";
         Version = "1.23.1";
+        SupportedConversions = listOfSupportedConversions();
     }
 
     /// <summary>
     /// Convert a file to a new format
     /// </summary>
-    /// <param name="fileinfo">The file to be converted</param>
+    /// <param name="filePath">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-    public override void ConvertFile(string fileinfo, string pronom)
+    public override void ConvertFile(string filePath, string pronom)
     {
         string outputDirectory = GlobalVariables.parsedOptions.Output;
-        string outputFileName = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileNameWithoutExtension(fileinfo));
+        string outputFileName = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileNameWithoutExtension(filePath));
         string extension;
         string sDevice;
 
@@ -60,7 +61,7 @@ public class GhostscriptConverter : Converter
             case "fmt/935":
                 extension = ".png";
                 sDevice = "png16m";
-                convertToImage(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(filePath, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region jpg
@@ -78,7 +79,7 @@ public class GhostscriptConverter : Converter
             case "fmt/367":
                 extension = ".jpg";
                 sDevice = "jpeg";
-                convertToImage(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(filePath, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region tif
@@ -94,7 +95,7 @@ public class GhostscriptConverter : Converter
             case "fmt/156":
                 extension = ".tiff";
                 sDevice = "tiff24nc";
-                convertToImage(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(filePath, outputFileName, sDevice, extension);
                 break;
             #endregion
             #region bmp
@@ -108,7 +109,7 @@ public class GhostscriptConverter : Converter
             case "fmt/117":
                 extension = ".bmp";
                 sDevice = "bmp16m";
-                convertToImage(fileinfo, outputFileName, sDevice, extension);
+                convertToImage(filePath, outputFileName, sDevice, extension);
                 break;
             #endregion
             //Check how to make the pronom correct
@@ -158,11 +159,11 @@ public class GhostscriptConverter : Converter
                 extension = ".pdf";
                 sDevice = "pdfwrite";
                 string pdfVersion = pdfVersionMap[pronom].ToString();
-                convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion);
+                convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion);
                 break;
             #endregion
             default:
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo);
+                log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, filePath);
                 break;
         }
     }
@@ -170,11 +171,11 @@ public class GhostscriptConverter : Converter
     /// <summary>
     /// Convert a file using GhostScript command line
     /// </summary>
-    /// <param name="fileinfo">The file to be converted</param>
+    /// <param name="filePath">The file to be converted</param>
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
     /// <param name="extension">Extension type for after the conversion</param>
-    void convertToImage(string fileinfo, string outputFileName, string sDevice, string extension)
+    void convertToImage(string filePath, string outputFileName, string sDevice, string extension)
     {
         Logger log = Logger.Instance;
         string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
@@ -183,7 +184,7 @@ public class GhostscriptConverter : Converter
             using (var rasterizer = new GhostscriptRasterizer())
             {
                 GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
-                using (var stream = new FileStream(fileinfo, FileMode.Open, FileAccess.Read))
+                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     rasterizer.Open(stream, versionInfo, false);
 
@@ -204,14 +205,14 @@ public class GhostscriptConverter : Converter
                     }
                     else
                     {
-                        log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, fileinfo);
+                        log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, filePath);
                     }
                 }
             }
         }
         catch (Exception e)
         {
-            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo);
+            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
         }
     }
 
@@ -232,11 +233,11 @@ public class GhostscriptConverter : Converter
         }
     }
 
-    void convertToPDF(string fileinfo, string outputFileName, string sDevice, string extension, string pdfVersion)
+    void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion)
     {
         Logger log = Logger.Instance;
         string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
-        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFileName + extension + " " + fileinfo;
+        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFileName + extension + " " + filePath;
 
         try
         {
@@ -252,11 +253,11 @@ public class GhostscriptConverter : Converter
                 exeProcess?.WaitForExit();
             }
 
-            deleteOriginalFileFromOutputDirectory(fileinfo);
+            deleteOriginalFileFromOutputDirectory(filePath);
         }
         catch (Exception e)
         {
-            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo);
+            log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
         }
     }
 

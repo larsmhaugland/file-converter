@@ -243,7 +243,7 @@ public class ConversionManager
                     {
                         break;
                     }
-                    var dict = converter.listOfSupportedConversions();
+                    var dict = converter.SupportedConversions;
                     //If the converter supports the current pronom, check if it can convert to the next pronom in the route
                     if (dict == null || !dict.ContainsKey(file.CurrentPronom))
                     {

@@ -82,6 +82,7 @@ class Program
 				cm.ConvertFiles().Wait();
 			} catch (Exception e)
 			{
+				logger.SetUpDocumentation(fileManager.Files);
 				logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
 			}
 			Console.WriteLine("Done!");
