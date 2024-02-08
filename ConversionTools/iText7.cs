@@ -34,6 +34,7 @@ using iText.Html2pdf.Attach.Impl.Layout;
 /// </summary>
 public class iText7 : Converter
 {
+    private static readonly object padlock = new object();
     public iText7()
     {
         Name = "iText7";
@@ -316,27 +317,31 @@ public class iText7 : Converter
         try
         {
             string newFileName = Path.Combine(Path.GetDirectoryName(filePath) ?? "", Path.GetFileNameWithoutExtension(filePath) + "_PDFA.pdf");
-            using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
+            lock (padlock)
             {
-                PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
-
-                using (PdfReader reader = new PdfReader(filePath))
-                using (PdfWriter writer = new PdfWriter(newFileName))
+                using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
                 {
 
-                    PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
-                    PdfDocument pdfDocument = new PdfDocument(reader);
+                    PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
 
-                    
-                    for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
+                    using (PdfReader reader = new PdfReader(filePath))
+                    using (PdfWriter writer = new PdfWriter(newFileName))
                     {
-                        PdfPage page = pdfADocument.AddNewPage();
-                        PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
-                        PdfCanvas canvas = new PdfCanvas(page);
-                        canvas.AddXObject(pageCopy);
+
+                        PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
+                        PdfDocument pdfDocument = new PdfDocument(reader);
+
+                        for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
+                        {
+                            PdfPage page = pdfADocument.AddNewPage();
+                            PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
+                            PdfCanvas canvas = new PdfCanvas(page);
+                            canvas.AddXObject(pageCopy);
+                        }
+                        pdfDocument.Close();
+                        pdfADocument.Close();
                     }
-                    pdfDocument.Close();
-                    pdfADocument.Close();
+
                 }
             }
             File.Delete(filePath);
