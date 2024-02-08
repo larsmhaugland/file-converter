@@ -223,7 +223,7 @@ public class ConversionManager
 		}
 
 		List<Task> tasks = new List<Task>();
-		ThreadPool.SetMaxThreads(1,1);//(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
+		ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
 		long totalFiles = WorkingSet.Count;
 		ProgressBar progressBar = new ProgressBar();
 		progressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles);
