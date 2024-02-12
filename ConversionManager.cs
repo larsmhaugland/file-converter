@@ -168,13 +168,10 @@ public class ConversionManager
 	void checkConversion()
 	{
 		var sf = Siegfried.Instance;
-		bool allConverted = true;
 		foreach (FileInfo file in Files)
 		{
 			file.CheckIfConverted();
-			allConverted = allConverted && file.IsConverted;
 		}
-		Console.WriteLine("All files converted: " + allConverted);
 	}
 
 	/// <summary>
@@ -225,138 +222,146 @@ public class ConversionManager
 
 		List<Task> tasks = new List<Task>();
 		ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
-		long totalFiles = WorkingSet.Count;
-		ProgressBar progressBar = new ProgressBar();
-		progressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles);
-		
-		//Repeat until all files have been converted/checked
-		while (WorkingSet.Count > 0)
-		{	
-			progressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles);
-			Dictionary<string, CountdownEvent> countdownEvents = new Dictionary<string, CountdownEvent>();
-				
-			//Loop through working set
-			foreach (FileToConvert file in WorkingSet)
+		int totalFiles = WorkingSet.Count;
+
+		using (var overallProgressBar = new ProgressBar("Converting files", totalFiles))
+		{
+			//Repeat until all files have been converted/checked
+			while (WorkingSet.Count > 0)
 			{
-				//If file is already worked on, skip it
-				if (file.IsModified || file.Route.Count == 0)
+				overallProgressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles, totalFiles - WorkingSet.Count);
+				Dictionary<string, CountdownEvent> countdownEvents = new Dictionary<string, CountdownEvent>();
+
+				//Loop through working set
+				foreach (FileToConvert file in WorkingSet)
 				{
-					break;
-				}
-				//Loop through converters
-				foreach (Converter converter in Converters)
-				{
-					if (file.IsModified)
+					//If file is already worked on, skip it
+					if (file.IsModified || file.Route.Count == 0)
 					{
 						break;
 					}
-					var dict = converter.SupportedConversions;
-						
-					//If the converter supports the current pronom, check if it can convert to the next pronom in the route
-					if (dict == null || !dict.ContainsKey(file.CurrentPronom))
+					//Loop through converters
+					foreach (Converter converter in Converters)
 					{
-						continue;
-					}
-					foreach (string outputFormat in dict[file.CurrentPronom])
-					{
-						//Check if the converter can convert to the next pronom in the route
-						if (file.Route.First() != outputFormat)
+						if (file.IsModified)
+						{
+							break;
+						}
+						var dict = converter.SupportedConversions;
+
+						//If the converter supports the current pronom, check if it can convert to the next pronom in the route
+						if (dict == null || !dict.ContainsKey(file.CurrentPronom))
 						{
 							continue;
 						}
-						//Create a countdown event for the current file
-						file.IsModified = true;
-						//Try to queue converting file using virtual function
-						if (ThreadPool.QueueUserWorkItem(state =>
-							{
-								try
-								{
-									converter.ConvertFile(file.FilePath, outputFormat);
-									if (converter.Name != null &&
-										(FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name))
-									{
-										FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name);
-									}
-								}
-								catch (Exception e)
-								{
-									logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
-									file.IsModified = false;
-								}
-								finally
-								{
-									countdownEvents[file.FilePath].Signal();
-								}
-							}))
+						foreach (string outputFormat in dict[file.CurrentPronom])
 						{
-							if (!countdownEvents.ContainsKey(file.FilePath))
+							//Check if the converter can convert to the next pronom in the route
+							if (file.Route.First() != outputFormat)
 							{
-								countdownEvents.Add(file.FilePath, new CountdownEvent(1));
+								continue;
 							}
-							else
+							//Create a countdown event for the current file
+							file.IsModified = true;
+							//Try to queue converting file using virtual function
+							if (ThreadPool.QueueUserWorkItem(state =>
+								{
+									try
+									{
+										converter.ConvertFile(file.FilePath, outputFormat);
+										Thread.Sleep(10000);
+										if (converter.Name != null &&
+											(FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name))
+										{
+											FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name);
+										}
+									}
+									catch (Exception e)
+									{
+										logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
+										file.IsModified = false;
+									}
+									finally
+									{
+										if (countdownEvents.ContainsKey(file.FilePath))
+										{
+											countdownEvents[file.FilePath].Signal();
+										}
+									}
+								}))
 							{
-								Console.WriteLine("What happened here?");
+								//To be run if the Thread was successfully queued
+								if (!countdownEvents.ContainsKey(file.FilePath))
+								{
+									countdownEvents.Add(file.FilePath, new CountdownEvent(1));
+								}
+								else
+								{
+									Console.WriteLine("What happened here?");
+								}
+								break;
 							}
-							break;
 						}
 					}
+
 				}
-				}
+
 				
-				
-
-			await Task.Run(() =>
-			{
-				foreach (var countdownEvent in countdownEvents)
+				await Task.Run(() =>
 				{
-					countdownEvent.Value.Wait();
-					countdownEvent.Value.Dispose(); // Dispose after completion
+					foreach (var countdownEvent in countdownEvents)
+					{
+						countdownEvent.Value.Wait();
+						countdownEvent.Value.Dispose(); // Dispose after completion
+					}
+					countdownEvents.Clear();
+				});
+
+				//Remove files that have been worked on from the working set and update for the rest
+				var itemsToRemove = new List<FileToConvert>();
+
+				foreach (var item in WorkingSet)
+				{
+					if (!item.IsModified)
+					{
+						itemsToRemove.Add(item);
+						continue;
+					}
+
+					item.IsModified = false;
+
+					// Check if file was converted correctly
+					var file = sf.IdentifyFile(item.FilePath, false);
+
+					if (file == null)
+					{
+						logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + item.FilePath, true);
+						continue;
+					}
+
+					item.CurrentPronom = file.matches[0].id;
+
+					if (item.CurrentPronom == item.Route.First())
+					{
+						item.Route.RemoveAt(0);
+					}
+
+					// Remove if no more steps in route
+					if (item.Route.Count == 0)
+					{
+						itemsToRemove.Add(item);
+					}
 				}
-				countdownEvents.Clear();
-			});
 
-			//Remove files that have been worked on from the working set and update for the rest
-			var itemsToRemove = new List<FileToConvert>();
-
-			foreach (var item in WorkingSet)
-			{
-				if (!item.IsModified)
+				foreach (var itemToRemove in itemsToRemove)
 				{
-					itemsToRemove.Add(item);
-					continue;
+					WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
 				}
-
-				item.IsModified = false;
-
-				// Check if file was converted correctly
-				var file = sf.IdentifyFile(item.FilePath, false);
-
-				if (file == null)
+				if (WorkingSet.Count == 0)
 				{
-					logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + item.FilePath, true);
-					continue;
-				}
-
-				item.CurrentPronom = file.matches[0].id;
-
-				if (item.CurrentPronom == item.Route.First())
-				{
-					item.Route.RemoveAt(0);
-				}
-
-				// Remove if no more steps in route
-				if (item.Route.Count == 0)
-				{
-					itemsToRemove.Add(item);
+					overallProgressBar.Report(1, totalFiles);
 				}
 			}
-
-			foreach (var itemToRemove in itemsToRemove)
-			{
-				WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
-			}
-				
-			progressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles);
 		}
 		//Update FileInfo list with new data
 		checkConversion();
