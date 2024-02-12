@@ -14,7 +14,7 @@
 			-->
 	<FileClass>
 		<ClassName>images</ClassName>
-		<Default>fmt/477</Default> <!-- Must be filled -->
+		<Default>fmt/14</Default> <!-- Must be filled -->
 		<FileTypes>
 			<Filename>png</Filename>
 			<Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
@@ -48,10 +48,141 @@
 			<Default></Default>
 		</FileTypes>
 	</FileClass>
+
+	<!--WORD DOCUMENT CLASS -->
+	<FileClass>
+		<ClassName>Word</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>doc</Filename>
+			<Pronoms>
+				x-fmt/329,fmt/609,fmt/39,x-fmt/274,x-fmt/275,x-fmt/276,fmt/1688,fmt/37,fmt/38,fmt/1282,fmt/1283,x-fmt/131,x-fmt/42,x-fmt/43,fmt/40,x-fmt/44,x-fmt/393,x-fmt/394,fmt/892
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>docx</Filename>
+			<Pronoms>
+				fmt/473,fmt/1827,fmt/412
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>docm</Filename>
+			<Pronoms>
+				fmt/523
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>dotx</Filename>
+			<Pronoms>
+				fmt/597
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>dotm</Filename>
+			<Pronoms>
+				fmt/599
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>dot</Filename>
+			<Pronoms>
+				x-fmt/45,fmt/755
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
+	
+	<!-- POWER POINT DOCUMENT CLASS-->
+	<FileClass>
+		<ClassName>PowerPoint</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>ppt</Filename>
+			<Pronoms>
+				fmt/1537,fmt/1866,fmt/181,fmt/1867,fmt/179,fmt/1747,fmt/1748,x-fmt/88,fmt/125,fmt/126,
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>pptx</Filename>
+			<Pronoms>
+				fmt/215,fmt/1829,fmt/494
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>pptm</Filename>
+			<Pronoms>
+				fmt/487
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
+	
+	<!-- EXCEL FILE CLASS-->
+	<FileClass>
+		<ClassName>EXCEL</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>xls</Filename>
+			<Pronoms>
+				fmt/55,fmt/56,fmt/57,fmt/61,fmt/62,fmt/59
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>xlsx</Filename>
+			<Pronoms>
+				fmt/214,fmt/1828
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>xlsm</Filename>
+			<Pronoms>
+				fmt/445
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
+	
+	<!-- OPEN DOCUMENT FILE CLASS -->
+	<FileClass>
+		<ClassName>Open Document</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>ODT</Filename>
+			<Pronoms>
+				x-fmt/3,fmt/1756,fmt/136,fmt/290,fmt/291
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>ODP</Filename>
+			<Pronoms>
+				fmt/1754,fmt/138,fmt/292,fmt/293
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+		<FileTypes>
+			<Filename>ODS</Filename>
+			<Pronoms>
+				fmt/1755,fmt/137,fmt/294,fmt/295
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
+	
+	
 	<FolderOverride>
 		<FolderPath>apekatter</FolderPath><!-- Path after input folder example: /documents -->
 		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
-		<ConvertTo>fmt/11</ConvertTo>
+		<ConvertTo>fmt/477</ConvertTo>
 		<MergeImages></MergeImages><!-- Yes, No -->
 	</FolderOverride>
 </root>

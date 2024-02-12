@@ -156,6 +156,7 @@ public class ConversionManager
 		Converters = new List<Converter>();
 		Converters.Add(new iText7());
 		Converters.Add(new GhostscriptConverter());
+		Converters.Add(new CogniddoxConverter());
 		//Get files from FileManager
 		Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
@@ -174,34 +175,32 @@ public class ConversionManager
 		}
 	}
 
-	/// <summary>
-	/// Responsible for converting all files
-	/// </summary>
-	public async Task ConvertFiles()
-	{
-		//Initialize working set
-		ConcurrentBag<FileToConvert> WorkingSet = new ConcurrentBag<FileToConvert>();
-		Siegfried sf = Siegfried.Instance;
-		Logger logger = Logger.Instance;
-		foreach (FileInfo file in Files)
-		{
-			var newFile = new FileToConvert(file);
-			
-			
-			string parentDirName = Directory.GetParent(file.FilePath)?.Name ?? "";
-			//check if there is a folderoverride on the folder this file is in  
-			if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
-			{
-				foreach(string pronom in GlobalVariables.FolderOverride[parentDirName].PronomsList)
-				{
-					if(file.OriginalPronom == pronom)
-					{
-						newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
-					}
-				}
-			}
-			//Use current and target pronom to create a key for the conversion map
-			var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
+    /// <summary>
+    /// Responsible for converting all files
+    /// </summary>
+    public async Task ConvertFiles()
+    {
+        //Initialize working set
+        ConcurrentBag<FileToConvert> WorkingSet = new ConcurrentBag<FileToConvert>();
+        Siegfried sf = Siegfried.Instance;
+        Logger logger = Logger.Instance;
+        foreach (FileInfo file in Files)
+        {
+            var newFile = new FileToConvert(file);
+            string parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
+            //check if there is a folderoverride on the folder this file is in  
+            if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
+            {
+                foreach(string pronom in GlobalVariables.FolderOverride[parentDirName].PronomsList)
+                {
+                    if(file.OriginalPronom == pronom)
+                    {
+                        newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+                    }
+                }
+            }
+            //Use current and target pronom to create a key for the conversion map
+            var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
 
 			//If the conversion map contains the key, set the route to the value of the key
 			if (ConversionMap.ContainsKey(key))

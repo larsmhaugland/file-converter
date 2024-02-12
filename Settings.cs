@@ -143,90 +143,102 @@ class Settings
 			if (xmlDoc.DocumentElement == null) { logger.SetUpRunTimeLogMessage("Could not find settings file", true, filename: pathToSettings); return; }
 
 
-			XmlNodeList? folderOverrideNodes = xmlDoc.SelectNodes("/root/FolderOverride");
-		if (folderOverrideNodes != null)
-		{
-			foreach (XmlNode folderOverrideNode in folderOverrideNodes)
-			{
-				string? folderPath = folderOverrideNode.SelectSingleNode("FolderPath")?.InnerText;
-				string? pronoms = folderOverrideNode.SelectSingleNode("Pronoms")?.InnerText;
+            XmlNodeList? folderOverrideNodes = xmlDoc.SelectNodes("/root/FolderOverride");
+            if (folderOverrideNodes != null)
+            {
+                foreach (XmlNode folderOverrideNode in folderOverrideNodes)
+                {
+                    string? folderPath = folderOverrideNode.SelectSingleNode("FolderPath")?.InnerText;
+                    string? pronoms = folderOverrideNode.SelectSingleNode("Pronoms")?.InnerText;
 
-				List<string> pronomsList = new List<string>();
-				if (!string.IsNullOrEmpty(pronoms))
-				{
-					pronomsList.AddRange(pronoms.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-												 .Select(pronom => pronom.Trim()));
-				}
+                    List<string> pronomsList = new List<string>();
+                    if (!string.IsNullOrEmpty(pronoms))
+                    {
+                        pronomsList.AddRange(pronoms.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                     .Select(pronom => pronom.Trim()));
+                    }
 
-				SettingsData settings = new SettingsData
-				{
-					PronomsList = pronomsList,
-					DefaultType = folderOverrideNode.SelectSingleNode("ConvertTo")?.InnerText
-				};
+                    SettingsData settings = new SettingsData
+                    {
+                        PronomsList = pronomsList,
+                        DefaultType = folderOverrideNode.SelectSingleNode("ConvertTo")?.InnerText
+                    };
 
-				bool folderPathEmpty = String.IsNullOrEmpty(folderPath);
-				bool pronomsEmpty = String.IsNullOrEmpty(pronoms);
-				bool convertToEmpty = String.IsNullOrEmpty(settings.DefaultType);
+                    bool folderPathEmpty = String.IsNullOrEmpty(folderPath);
+                    bool pronomsEmpty = String.IsNullOrEmpty(pronoms);
+                    bool convertToEmpty = String.IsNullOrEmpty(settings.DefaultType);
 
-				if (folderPathEmpty && pronomsEmpty && convertToEmpty)
-				{
-					logger.SetUpRunTimeLogMessage("empty folderOverride in seettings", true);
-				}
-				else if (folderPathEmpty && !pronomsEmpty && !convertToEmpty)
-				{
-					logger.SetUpRunTimeLogMessage("folderpath is empty for " + settings.PronomsList + "-" + settings.DefaultType + " in settings", true);
-				}
-				else if (pronomsEmpty && !convertToEmpty && !folderPathEmpty)
-				{
-					logger.SetUpRunTimeLogMessage("pronomlist is empty for " + folderPath + " in settings", true);
-				}
-				else if (convertToEmpty && !pronomsEmpty && !folderPathEmpty)
-				{
-					logger.SetUpRunTimeLogMessage("convertTo is empty for " + folderPath + " in settings", true);
-				}
-				else
-				{
-					string outputPlusfolderPath = GlobalVariables.parsedOptions.Output + "/" + folderPath;
-					GlobalVariables.FolderOverride[folderPath] = settings;
-					List<string> subfolders = GetSubfolderPaths(folderPath, outputPlusfolderPath);
-					if (subfolders.Count > 0)
-					{
-						foreach (string subfolder in subfolders)
-						{
-							if (!GlobalVariables.FolderOverride.ContainsKey(subfolder))
-							{
-								GlobalVariables.FolderOverride[subfolder] = settings;
-							}
-						}
-					}
-				}
-			}
-		}
-		}
-		catch (Exception ex)
-		{
-			logger.SetUpRunTimeLogMessage(ex.Message, true);
-		}
-	}
+                    if (folderPathEmpty && pronomsEmpty && convertToEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("empty folderOverride in settings", true);
+                    }
+                    else if (folderPathEmpty && !pronomsEmpty && !convertToEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("folderpath is empty for " + settings.PronomsList + "-" + settings.DefaultType + " in settings", true);
+                    }
+                    else if (pronomsEmpty && !convertToEmpty && !folderPathEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("pronomlist is empty for " + folderPath + " in settings", true);
+                    }
+                    else if (convertToEmpty && !pronomsEmpty && !folderPathEmpty)
+                    {
+                        logger.SetUpRunTimeLogMessage("convertTo is empty for " + folderPath + " in settings", true);
+                    }
+                    else
+                    {
+                        //string outputPlusfolderPath = GlobalVariables.parsedOptions.Output + "/" + folderPath;
+                        GlobalVariables.FolderOverride[folderPath] = settings;
+                        List<string> subfolders = GetSubfolderPaths(GlobalVariables.parsedOptions.Output, folderPath);
+                        if (subfolders.Count > 0)
+                        {
+                            foreach (string subfolder in subfolders)
+                            {
+                                if (!GlobalVariables.FolderOverride.ContainsKey(subfolder))
+                                {
+                                    GlobalVariables.FolderOverride[subfolder] = settings;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.SetUpRunTimeLogMessage(ex.Message, true);
+        }
+    }
 
-	private static List<string> GetSubfolderPaths(string folderPath, string outputPlusfolderPath)
-	{
-		List<string> subfolders = new List<string>();
+    private static List<string> GetSubfolderPaths(string outputPath, string folderName)
+    {
+        List<string> subfolders = new List<string>();
 
-		try
-		{
-			foreach (string subfolder in Directory.GetDirectories(folderPath))
-			{
-				// Remove the outputPlusfolderPath from the beginning of the subfolder path
-				string relativePath = subfolder.Substring(outputPlusfolderPath.Length).TrimStart(Path.DirectorySeparatorChar);
-				subfolders.Add(relativePath);
-				subfolders.AddRange(GetSubfolderPaths(subfolder, outputPlusfolderPath));
-			}
-		}
-		catch (UnauthorizedAccessException)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("You do not have permission to access this folder", true, filename: folderPath);
-		}
+        try
+        {
+            string targetFolderPath = Path.Combine(outputPath, folderName);
+            string relativePath = Path.GetRelativePath(outputPath, targetFolderPath); // Calculate the relative path for the current folder
+
+            if (Directory.Exists(targetFolderPath))
+            {
+                // Add current folder to subfolders list
+                subfolders.Add(relativePath);
+
+                // Add immediate subfolders
+                foreach (string subfolder in Directory.GetDirectories(targetFolderPath))
+                {
+                    // Recursively get subfolders of each subfolder
+                    subfolders.AddRange(GetSubfolderPaths(outputPath, Path.Combine(folderName, Path.GetFileName(subfolder))));
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Folder '{folderName}' does not exist under '{outputPath}'");
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("You do not have permission to access this folder", true, filename: outputPath);
+        }
 
 		return subfolders;
 	}
