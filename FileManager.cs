@@ -6,13 +6,11 @@ public class FileManager
 {
     private static FileManager? instance;
     private static readonly object lockObject = new object();
-    public Dictionary<string, KeyValuePair<string,string>> FolderOverride;
 	public List<FileInfo> Files;	// List of files to be converted
 
     private FileManager()
     {
         Files = new List<FileInfo>();
-        FolderOverride = new Dictionary<string, KeyValuePair<string,string>>();
     }
     public static FileManager Instance
     {

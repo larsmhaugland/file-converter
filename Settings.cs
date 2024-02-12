@@ -9,7 +9,7 @@ using System.Xml;
 public class SettingsData
 {
     public List<string> PronomsList { get; set; } = new List<string>();
-    public string ConvertTo { get; set; } = "";
+    //public string ConvertTo { get; set; } = "";
     public string DefaultType { get; set; } = "";
 }
 class Settings
@@ -168,25 +168,12 @@ class Settings
                     bool pronomsEmpty = String.IsNullOrEmpty(pronoms);
                     bool convertToEmpty = String.IsNullOrEmpty(settings.DefaultType);
 
-                    if (folderPathEmpty && pronomsEmpty && convertToEmpty)
+                    if (folderPathEmpty || pronomsEmpty || convertToEmpty)
                     {
-                        logger.SetUpRunTimeLogMessage("empty folderOverride in settings", true);
-                    }
-                    else if (folderPathEmpty && !pronomsEmpty && !convertToEmpty)
-                    {
-                        logger.SetUpRunTimeLogMessage("folderpath is empty for " + settings.PronomsList + "-" + settings.DefaultType + " in settings", true);
-                    }
-                    else if (pronomsEmpty && !convertToEmpty && !folderPathEmpty)
-                    {
-                        logger.SetUpRunTimeLogMessage("pronomlist is empty for " + folderPath + " in settings", true);
-                    }
-                    else if (convertToEmpty && !pronomsEmpty && !folderPathEmpty)
-                    {
-                        logger.SetUpRunTimeLogMessage("convertTo is empty for " + folderPath + " in settings", true);
+                        logger.SetUpRunTimeLogMessage("something wrong with a folderOverride in settings", true);
                     }
                     else
                     {
-                        //string outputPlusfolderPath = GlobalVariables.parsedOptions.Output + "/" + folderPath;
                         GlobalVariables.FolderOverride[folderPath] = settings;
                         List<string> subfolders = GetSubfolderPaths(GlobalVariables.parsedOptions.Output, folderPath);
                         if (subfolders.Count > 0)
@@ -208,7 +195,12 @@ class Settings
             logger.SetUpRunTimeLogMessage(ex.Message, true);
         }
     }
-
+    /// <summary>
+    /// Recursively retrieves all subfolders of a given parent folder.
+    /// </summary>
+    /// <param name="outputPath">path to the output folder either absolute path or a relitve path from the working directory</param>
+    /// <param name="folderName">the name of the parent folder</param>
+    /// <returns>list with paths to all subfolders</returns>
     private static List<string> GetSubfolderPaths(string outputPath, string folderName)
     {
         List<string> subfolders = new List<string>();

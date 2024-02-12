@@ -190,7 +190,7 @@ public class ConversionManager
         foreach (FileInfo file in Files)
         {
             var newFile = new FileToConvert(file);
-            string parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
+            string? parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
             //check if there is a folderoverride on the folder this file is in  
             if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
             {

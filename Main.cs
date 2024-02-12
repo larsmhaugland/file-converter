@@ -5,8 +5,8 @@ using System.Diagnostics;
 public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
-    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
-    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>();
+    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
+    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
     public static HashAlgorithms checksumHash;
 }
 public class Options
