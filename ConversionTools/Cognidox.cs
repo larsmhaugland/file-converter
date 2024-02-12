@@ -22,10 +22,13 @@ public class CogniddoxConverter : Converter
     public override void ConvertFile(string filePath, string pronom)
     {   
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
+        string parentDirectory = Directory.GetParent(filePath).ToString();
         string fileName = Path.GetFileNameWithoutExtension(filePath);
-        string fileNameWithExtension = fileName + ".pdf";
+        string fileNameWithExtension = Path.Combine(parentDirectory, fileName + ".pdf");
+
         RunOfficeToPdfConversion(covnersionExePath, filePath, fileNameWithExtension); 
     }
+
     /// <summary>
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
@@ -71,8 +74,19 @@ public class CogniddoxConverter : Converter
         process.Start();
         process.WaitForExit();
 
-        // Optionally, you can read the output or handle errors here.
+        // Capture standard output and standard error
         string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+
+        // Print standard output and standard error to the console or log it
+        Console.WriteLine("Conversion Output:");
+        Console.WriteLine(output);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            Console.WriteLine("Conversion Error:");
+            Console.WriteLine(error);
+        }
 
         process.Close();
     }

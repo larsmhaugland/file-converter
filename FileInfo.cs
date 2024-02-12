@@ -100,23 +100,23 @@ public class FileInfo
 
 	public bool CheckIfConverted()
 	{
-        //Get new pronom
-        var newInfo = Siegfried.Instance.IdentifyFile(FilePath, true);
-        if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
-        {
+		//Get new pronom
+		var newInfo = Siegfried.Instance.IdentifyFile(FilePath, true);
+		if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
+		{
 			IsConverted = true;
-        } else if (newInfo == null)
+		} else if (newInfo == null)
 		{
 			return false;
 		}
-        NewPronom = newInfo.matches[0].id;
-        NewFormatName = newInfo.matches[0].format;
-        NewMime = newInfo.matches[0].mime;
-        NewSize = newInfo.filesize;
+		NewPronom = newInfo.matches[0].id;
+		NewFormatName = newInfo.matches[0].format;
+		NewMime = newInfo.matches[0].mime;
+		NewSize = newInfo.filesize;
 		NewChecksum = newInfo.hash;
 
-        return IsConverted;
-    }
+		return IsConverted;
+	}
 
 	public void AddConversionTool(string tool)
 	{
