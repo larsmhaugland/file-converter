@@ -5,16 +5,16 @@ using System.Diagnostics;
 public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
-    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>();
-    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>();
+    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
+    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
     public static HashAlgorithms checksumHash;
 }
 public class Options
 {
-    [Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
-    public string Input { get; set; } = "";
-    [Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
-    public string Output { get; set; } = "";
+	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
+	public string Input { get; set; } = "";
+	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
+	public string Output { get; set; } = "";
 
 }
 class Program
@@ -22,11 +22,12 @@ class Program
 	
 	static void Main(string[] args)
 	{
+		
 		Stopwatch stopwatch = new Stopwatch();
 		stopwatch.Start();
 		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
 		{
-            GlobalVariables.parsedOptions = options;
+			GlobalVariables.parsedOptions = options;
 			if (options.Input != null)
 			{
 				Console.WriteLine("Input: " + options.Input);
@@ -41,11 +42,11 @@ class Program
 			return;
 
 		Directory.SetCurrentDirectory("../../../");
-        Settings settings = Settings.Instance;
+		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
 		Console.WriteLine("Done!");
-        Logger logger = Logger.Instance;
+		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
 		Siegfried sf = Siegfried.Instance;
@@ -56,12 +57,10 @@ class Program
 			Console.WriteLine("Copying and unpacking files...");
 			//Copy and unpack files
 			sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-			Console.WriteLine("Done! Elapsed: {0}", stopwatch.Elapsed);
 			settings.SetUpFolderOverride("./Settings.xml");
 			Console.WriteLine("Identifying files...");
 			//Identify files
 			fileManager.IdentifyFiles();
-			Console.WriteLine("Done! Elapsed: {0}", stopwatch.Elapsed);
 		} catch (Exception e)
 		{
 			Console.WriteLine("Could not identify files: " + e.Message);
@@ -69,23 +68,30 @@ class Program
 			return;
 		}
 
-        ConversionManager cm = new ConversionManager();
-        logger.AskAboutReqAndConv();
-		
-        if (fileManager.Files.Count > 0)
-        {
+		ConversionManager cm = new ConversionManager();
+		logger.AskAboutReqAndConv();
+
+		if (fileManager.Files.Count > 0)
+		{
 			Console.WriteLine("Files identified: " + fileManager.Files.Count);
 			Console.WriteLine("Converting files...");
-            cm.ConvertFiles();
-			Console.WriteLine("Done!");
-			Console.WriteLine("Compressing folders...");
+			try
+			{
+				cm.ConvertFiles().Wait();
+			} catch (Exception e)
+			{
+				logger.SetUpDocumentation(fileManager.Files);
+				logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
+			}
+			//Console.WriteLine("Done!");
+			//Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();
-			Console.WriteLine("Done!");
-			Console.WriteLine("Documenting conversion...");
-            logger.SetUpDocumentation(fileManager.Files);
-			Console.WriteLine("Done!");
-        }
+			//Console.WriteLine("Done!");
+			//Console.WriteLine("Documenting conversion...");
+			logger.SetUpDocumentation(fileManager.Files);
+			//Console.WriteLine("Done!");
+		}
 		stopwatch.Stop();
-		Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
-    }
+		//Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
+	}
 }

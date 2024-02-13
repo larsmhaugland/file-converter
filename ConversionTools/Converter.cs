@@ -16,17 +16,17 @@ public class Converter
 
 
 
-    public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
+	public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
 	{
 		return new Dictionary<string, List<string>>();
 	}
 
-    /// <summary>
-    /// Convert a file to a new format
-    /// </summary>
-    /// <param name="fileinfo">The file to be converted</param>
-    /// <param name="pronom">The file format to convert to</param>
-    public virtual void ConvertFile(string fileinfo, string pronom)
+	/// <summary>
+	/// Convert a file to a new format
+	/// </summary>
+	/// <param name="fileinfo">The file to be converted</param>
+	/// <param name="pronom">The file format to convert to</param>
+	public virtual void ConvertFile(string fileinfo, string pronom)
 	{ }
 	
 	/// <summary>
@@ -46,8 +46,8 @@ public class Converter
 		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo));
 		if (File.Exists(fileToDelete))
 		{
-            File.Delete(fileToDelete);
-        }
+			File.Delete(fileToDelete);
+		}
 	}
 	public virtual void replaceFileInList(string filepathBefore, string filepathAfter)
 	{
@@ -59,6 +59,31 @@ public class Converter
 			}
 		}
 	}
-    //TODO: Implement base methods
-    //TODO: Try again if files fail to convert
+
+	/// <summary>
+	/// Check if a file has been converted and update the file list
+	/// </summary>
+	/// <param name="oldFilepath">Filepath to original file</param>
+	/// <param name="newFilepath">Filepath to new file</param>
+	/// <param name="newFormat">Target pronom code</param>
+	/// <returns></returns>
+	public bool CheckConversionStatus(string oldFilepath, string newFilepath, string newFormat)
+	{
+		Siegfried sf = Siegfried.Instance;
+		var file = sf.IdentifyFile(newFilepath, false);
+		if (file != null)
+		{
+			if (file.matches[0].id == newFormat)
+			{
+				replaceFileInList(oldFilepath, newFilepath);
+				deleteOriginalFileFromOutputDirectory(oldFilepath);
+				return true;
+			}
+		}
+		else
+		{
+			Console.WriteLine("File not found");
+		}
+		return false;
+	}
 }

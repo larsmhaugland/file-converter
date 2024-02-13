@@ -24,7 +24,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="GhostscriptBinaryFiles\gs10.02.1\bin\gswin64c.exe">
+<<<<<<< HEAD
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+=======
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+>>>>>>> 6a5d384ce2bd73a962c5c069c449b4bc67af2781
     </None>
     <None Update="ghostscriptbinarywindows\gs10.02.1\bin\gsdll64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
