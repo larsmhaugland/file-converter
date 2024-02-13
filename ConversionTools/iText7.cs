@@ -199,7 +199,7 @@ public class iText7 : Converter
         }
         else if (extension == ".jpg" || extension == ".png" || extension == ".gif" || extension == ".tiff" || extension == ".bmp")
         {
-            convertFromImageToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_2_0, conformanceLevel);
+            convertFromImageToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_2_0, pronom, conformanceLevel);
         }
         else
         {
@@ -495,72 +495,5 @@ public class iText7 : Converter
             deleteOriginalFileFromOutputDirectory(file);
         }
     }
-
-
-    List<string> ImagePronoms = [
-        "fmt/3",
-        "fmt/4",
-        "fmt/11",
-        "fmt/12",
-        "fmt/13",
-        "fmt/935",
-        "fmt/41",
-        "fmt/42",
-        "fmt/43",
-        "fmt/44",
-        "x-fmt/398",
-        "x-fmt/390",
-        "x-fmt/391",
-        "fmt/645",
-        "fmt/1507",
-        "fmt/112",
-        "fmt/367",
-        "fmt/1917",
-        "x-fmt/399",
-        "x-fmt/388",
-        "x-fmt/387",
-        "fmt/155",
-        "fmt/353",
-        "fmt/154",
-        "fmt/153",
-        "fmt/156",
-        "x-fmt/270",
-        "fmt/115",
-        "fmt/118",
-        "fmt/119",
-        "fmt/114",
-        "fmt/116",
-        "fmt/117"
-    ];
-    List<string> HTMLPronoms = [
-        "fmt/103",
-        "fmt/96",
-        "fmt/97",
-        "fmt/98",
-        "fmt/99",
-        "fmt/100",
-        "fmt/471",
-        "fmt/1132",
-        "fmt/102",
-        "fmt/583"
-    ];
-    List<string> PDFPronoms = [
-        "fmt/95",
-        "fmt/354",
-        "fmt/476",
-        "fmt/477",
-        "fmt/478",
-        "fmt/479",
-        "fmt/480",
-        "fmt/14",
-        "fmt/15",
-        "fmt/16",
-        "fmt/17",
-        "fmt/18",
-        "fmt/19",
-        "fmt/20",
-        "fmt/276",
-        "fmt/1129"
-    ];
 
 }
