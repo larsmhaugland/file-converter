@@ -6,20 +6,14 @@ using System.Threading.Tasks;
 using System.IO;
 using iText.Kernel.Pdf;
 using iText.Layout;
-using iText.Layout.Element;
 using iText.IO.Image;
-using System.Reflection;
-using iText.Kernel.Font;
 using iText.Pdfa;
 using iText.Html2pdf;
-using iText.Commons;
-using System.Runtime.CompilerServices;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Tagutils;
-using iText.Html2pdf.Attach.Impl.Layout;
+using SharpCompress.Common;
+using System.Reflection.Metadata;
 
-//TODO: PDF-A 2A isn't working right now
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -171,40 +165,39 @@ public class iText7 : Converter
     /// <param name="pronom">The file format to convert to</param>
     public override void ConvertFile(string fileinfo, string pronom)
     {
-        PdfVersion? pdfVersion = null;
-        PdfAConformanceLevel? conformanceLevel = null;
-        if (PronomToPdfVersion.ContainsKey(pronom))
-        {
-            pdfVersion = PronomToPdfVersion[pronom];
+		try
+		{
+			PdfVersion? pdfVersion = null;
+			PdfAConformanceLevel? conformanceLevel = null;
+			if (PronomToPdfVersion.ContainsKey(pronom))
+			{
+				pdfVersion = PronomToPdfVersion[pronom];
+			}
+			if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
+			{
+				conformanceLevel = PronomToPdfAConformanceLevel[pronom];
+			}
+			string extension = Path.GetExtension(fileinfo).ToLower();
+			if (extension == ".html" || extension == ".htm")
+			{
+				convertFromHTMLToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_1_2, conformanceLevel != null, pronom, conformanceLevel);
+			}
+			else if (extension == ".pdf")
+			{
+				if (conformanceLevel != null)
+				{
+					convertFromPDFToPDFA(fileinfo, conformanceLevel, pronom);
+				}
+			}
+			else if (extension == ".jpg" || extension == ".png" || extension == ".gif" || extension == ".tiff" || extension == ".bmp")
+			{
+				convertFromImageToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_2_0, pronom, conformanceLevel);
+			}
         }
-        if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
-        {
-            conformanceLevel = PronomToPdfAConformanceLevel[pronom];
-        }
-        string extension = Path.GetExtension(fileinfo).ToLower();
-        if (extension == ".html" || extension == ".htm")
-        {
-            convertFromHTMLToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_1_2, conformanceLevel != null, conformanceLevel);
-        }
-        else if (extension == ".pdf")
-        {
-            if (conformanceLevel != null)
-            {
-                convertFromPDFToPDFA(fileinfo, conformanceLevel);
-            }
-            else
-            {
-                convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A);
-            }
-        }
-        else if (extension == ".jpg" || extension == ".png" || extension == ".gif" || extension == ".tiff" || extension == ".bmp")
-        {
-            convertFromImageToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_2_0, pronom, conformanceLevel);
-        }
-        else
-        {
-               Logger.Instance.SetUpRunTimeLogMessage("File format not supported by iText7. File is not converted.", true, filename: fileinfo);
-        }
+        catch(Exception e)
+		{
+			   Logger.Instance.SetUpRunTimeLogMessage("Error converting file with iText7. Error message: " + e.Message, true, filename: fileinfo);
+		}
     }
 
 	/// <summary>
@@ -224,7 +217,7 @@ public class iText7 : Converter
 		{
 			using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
 			using (var pdfDocument = new PdfDocument(pdfWriter))
-			using (var document = new Document(pdfDocument))
+			using (var document = new iText.Layout.Document(pdfDocument))
 			{
 				pdfDocument.SetTagged();
 				PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
@@ -264,7 +257,7 @@ public class iText7 : Converter
 	/// </summary>
 	/// <param name="filePath">Name of the file to be converted</param>
 	/// <param name="pdfVersion">Specific pdf version to be converted to</param>
-	void convertFromHTMLToPDF(string filePath, PdfVersion pdfVersion, bool pdfA, PdfAConformanceLevel? conformanceLevel = null)
+	void convertFromHTMLToPDF(string filePath, PdfVersion pdfVersion, bool pdfA, string pronom, PdfAConformanceLevel? conformanceLevel = null)
 	{
 		string dir = Path.GetDirectoryName(filePath)?.ToString() ?? "";
 		string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(filePath));
@@ -274,7 +267,7 @@ public class iText7 : Converter
 		{
 			using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
 			using (var pdfDocument = new PdfDocument(pdfWriter))
-			using (var document = new Document(pdfDocument))
+			using (var document = new iText.Layout.Document(pdfDocument))
 			{
 				pdfDocument.SetTagged();
 				PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
@@ -292,11 +285,29 @@ public class iText7 : Converter
 			{
 				convertFromPDFToPDFA(output, conformanceLevel, filePath);
 			}
-			else
-			{
-				deleteOriginalFileFromOutputDirectory(filePath);
-			}
-		}
+
+            int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus(filePath, output, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertFromHTMLToPDF(filePath, pdfVersion, pdfA, pronom, conformanceLevel);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+            else
+            {
+                deleteOriginalFileFromOutputDirectory(filePath);
+				
+            }
+
+        }
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: filePath);
@@ -310,54 +321,7 @@ public class iText7 : Converter
     /// <param name="filePath">The filename to convert</param>
     /// <param name="conformanceLevel">The type of PDF-A to convert to</param>
     /// <param name="originalFile">Original file that should be deleted</param>
-    /*void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
-	{
-		try
-		{
-			string newFileName = Path.Combine(Path.GetDirectoryName(filePath) ?? "", Path.GetFileNameWithoutExtension(filePath) + "_PDFA.pdf");
-			lock (padlock)
-			{
-				using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
-				{
-
-					PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
-
-					using (PdfReader reader = new PdfReader(filePath))
-					using (PdfWriter writer = new PdfWriter(newFileName))
-					{
-
-						PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
-						PdfDocument pdfDocument = new PdfDocument(reader);
-						pdfDocument.SetTagged();
-
-						for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
-						{
-							PdfPage page = pdfADocument.AddNewPage();
-				
-							PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
-							PdfCanvas canvas = new PdfCanvas(page);
-							canvas.AddXObject(pageCopy);
-						}
-						pdfDocument.Close();
-						pdfADocument.Close();
-					}
-
-				}
-			}
-			File.Delete(filePath);
-			File.Move(newFileName, filePath);
-			if (originalFile != null)
-			{
-				deleteOriginalFileFromOutputDirectory(originalFile);
-			}
-		}
-		catch(Exception e)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: filePath);
-			throw;
-		}
-	}*/
-    void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
+    void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string pronom, string? originalFile = null)
     {
         try
         {
@@ -373,24 +337,7 @@ public class iText7 : Converter
                     using (PdfReader reader = new PdfReader(filePath))
                     {
                         PdfDocument pdfDocument = new PdfDocument(reader);
-
-                        // Enable tagging for the entire PDF document
-                        //pdfDocument.SetTagged();
 						pdfADocument.SetTagged();
-
-                        PdfDictionary catalog = pdfDocument.GetCatalog().GetPdfObject();
-
-                        // Check if markinfo dictionary exists and if the entry marked is set to true
-                        PdfDictionary markInfo = catalog.GetAsDictionary(PdfName.MarkInfo);
-						if (markInfo == null)
-						{
-                            markInfo = new PdfDictionary();
-							markInfo.Put(PdfName.Marked, PdfBoolean.TRUE);
-                            catalog.Put(PdfName.MarkInfo, markInfo);
-                        }
-						// Add markinfo to the PDF-A document
-						pdfADocument.GetCatalog().Put(PdfName.MarkInfo, markInfo);
-
 
                         for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
                         {
@@ -406,6 +353,22 @@ public class iText7 : Converter
                 }
             }
 
+            int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus(filePath, newFileName, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertFromPDFToPDFA(filePath, conformanceLevel, pronom, originalFile);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+
             File.Delete(filePath);
             File.Move(newFileName, filePath);
 
@@ -413,6 +376,7 @@ public class iText7 : Converter
             {
                 deleteOriginalFileFromOutputDirectory(originalFile);
             }
+            
         }
         catch (Exception e)
         {
@@ -517,7 +481,7 @@ public class iText7 : Converter
 
 		using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
 		using (var pdfDocument = new PdfDocument(pdfWriter))
-		using (var document = new Document(pdfDocument))
+		using (var document = new iText.Layout.Document(pdfDocument))
 		{
 			pdfDocument.SetTagged();
 			PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
@@ -546,7 +510,7 @@ public class iText7 : Converter
         PdfOutputIntent? outputIntent = null;
         using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)))
         using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
-        using (var document = new Document(pdfDocument))
+        using (var document = new iText.Layout.Document(pdfDocument))
         {
             pdfDocument.SetTagged();
             PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
