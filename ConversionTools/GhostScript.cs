@@ -24,6 +24,7 @@ using System.Runtime.Intrinsics.X86;
 /// 
 /// GhostScript supports the following conversions:     <br></br>
 /// - PDF to Image (png, jpg, tif, bmp)                 <br></br>
+/// - PostScript to PDF                                 <br></br>
 ///                                                     <br></br>
 /// Conversions not added:                              <br></br>
 /// - Image to PDF  (see iText7)                        <br></br>

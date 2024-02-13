@@ -19,6 +19,8 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Html2pdf.Attach.Impl.Layout;
 
+//TODO: PDF-A 2A isn't working right now
+
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
 ///                                                                                                  <br></br>
@@ -26,7 +28,7 @@ using iText.Html2pdf.Attach.Impl.Layout;
 /// - Image (jpg, png, gif, tiff, bmp) to PDF 1.0-2.0                                                <br></br>
 /// - Image (jpg, png, gif, tiff, bmp) to PDF-A 1A-3B                                                <br></br>
 /// - HTML to PDF 1.0-2.0                                                                            <br></br>
-/// - PDF 1.0-2.0 to PDF-A 1A-3B                                                                     <br></br>
+/// - PDF 1.0-2.0 to PDF-A 1A-3B                                                                     <br></br>                                                                          
 ///                                                                                                  <br></br>
 /// iText7 can also combine the following file formats into one PDF (1.0-2.0) or PDF-A (1A-3B):      <br></br>
 /// - Image (jpg, png, gif, tiff, bmp)                                                               <br></br>
@@ -41,6 +43,126 @@ public class iText7 : Converter
         SupportedConversions = listOfSupportedConversions();
     }
 
+    List<string> ImagePronoms = [
+    "fmt/3",
+        "fmt/4",
+        "fmt/11",
+        "fmt/12",
+        "fmt/13",
+        "fmt/935",
+        "fmt/41",
+        "fmt/42",
+        "fmt/43",
+        "fmt/44",
+        "x-fmt/398",
+        "x-fmt/390",
+        "x-fmt/391",
+        "fmt/645",
+        "fmt/1507",
+        "fmt/112",
+        "fmt/367",
+        "fmt/1917",
+        "x-fmt/399",
+        "x-fmt/388",
+        "x-fmt/387",
+        "fmt/155",
+        "fmt/353",
+        "fmt/154",
+        "fmt/153",
+        "fmt/156",
+        "x-fmt/270",
+        "fmt/115",
+        "fmt/118",
+        "fmt/119",
+        "fmt/114",
+        "fmt/116",
+        "fmt/117"
+];
+    List<string> HTMLPronoms = [
+        "fmt/103",
+        "fmt/96",
+        "fmt/97",
+        "fmt/98",
+        "fmt/99",
+        "fmt/100",
+        "fmt/471",
+        "fmt/1132",
+        "fmt/102",
+        "fmt/583"
+    ];
+    List<string> PDFPronoms = [
+        "fmt/95",
+        "fmt/354",
+        "fmt/476",
+        "fmt/477",
+        "fmt/478",
+        "fmt/479",
+        "fmt/480",
+        "fmt/14",
+        "fmt/15",
+        "fmt/16",
+        "fmt/17",
+        "fmt/18",
+        "fmt/19",
+        "fmt/20",
+        "fmt/276",
+        "fmt/1129"
+    ];
+
+    Dictionary<String, PdfVersion> PronomToPdfVersion = new Dictionary<string, PdfVersion>()
+    {
+        {"fmt/14", PdfVersion.PDF_1_0},
+        {"fmt/15", PdfVersion.PDF_1_1},
+        {"fmt/16", PdfVersion.PDF_1_2},
+        {"fmt/17", PdfVersion.PDF_1_3},
+        {"fmt/18", PdfVersion.PDF_1_4},
+        {"fmt/19", PdfVersion.PDF_1_5},
+        {"fmt/20", PdfVersion.PDF_1_6},
+        {"fmt/276", PdfVersion.PDF_1_7},
+        {"fmt/1129", PdfVersion.PDF_2_0},
+        {"fmt/95", PdfVersion.PDF_2_0 },
+        {"fmt/354", PdfVersion.PDF_2_0 },
+        {"fmt/476", PdfVersion.PDF_2_0 },
+        {"fmt/477", PdfVersion.PDF_2_0 },
+        {"fmt/478", PdfVersion.PDF_2_0 },
+        {"fmt/479", PdfVersion.PDF_2_0 },
+        {"fmt/480", PdfVersion.PDF_2_0 }
+    };
+
+    Dictionary<String, PdfAConformanceLevel> PronomToPdfAConformanceLevel = new Dictionary<string, PdfAConformanceLevel>()
+    {
+        {"fmt/95", PdfAConformanceLevel.PDF_A_1A },
+        {"fmt/354", PdfAConformanceLevel.PDF_A_1B },
+        {"fmt/476", PdfAConformanceLevel.PDF_A_2A },
+        {"fmt/477", PdfAConformanceLevel.PDF_A_2B },
+        {"fmt/478", PdfAConformanceLevel.PDF_A_2U },
+        {"fmt/479", PdfAConformanceLevel.PDF_A_3A },
+        {"fmt/480", PdfAConformanceLevel.PDF_A_3B }
+    };
+
+    /// <summary>
+    /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
+    /// </summary>
+    /// <returns>List of all conversions</returns>
+    public override Dictionary<string, List<string>> listOfSupportedConversions()
+    {
+        var supportedConversions = new Dictionary<string, List<string>>();
+        foreach (string imagePronom in ImagePronoms)
+        {
+            supportedConversions.Add(imagePronom, PDFPronoms);
+        }
+        foreach (string htmlPronom in HTMLPronoms)
+        {
+            supportedConversions.Add(htmlPronom, PDFPronoms);
+        }
+        foreach (string pdfPronom in PDFPronoms)
+        {
+            supportedConversions.Add(pdfPronom, PDFPronoms);
+        }
+
+        return supportedConversions;
+    }
+
     /// <summary>
     /// Convert a file to a new format
     /// </summary>
@@ -48,162 +170,39 @@ public class iText7 : Converter
     /// <param name="pronom">The file format to convert to</param>
     public override void ConvertFile(string fileinfo, string pronom)
     {
-        Logger log = Logger.Instance;
+        PdfVersion? pdfVersion = null;
+        PdfAConformanceLevel? conformanceLevel = null;
+        if (PronomToPdfVersion.ContainsKey(pronom))
+        {
+            pdfVersion = PronomToPdfVersion[pronom];
+        }
+        if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
+        {
+            conformanceLevel = PronomToPdfAConformanceLevel[pronom];
+        }
         string extension = Path.GetExtension(fileinfo).ToLower();
-
         if (extension == ".html" || extension == ".htm")
         {
-            switch (pronom)
-            {
-                //PDF-A
-                case "fmt/95":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_1A);
-                    break;
-                case "fmt/354":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_1B);
-                    break;
-                case "fmt/476":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2A);
-                    break;
-                case "fmt/477":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2B);
-                    break;
-                case "fmt/478":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_2U);
-                    break;
-                case "fmt/479":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_3A);
-                    break;
-                case "fmt/480":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, true, PdfAConformanceLevel.PDF_A_3B);
-                    break;
-                //PDF 1.x
-                case "fmt/14":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_0, false);
-                    break;
-                case "fmt/15":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_1, false);
-                    break;
-                case "fmt/16":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_2, false);
-                    break;
-                case "fmt/17":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_3, false);
-                    break;
-                case "fmt/18":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_4, false);
-                    break;
-                case "fmt/19":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_5, false);
-                    break;
-                case "fmt/20":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_6, false);
-                    break;
-                case "fmt/276":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_1_7, false);
-                    break;
-                //PDF 2.x
-                case "fmt/1129":
-                    convertFromHTMLToPDF(fileinfo, PdfVersion.PDF_2_0, false);
-                    break;
-                //Logger error-message
-                default:
-                    log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
-                    break;
-            }
-
+            convertFromHTMLToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_1_2, conformanceLevel != null, conformanceLevel);
         }
-        else if(extension == ".pdf")
+        else if (extension == ".pdf")
         {
-            switch (pronom)
+            if (conformanceLevel != null)
             {
-                //PDF-A
-                case "fmt/95":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A);
-                    break;
-                case "fmt/354":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1B);
-                    break;
-                case "fmt/476":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2A);
-                    break;
-                case "fmt/477":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2B);
-                    break;
-                case "fmt/478":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_2U);
-                    break;
-                case "fmt/479":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3A);
-                    break;
-                case "fmt/480":
-                    convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_3B);
-                    break;
-                default:
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
-                break;
+                convertFromPDFToPDFA(fileinfo, conformanceLevel);
             }
+            else
+            {
+                convertFromPDFToPDFA(fileinfo, PdfAConformanceLevel.PDF_A_1A);
+            }
+        }
+        else if (extension == ".jpg" || extension == ".png" || extension == ".gif" || extension == ".tiff" || extension == ".bmp")
+        {
+            convertFromImageToPDF(fileinfo, pdfVersion ?? PdfVersion.PDF_2_0, conformanceLevel);
         }
         else
         {
-            switch (pronom)
-            {
-                //PDF-A
-                case "fmt/95":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1A);
-                    break;
-                case "fmt/354":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_1B);
-                    break;
-                case "fmt/476":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2A);
-                    break;
-                case "fmt/477":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2B);
-                    break;
-                case "fmt/478":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_2U);
-                    break;
-                case "fmt/479":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3A);
-                    break;
-                case "fmt/480":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0, PdfAConformanceLevel.PDF_A_3B);
-                    break;
-                //PDF 1.x
-                case "fmt/14":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_0);
-                    break;
-                case "fmt/15":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_1);
-                    break;
-                case "fmt/16":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_2);
-                    break;
-                case "fmt/17":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_3);
-                    break;
-                case "fmt/18":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_4);
-                    break;
-                case "fmt/19":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_5);
-                    break;
-                case "fmt/20":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_6);
-                    break;
-                case "fmt/276":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_1_7);
-                    break;
-                //PDF 2.x
-                case "fmt/1129":
-                    convertFromImageToPDF(fileinfo, PdfVersion.PDF_2_0);
-                    break;
-                //Logger error-message
-                default:
-                    log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. File is not converted.", true, filename: fileinfo);
-                    break;
-            }
+               Logger.Instance.SetUpRunTimeLogMessage("File format not supported by iText7. File is not converted.", true, filename: fileinfo);
         }
     }
 
@@ -346,81 +345,81 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="fileinfo">The file that gets updated information</param>
     /// 	/// <param name="pronom">The file format to convert to</param>
-    public override void CombineFiles(string[] files, string pronom)
-    {
-        if (files == null || files.Length == 0)
-        {
-            Logger.Instance.SetUpRunTimeLogMessage("Files sent to iText7 to be combined, but no files found.", true);
-            return;
-        }
+     public override void CombineFiles(string[] files, string pronom)
+     {
+         if (files == null || files.Length == 0)
+         {
+             Logger.Instance.SetUpRunTimeLogMessage("Files sent to iText7 to be combined, but no files found.", true);
+             return;
+         }
 
-        Logger log = Logger.Instance;
+         Logger log = Logger.Instance;
 
-        string outputFolder = GlobalVariables.parsedOptions.Output;
-        //TODO: Check with archive how they want to name the combined pdfs
-        string outputFileName = Path.GetFileNameWithoutExtension(files[0]) + ".pdf";
+         string outputFolder = GlobalVariables.parsedOptions.Output;
+         //TODO: Check with archive how they want to name the combined pdfs
+         string outputFileName = Path.GetFileNameWithoutExtension(files[0]) + ".pdf";
 
-        switch (pronom)
-        {
-            //PDF-A
-            case "fmt/95":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1A);
-                break;
-            case "fmt/354":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1B);
-                break;
-            case "fmt/476":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2A);
-                break;
-            case "fmt/477":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2B);
-                break;
-            case "fmt/478":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2U);
-                break;
-            case "fmt/479":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3A);
-                break;
-            case "fmt/480":
-                MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3B);
-                break;
-            //PDF 1.x
-            case "fmt/14":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_0);
-                break;
-            case "fmt/15":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_1);
-                break;
-            case "fmt/16":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_2);
-                break;
-            case "fmt/17":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_3);
-                break;
-            case "fmt/18":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_4);
-                break;
-            case "fmt/19":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_5);
-                break;
-            case "fmt/20":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_6);
-                break;
-            case "fmt/276":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_7);
-                break;
-            //PDF 2.x
-            case "fmt/1129":
-                MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_2_0);
-                break;
-            //Logger error-message
-            default:
-                //TODO: Check how the archive wants to write the error message, should all files be displayed?
-                log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. Files have not been combined.", true, files[0]);
-                break;
-        
-        }
-    }
+         switch (pronom)
+         {
+             //PDF-A
+             case "fmt/95":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1A);
+                 break;
+             case "fmt/354":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1B);
+                 break;
+             case "fmt/476":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2A);
+                 break;
+             case "fmt/477":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2B);
+                 break;
+             case "fmt/478":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2U);
+                 break;
+             case "fmt/479":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3A);
+                 break;
+             case "fmt/480":
+                 MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3B);
+                 break;
+             //PDF 1.x
+             case "fmt/14":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_0);
+                 break;
+             case "fmt/15":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_1);
+                 break;
+             case "fmt/16":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_2);
+                 break;
+             case "fmt/17":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_3);
+                 break;
+             case "fmt/18":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_4);
+                 break;
+             case "fmt/19":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_5);
+                 break;
+             case "fmt/20":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_6);
+                 break;
+             case "fmt/276":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_7);
+                 break;
+             //PDF 2.x
+             case "fmt/1129":
+                 MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_2_0);
+                 break;
+             //Logger error-message
+             default:
+                 //TODO: Check how the archive wants to write the error message, should all files be displayed?
+                 log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. Files have not been combined.", true, files[0]);
+                 break;
+
+         }
+     }
 
     /// <summary>
     /// Merge several image files into one pdf
@@ -479,95 +478,5 @@ public class iText7 : Converter
             deleteOriginalFileFromOutputDirectory(file);
         }
     }
-
-    /// <summary>
-    /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
-    /// </summary>
-    /// <returns>List of all conversions</returns>
-    public override Dictionary<string, List<string>> listOfSupportedConversions()
-    {
-        var supportedConversions = new Dictionary<string, List<string>>();
-        foreach (string imagePronom in ImagePronoms)
-        {
-            supportedConversions.Add(imagePronom, PDFPronoms);
-        }
-        foreach(string htmlPronom in HTMLPronoms)
-        {
-            supportedConversions.Add(htmlPronom, PDFPronoms);
-        }
-        foreach(string pdfPronom in PDFPronoms)
-        {
-            supportedConversions.Add(pdfPronom, PDFPronoms);
-        }
-
-        return supportedConversions;
-    }
-
-
-    List<string> ImagePronoms = [
-        "fmt/3",
-        "fmt/4",
-        "fmt/11",
-        "fmt/12",
-        "fmt/13",
-        "fmt/935",
-        "fmt/41",
-        "fmt/42",
-        "fmt/43",
-        "fmt/44",
-        "x-fmt/398",
-        "x-fmt/390",
-        "x-fmt/391",
-        "fmt/645",
-        "fmt/1507",
-        "fmt/112",
-        "fmt/367",
-        "fmt/1917",
-        "x-fmt/399",
-        "x-fmt/388",
-        "x-fmt/387",
-        "fmt/155",
-        "fmt/353",
-        "fmt/154",
-        "fmt/153",
-        "fmt/156",
-        "x-fmt/270",
-        "fmt/115",
-        "fmt/118",
-        "fmt/119",
-        "fmt/114",
-        "fmt/116",
-        "fmt/117"
-    ];
-    List<string> HTMLPronoms = [
-        "fmt/103",
-        "fmt/96",
-        "fmt/97",
-        "fmt/98",
-        "fmt/99",
-        "fmt/100",
-        "fmt/471",
-        "fmt/1132",
-        "fmt/102",
-        "fmt/583"
-    ];
-    List<string> PDFPronoms = [
-        "fmt/95",
-        "fmt/354",
-        "fmt/476",
-        "fmt/477",
-        "fmt/478",
-        "fmt/479",
-        "fmt/480",
-        "fmt/14",
-        "fmt/15",
-        "fmt/16",
-        "fmt/17",
-        "fmt/18",
-        "fmt/19",
-        "fmt/20",
-        "fmt/276",
-        "fmt/1129"
-    ];
 
 }

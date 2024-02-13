@@ -14,7 +14,7 @@
     <PackageReference Include="itext7" Version="8.0.3" />
     <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.3" />
     <PackageReference Include="itext7.commons" Version="8.0.3" />
-    <PackageReference Include="itext7.pdfhtml" Version="5.0.2" />
+    <PackageReference Include="itext7.pdfhtml" Version="5.0.3" />
     <PackageReference Include="SharpCompress" Version="0.36.0" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.1" />
   </ItemGroup>
@@ -22,6 +22,9 @@
   <ItemGroup>
     <None Update="GhostscriptBinaryFiles\gs10.02.1\bin\gsdll64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="GhostscriptBinaryFiles\gs10.02.1\bin\gswin64c.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="ghostscriptbinarywindows\gs10.02.1\bin\gsdll64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
