@@ -304,13 +304,13 @@ public class iText7 : Converter
 
 	}
 
-	/// <summary>
-	/// Convert from any pdf file to pdf-A version 1A-3B
-	/// </summary>
-	/// <param name="filePath">The filename to convert</param>
-	/// <param name="conformanceLevel">The type of PDF-A to convert to</param>
-	/// <param name="originalFile">Original file that should be deleted</param>
-	void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
+    /// <summary>
+    /// Convert from any pdf file to pdf-A version 1A-3B
+    /// </summary>
+    /// <param name="filePath">The filename to convert</param>
+    /// <param name="conformanceLevel">The type of PDF-A to convert to</param>
+    /// <param name="originalFile">Original file that should be deleted</param>
+    /*void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
 	{
 		try
 		{
@@ -328,10 +328,12 @@ public class iText7 : Converter
 
 						PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent);
 						PdfDocument pdfDocument = new PdfDocument(reader);
+						pdfDocument.SetTagged();
 
 						for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
 						{
 							PdfPage page = pdfADocument.AddNewPage();
+				
 							PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
 							PdfCanvas canvas = new PdfCanvas(page);
 							canvas.AddXObject(pageCopy);
@@ -354,15 +356,79 @@ public class iText7 : Converter
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: filePath);
 			throw;
 		}
-	}
+	}*/
+    void convertFromPDFToPDFA(string filePath, PdfAConformanceLevel conformanceLevel, string? originalFile = null)
+    {
+        try
+        {
+            string newFileName = Path.Combine(Path.GetDirectoryName(filePath) ?? "", Path.GetFileNameWithoutExtension(filePath) + "_PDFA.pdf");
+            lock (padlock)
+            {
+                using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
+                {
+                    PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
+
+                    using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
+                    using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
+                    using (PdfReader reader = new PdfReader(filePath))
+                    {
+                        PdfDocument pdfDocument = new PdfDocument(reader);
+
+                        // Enable tagging for the entire PDF document
+                        //pdfDocument.SetTagged();
+						pdfADocument.SetTagged();
+
+                        PdfDictionary catalog = pdfDocument.GetCatalog().GetPdfObject();
+
+                        // Check if markinfo dictionary exists and if the entry marked is set to true
+                        PdfDictionary markInfo = catalog.GetAsDictionary(PdfName.MarkInfo);
+						if (markInfo == null)
+						{
+                            markInfo = new PdfDictionary();
+							markInfo.Put(PdfName.Marked, PdfBoolean.TRUE);
+                            catalog.Put(PdfName.MarkInfo, markInfo);
+                        }
+						// Add markinfo to the PDF-A document
+						pdfADocument.GetCatalog().Put(PdfName.MarkInfo, markInfo);
 
 
-	/// <summary>
-	/// Update the fileinfo object with new information after conversion
-	/// </summary>
-	/// <param name="fileinfo">The file that gets updated information</param>
-	/// <param name="pronom">The file format to convert to</param>
-	public override void CombineFiles(string[] files, string pronom)
+                        for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
+                        {
+                            PdfPage page = pdfADocument.AddNewPage();
+                            PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
+                            PdfCanvas canvas = new PdfCanvas(page);
+                            canvas.AddXObject(pageCopy); // Add the XObject at the origin
+                        }
+
+                        // Close the PDF documents
+                        pdfDocument.Close();
+                    }
+                }
+            }
+
+            File.Delete(filePath);
+            File.Move(newFileName, filePath);
+
+            if (originalFile != null)
+            {
+                deleteOriginalFileFromOutputDirectory(originalFile);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: filePath);
+            throw;
+        }
+    }
+
+
+
+    /// <summary>
+    /// Update the fileinfo object with new information after conversion
+    /// </summary>
+    /// <param name="fileinfo">The file that gets updated information</param>
+    /// <param name="pronom">The file format to convert to</param>
+    public override void CombineFiles(string[] files, string pronom)
 	{
 		if (files == null || files.Length == 0)
 		{
