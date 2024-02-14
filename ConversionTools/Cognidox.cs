@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
 public class CogniddoxConverter : Converter
 {
+    Logger log = Logger.Instance;
     public CogniddoxConverter()
     {
         Name = "";
@@ -20,13 +22,27 @@ public class CogniddoxConverter : Converter
     /// <param name="filePath">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
     public override void ConvertFile(string filePath, string pronom)
-    {   
+    {
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
         string parentDirectory = Directory.GetParent(filePath).ToString();
         string fileName = Path.GetFileNameWithoutExtension(filePath);
-        string fileNameWithExtension = Path.Combine(parentDirectory, fileName + ".pdf");
+        string targetFileExtension = "";
+        // Logic here for getting the correct file extenstion based on the pronom (fmt format) sent as parameter
+        string filePathWithNewExtension = Path.Combine(parentDirectory, fileName + targetFileExtension);
 
-        RunOfficeToPdfConversion(covnersionExePath, filePath, fileNameWithExtension); 
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            RunOfficeToPdfConversionWindows(covnersionExePath, filePath, filePathWithNewExtension);
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            RunOfficeConversionLinuxMacOS(filePath, filePathWithNewExtension);
+        }
+        else
+        {
+            log.SetUpRunTimeLogMessage("Operating system not supported for office conversion", true, filePath);
+        }
+
     }
 
     /// <summary>
@@ -58,15 +74,83 @@ public class CogniddoxConverter : Converter
             supportedConversions.Add(odtPronom, PDFPronoms);
         }
 
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            foreach (string excelPronom in EXCELPronoms)
+            {
+                if (!supportedConversions.ContainsKey(excelPronom))
+                {
+                    supportedConversions[excelPronom] = new List<string>();
+                }
+                supportedConversions[excelPronom].AddRange(WORDPronoms);
+                supportedConversions[excelPronom].AddRange(PowerPointPronoms);
+                supportedConversions[excelPronom].AddRange(OpenDocumentPronoms);
+            }
+
+            foreach (string wordPronom in WORDPronoms)
+            {
+                if (!supportedConversions.ContainsKey(wordPronom))
+                {
+                    supportedConversions[wordPronom] = new List<string>();
+                }
+                supportedConversions[wordPronom].AddRange(PowerPointPronoms);
+                supportedConversions[wordPronom].AddRange(OpenDocumentPronoms);
+                supportedConversions[wordPronom].AddRange(EXCELPronoms);
+            }
+
+            foreach (string pptPronom in PowerPointPronoms)
+            {
+                if (!supportedConversions.ContainsKey(pptPronom))
+                {
+                    supportedConversions[pptPronom] = new List<string>();
+                }
+                supportedConversions[pptPronom].AddRange(EXCELPronoms);
+                supportedConversions[pptPronom].AddRange(OpenDocumentPronoms);
+                supportedConversions[pptPronom].AddRange(WORDPronoms);
+            }
+        }
 
         return supportedConversions;
     }
 
-    static void RunOfficeToPdfConversion(string exePath, string sourceDoc, string destinationPdf)
+    static void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf)
     {
         Process process = new Process();
         process.StartInfo.FileName = exePath;
         process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}";
+        process.StartInfo.RedirectStandardOutput = true;
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.CreateNoWindow = true;
+
+        process.Start();
+        process.WaitForExit();
+
+        // Capture standard output and standard error
+        string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+
+        // Print standard output and standard error to the console or log it
+        Console.WriteLine("Conversion Output:");
+        Console.WriteLine(output);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            Console.WriteLine("Conversion Error:");
+            Console.WriteLine(error);
+        }
+
+        process.Close();
+    }
+
+    static void RunOfficeConversionLinuxMacOS(string filePath, string outputdir)
+    {
+        // Build the soffice command
+        string sofficeCommand = $"soffice --convert-to pdf {filePath}";
+
+        // Start the process
+        Process process = new Process();
+        process.StartInfo.FileName = "/bin/bash";
+        process.StartInfo.Arguments = $"-c \"{sofficeCommand}\"";
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.CreateNoWindow = true;
@@ -134,7 +218,7 @@ public class CogniddoxConverter : Converter
         "fmt/599", // DOTM
         // DOT
         "x-fmt/45",
-        "fmt/755"
+        "fmt/755",
 
     ];
     List<string> EXCELPronoms =
@@ -207,5 +291,14 @@ public class CogniddoxConverter : Converter
         "fmt/137",
         "fmt/294",
         "fmt/295",
+    ];
+    List<string> RTFPronoms =
+    [
+        "fmt/969",
+        "fmt/45",
+        "fmt/50",
+        "fmt/52",
+        "fmt/53",
+        "fmt/355",
     ];
 }
