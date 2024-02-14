@@ -181,6 +181,7 @@ public class ConversionManager
     /// </summary>
     public async Task ConvertFiles()
     {
+        Dictionary<string, List<FileInfo>> mergingFiles = new Dictionary<string, List<FileInfo>>();
         //Initialize working set
         ConcurrentBag<FileToConvert> WorkingSet = new ConcurrentBag<FileToConvert>();
         Siegfried sf = Siegfried.Instance;
@@ -188,6 +189,7 @@ public class ConversionManager
         foreach (FileInfo file in Files)
         {
             var newFile = new FileToConvert(file);
+			bool addToWorkingSet = true;
             string? parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
             //check if there is a folderoverride on the folder this file is in  
             if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
@@ -196,7 +198,23 @@ public class ConversionManager
                 {
                     if(file.OriginalPronom == pronom)
                     {
-                        newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+						if (!GlobalVariables.FolderOverride[parentDirName].Merge)
+						{
+                            newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+                        }
+                        else
+						{
+                            // Check if the key exists in the dictionary
+                            if (!mergingFiles.ContainsKey(parentDirName))
+                            {
+                                // If the key does not exist, add it along with a new list
+                                mergingFiles[parentDirName] = new List<FileInfo>();
+                            }
+
+                            // Add the file to the list associated with the key
+                            mergingFiles[parentDirName].Add(file);
+							addToWorkingSet = false;
+                        }
                     }
                 }
             }
@@ -217,9 +235,12 @@ public class ConversionManager
 				continue;
 			}
 			file.Route = newFile.Route;
-			WorkingSet.Add(newFile);
+			if (addToWorkingSet)
+			{
+                WorkingSet.Add(newFile);
+            }
 		}
-
+		SendToCombineFiles(mergingFiles);
 		List<Task> tasks = new List<Task>();
 		ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
 		int totalFiles = WorkingSet.Count;
@@ -364,4 +385,25 @@ public class ConversionManager
 		//Update FileInfo list with new data
 		checkConversion();
 	}
+    void SendToCombineFiles(Dictionary<string, List<FileInfo>> mergingFiles)
+	{
+		try
+		{
+            foreach (var entry in mergingFiles)
+            {
+                var converter = new iText7();
+                var outputPronom = GlobalVariables.FolderOverride[entry.Key].DefaultType;
+                List<string> filepaths = new List<string>();
+                foreach (var file in entry.Value)
+                {
+                    filepaths.Add(file.FilePath);
+                }
+                converter.CombineFiles(filepaths.ToArray(), outputPronom);
+            }
+        }
+		catch(Exception e)
+		{
+            Logger.Instance.SetUpRunTimeLogMessage(e.Message,true);
+        }
+    }	
 }

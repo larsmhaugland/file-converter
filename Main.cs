@@ -5,7 +5,9 @@ using System.Diagnostics;
 public static class GlobalVariables
 {
     public static Options parsedOptions = new Options();
+	//Map with all specified conversion formats, to and from
     public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
+	// Map with info about what folders have overrides for specific formats
     public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
     public static HashAlgorithms checksumHash;
 }
