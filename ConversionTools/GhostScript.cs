@@ -1,22 +1,8 @@
-﻿using iText.IO.Util;
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Ghostscript.NET.Rasterizer;
 using System.Drawing.Imaging;
-using Org.BouncyCastle.Bcpg;
-using System.Reflection;
-using iText.Kernel.Geom;
 using Ghostscript.NET;
-using iText.Layout.Splitting;
-using System.Runtime.Intrinsics.X86;
 
-//TODO: Check resolution settings when converting to image
-//TODO: Error check - only delete original file if conversion is completed successfully
 //TODO: Put all images in a folder with original name and delete original file
 
 /// <summary>
@@ -134,8 +120,7 @@ public class GhostscriptConverter : Converter
     /// <param name="pronom">The file format to convert to</param>
     public override void ConvertFile(string filePath, string pronom)
 	{
-		string outputDirectory = GlobalVariables.parsedOptions.Output;
-		string outputFileName = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileNameWithoutExtension(filePath));
+		string outputFileName = Path.GetFileNameWithoutExtension(filePath);
 		string extension;
 		string sDevice;
 
@@ -151,7 +136,7 @@ public class GhostscriptConverter : Converter
 			case "fmt/935":
 				extension = ".png";
 				sDevice = "png16m";
-				convertToImage(filePath, outputFileName, sDevice, extension);
+				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
 				break;
 			#endregion
 			#region jpg
@@ -169,7 +154,7 @@ public class GhostscriptConverter : Converter
 			case "fmt/367":
 				extension = ".jpg";
 				sDevice = "jpeg";
-				convertToImage(filePath, outputFileName, sDevice, extension);
+				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
 				break;
 			#endregion
 			#region tif
@@ -185,7 +170,7 @@ public class GhostscriptConverter : Converter
 			case "fmt/156":
 				extension = ".tiff";
 				sDevice = "tiff24nc";
-				convertToImage(filePath, outputFileName, sDevice, extension);
+				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
 				break;
 			#endregion
 			#region bmp
@@ -199,7 +184,7 @@ public class GhostscriptConverter : Converter
 			case "fmt/117":
 				extension = ".bmp";
 				sDevice = "bmp16m";
-				convertToImage(filePath, outputFileName, sDevice, extension);
+				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
 				break;
 			#endregion
 			//Check how to make the pronom correct
@@ -249,7 +234,7 @@ public class GhostscriptConverter : Converter
 				extension = ".pdf";
 				sDevice = "pdfwrite";
 				string pdfVersion = pdfVersionMap[pronom].ToString();
-				convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion);
+				convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion,pronom);
 				break;
 			#endregion
 			default:
@@ -265,7 +250,7 @@ public class GhostscriptConverter : Converter
 	/// <param name="outputFileName">The name of the new file</param>
 	/// <param name="sDevice">What format GhostScript will convert to</param>
 	/// <param name="extension">Extension type for after the conversion</param>
-	void convertToImage(string filePath, string outputFileName, string sDevice, string extension)
+	void convertToImage(string filePath, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
 		string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
@@ -291,12 +276,37 @@ public class GhostscriptConverter : Converter
 								image.Save(pageOutputFileName, imageFormat);
 							}
 						}
-						// deleteOriginalFileFromOutputDirectory(fileinfo);
-					}
-					else
-					{
-						log.SetUpRunTimeLogMessage("Format not supported by GhostScript. File is not converted.", true, filePath);
-					}
+
+                        int count = 1;
+                        bool converted = false;
+                        do
+                        {
+                            converted = CheckConversionStatus(filePath, outputFileName, pronom);
+                            count++;
+                            if (!converted)
+                            {
+                                convertToImage(filePath, outputFileName, sDevice, extension, pronom);
+                            }
+                        } while (!converted && count < 4);
+                        if (!converted)
+                        {
+                            throw new Exception("File was not converted");
+                        }
+
+						//Create folder for images with original name
+						string folder = Path.GetFileNameWithoutExtension(filePath);
+						string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
+						Directory.CreateDirectory(folderPath);
+						
+						for(int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+						{
+							string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
+							string pageOutputFilePath = Path.Combine(GlobalVariables.parsedOptions.Output, pageOutputFileName);
+							string pageOutputFilePathInFolder = Path.Combine(folderPath, pageOutputFileName);
+							File.Move(pageOutputFilePath, pageOutputFilePathInFolder);
+						}
+		
+                    }
 				}
 			}
 		}
@@ -323,11 +333,13 @@ public class GhostscriptConverter : Converter
 		}
 	}
 
-	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion)
+	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
 		Logger log = Logger.Instance;
+		string outputFolder = Path.GetDirectoryName(filePath);
+		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
 		string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
-		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFileName + extension + " " + filePath;
+		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
 
 		try
 		{
@@ -343,7 +355,22 @@ public class GhostscriptConverter : Converter
 				exeProcess?.WaitForExit();
 			}
 
-			deleteOriginalFileFromOutputDirectory(filePath);
+            int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus(filePath,outputFilePath, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+
 		}
 		catch (Exception e)
 		{
