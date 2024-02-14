@@ -393,117 +393,81 @@ public class iText7 : Converter
     /// <param name="fileinfo">The file that gets updated information</param>
     /// <param name="pronom">The file format to convert to</param>
     public override void CombineFiles(string[] files, string pronom)
-	{
-		if (files == null || files.Length == 0)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("Files sent to iText7 to be combined, but no files found.", true);
-			return;
-		}
+    {
+        if (files == null || files.Length == 0)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Files sent to iText7 to be combined, but no files found.", true);
+            return;
+        }
 
-		Logger log = Logger.Instance;
+        try
+        {
+            PdfVersion? pdfVersion = null;
+            PdfAConformanceLevel? conformanceLevel = null;
 
-		string outputFolder = GlobalVariables.parsedOptions.Output;
-		//TODO: Check with archive how they want to name the combined pdfs
-		string outputFileName = Path.GetFileNameWithoutExtension(files[0]) + ".pdf";
+            if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
+            {
+                conformanceLevel = PronomToPdfAConformanceLevel[pronom];
+                MergeFilesToPDFA(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", GlobalVariables.parsedOptions.Output, conformanceLevel);
+            }
+            else if (PronomToPdfVersion.ContainsKey(pronom))
+            {
+                pdfVersion = PronomToPdfVersion[pronom];
+                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pdfVersion);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files with iText7. Error message: " + e.Message, true);
+        }
+    }
 
-		switch (pronom)
-		{
-			//PDF-A
-			case "fmt/95":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1A);
-				break;
-			case "fmt/354":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_1B);
-				break;
-			case "fmt/476":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2A);
-				break;
-			case "fmt/477":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2B);
-				break;
-			case "fmt/478":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_2U);
-				break;
-			case "fmt/479":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3A);
-				break;
-			case "fmt/480":
-				MergeFilesToPDFA(files, outputFileName, outputFolder, PdfAConformanceLevel.PDF_A_3B);
-				break;
-			//PDF 1.x
-			case "fmt/14":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_0);
-				break;
-			case "fmt/15":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_1);
-				break;
-			case "fmt/16":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_2);
-				break;
-			case "fmt/17":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_3);
-				break;
-			case "fmt/18":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_4);
-				break;
-			case "fmt/19":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_5);
-				break;
-			case "fmt/20":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_6);
-				break;
-			case "fmt/276":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_1_7);
-				break;
-			//PDF 2.x
-			case "fmt/1129":
-				MergeFilesToPDF(files, outputFileName, outputFolder, PdfVersion.PDF_2_0);
-				break;
-			//Logger error-message
-			default:
-				//TODO: Check how the archive wants to write the error message, should all files be displayed?
-				log.SetUpRunTimeLogMessage(pronom + " is not supported by iText7. Files have not been combined.", true, files[0]);
-				break;
-		
-		}
-	}
+    /// <summary>
+    /// Merge several image files into one pdf
+    /// </summary>
+    /// <param name="files"></param>
+    /// <param name="outputFileName"></param>
+    /// <param name="outputFolder"></param>
+    /// <param name="pdfVersion"></param>
+    void MergeFilesToPDF(string[] files, string outputFileName, PdfVersion pdfVersion)
+     {
+        try
+        {
+            
+            string? outputFolder = Path.GetDirectoryName(files[0]);
+            string output = Path.Combine(outputFolder, outputFileName);
 
-	/// <summary>
-	/// Merge several image files into one pdf
-	/// </summary>
-	/// <param name="files"></param>
-	/// <param name="outputFileName"></param>
-	/// <param name="outputFolder"></param>
-	/// <param name="pdfVersion"></param>
-	void MergeFilesToPDF(string[] files, string outputFileName, string outputFolder, PdfVersion pdfVersion)
-	{
-		string output = Path.Combine(outputFolder, outputFileName);
+            using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+            using (var pdfDocument = new PdfDocument(pdfWriter))
+            using (var document = new iText.Layout.Document(pdfDocument))
+            {
+                pdfDocument.SetTagged();
+                PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+                foreach (string file in files)
+                {
+                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file));
+                    document.Add(image);
+                }
+            }
+            foreach (string file in files)
+            {
+                deleteOriginalFileFromOutputDirectory(file);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true);
+        }
+     }
 
-		using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-		using (var pdfDocument = new PdfDocument(pdfWriter))
-		using (var document = new iText.Layout.Document(pdfDocument))
-		{
-			pdfDocument.SetTagged();
-			PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-			foreach (string file in files)
-			{
-				iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file));
-				document.Add(image);
-			}
-		}
-		foreach (string file in files) { 
-			deleteOriginalFileFromOutputDirectory(file);
-		}
-	}
-
-	/// <summary>
-	/// Merge several image files into one pdf-a
-	/// </summary>
-	/// <param name="files"></param>
-	/// <param name="outputFileName"></param>
-	/// <param name="outputFolder"></param>
-	/// <param name="conformanceLevel"></param>
-	void MergeFilesToPDFA(string[] files, string outputFileName, string outputFolder, PdfAConformanceLevel conformanceLevel)
+    /// <summary>
+    /// Merge several image files into one pdf-a
+    /// </summary>
+    /// <param name="files"></param>
+    /// <param name="outputFileName"></param>
+    /// <param name="outputFolder"></param>
+    /// <param name="conformanceLevel"></param>
+    void MergeFilesToPDFA(string[] files, string outputFileName, string outputFolder, PdfAConformanceLevel conformanceLevel)
 	{
 		string output = Path.Combine(outputFolder, outputFileName);
 
