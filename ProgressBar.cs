@@ -57,7 +57,7 @@ public class ProgressBar : IDisposable, IProgress<double>
 			animation[animationIndex++ % animation.Length],
 			currentDone, totalJobs);
 
-			string displayText = $"{title}:\t{progressBar}";
+			string displayText = $"{title}:\n{progressBar}";
 			UpdateText(displayText);
 			ResetTimer();
 		}

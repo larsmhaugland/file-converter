@@ -8,6 +8,7 @@ using Org.BouncyCastle.Asn1;
 using System.IO;
 using System.Threading;
 using iText.Layout.Splitting;
+using System.Threading.Tasks.Sources;
 
 class FileToConvert
 {
@@ -153,10 +154,7 @@ public class ConversionManager
 		//Initialize conversion map
 		initMap();
 		//Initialize converters
-		Converters = new List<Converter>();
-		Converters.Add(new iText7());
-		Converters.Add(new GhostscriptConverter());
-		//Converters.Add(new CogniddoxConverter());
+		Converters = AddConverters.Instance.GetConverters();
 		//Get files from FileManager
 		Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
@@ -244,145 +242,143 @@ public class ConversionManager
 		ThreadPool.SetMaxThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
 		int totalFiles = WorkingSet.Count;
 
-		using (var overallProgressBar = new ProgressBar("Converting files", totalFiles))
+		//Repeat until all files have been converted/checked
+		while (WorkingSet.Count > 0)
 		{
-			//Repeat until all files have been converted/checked
-			while (WorkingSet.Count > 0)
-			{
-				overallProgressBar.Report((float)(totalFiles - WorkingSet.Count) / (float)totalFiles, totalFiles - WorkingSet.Count);
-				Dictionary<string, CountdownEvent> countdownEvents = new Dictionary<string, CountdownEvent>();
+			Dictionary<string, CountdownEvent> countdownEvents = new Dictionary<string, CountdownEvent>();
 
-				//Loop through working set
-				foreach (FileToConvert file in WorkingSet)
+			//Loop through working set
+			foreach (FileToConvert file in WorkingSet)
+			{
+				//If file is already worked on, skip it
+				if (file.IsModified || file.Route.Count == 0)
 				{
-					//If file is already worked on, skip it
-					if (file.IsModified || file.Route.Count == 0)
+					break;
+				}
+				//Loop through converters
+				foreach (Converter converter in Converters)
+				{
+					if (file.IsModified)
 					{
 						break;
 					}
-					//Loop through converters
-					foreach (Converter converter in Converters)
-					{
-						if (file.IsModified)
-						{
-							break;
-						}
-						var dict = converter.SupportedConversions;
+					var dict = converter.SupportedConversions;
 
-						//If the converter supports the current pronom, check if it can convert to the next pronom in the route
-						if (dict == null || !dict.ContainsKey(file.CurrentPronom))
+					//If the converter supports the current pronom, check if it can convert to the next pronom in the route
+					if (dict == null || !dict.ContainsKey(file.CurrentPronom))
+					{
+						continue;
+					}
+					foreach (string outputFormat in dict[file.CurrentPronom])
+					{
+						//Check if the converter can convert to the next pronom in the route
+						if (file.Route.First() != outputFormat)
 						{
 							continue;
 						}
-						foreach (string outputFormat in dict[file.CurrentPronom])
+						//Create a countdown event for the current file
+						file.IsModified = true;
+						//Try to queue converting file using virtual function
+						if (ThreadPool.QueueUserWorkItem(state =>
+							{
+								try
+								{
+									converter.ConvertFile(file.FilePath, outputFormat);
+									if (converter.Name != null &&
+										(FileInfoMap[file.FilePath].ConversionTools.Count == 0 || FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name))
+									{
+										FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name);
+									}
+								}
+								catch (Exception e)
+								{
+									logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
+									file.IsModified = false;
+								}
+								finally
+								{
+									if (countdownEvents.ContainsKey(file.FilePath))
+									{
+										countdownEvents[file.FilePath].Signal();
+									}
+								}
+							}))
 						{
-							//Check if the converter can convert to the next pronom in the route
-							if (file.Route.First() != outputFormat)
+							//To be run if the Thread was successfully queued
+							if (!countdownEvents.ContainsKey(file.FilePath))
 							{
-								continue;
+								countdownEvents.Add(file.FilePath, new CountdownEvent(1));
 							}
-							//Create a countdown event for the current file
-							file.IsModified = true;
-							//Try to queue converting file using virtual function
-							if (ThreadPool.QueueUserWorkItem(state =>
-								{
-									try
-									{
-										converter.ConvertFile(file.FilePath, outputFormat);
-										Thread.Sleep(10000);
-										if (converter.Name != null &&
-											(FileInfoMap[file.FilePath].ConversionTools.Count != 0 && FileInfoMap[file.FilePath].ConversionTools.Last() != converter.Name))
-										{
-											FileInfoMap[file.FilePath].ConversionTools.Add(converter.Name);
-										}
-									}
-									catch (Exception e)
-									{
-										logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
-										file.IsModified = false;
-									}
-									finally
-									{
-										if (countdownEvents.ContainsKey(file.FilePath))
-										{
-											countdownEvents[file.FilePath].Signal();
-										}
-									}
-								}))
+							else
 							{
-								//To be run if the Thread was successfully queued
-								if (!countdownEvents.ContainsKey(file.FilePath))
-								{
-									countdownEvents.Add(file.FilePath, new CountdownEvent(1));
-								}
-								else
-								{
-									Console.WriteLine("What happened here?");
-								}
-								break;
+								Console.WriteLine("What happened here?");
 							}
+							break;
 						}
 					}
-
 				}
 
-				
+			}
+			var total = countdownEvents.Count;
+			var current = 0;
+			using (ProgressBar progressBar = new ProgressBar("Awaiting threads", countdownEvents.Count))
+			{
 				await Task.Run(() =>
 				{
 					foreach (var countdownEvent in countdownEvents)
 					{
+						current++;
 						countdownEvent.Value.Wait();
+						progressBar.Report((float)current / (float)total, current);
 						countdownEvent.Value.Dispose(); // Dispose after completion
 					}
 					countdownEvents.Clear();
 				});
+                progressBar.Report(1, current);
+				Thread.Sleep(100);
+            }
+			//Remove files that have been worked on from the working set and update for the rest
+			var itemsToRemove = new List<FileToConvert>();
 
-				//Remove files that have been worked on from the working set and update for the rest
-				var itemsToRemove = new List<FileToConvert>();
-
-				foreach (var item in WorkingSet)
+			foreach (var item in WorkingSet)
+			{
+				if (!item.IsModified)
 				{
-					if (!item.IsModified)
-					{
-						itemsToRemove.Add(item);
-						continue;
-					}
-
-					item.IsModified = false;
-
-					// Check if file was converted correctly
-					var file = sf.IdentifyFile(item.FilePath, false);
-
-					if (file == null)
-					{
-						logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + item.FilePath, true);
-						continue;
-					}
-
-					item.CurrentPronom = file.matches[0].id;
-
-					if (item.CurrentPronom == item.Route.First())
-					{
-						item.Route.RemoveAt(0);
-					}
-
-					// Remove if no more steps in route
-					if (item.Route.Count == 0)
-					{
-						itemsToRemove.Add(item);
-					}
+					itemsToRemove.Add(item);
+					continue;
 				}
 
-				foreach (var itemToRemove in itemsToRemove)
+				item.IsModified = false;
+
+				// Check if file was converted correctly
+				var file = sf.IdentifyFile(item.FilePath, false);
+
+				if (file == null)
 				{
-					WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
+					logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not identify file: " + item.FilePath, true);
+					continue;
 				}
-				if (WorkingSet.Count == 0)
+
+				item.CurrentPronom = file.matches[0].id;
+
+				if (item.CurrentPronom == item.Route.First())
 				{
-					overallProgressBar.Report(1, totalFiles);
+					item.Route.RemoveAt(0);
+				}
+
+				// Remove if no more steps in route
+				if (item.Route.Count == 0)
+				{
+					itemsToRemove.Add(item);
 				}
 			}
+
+			foreach (var itemToRemove in itemsToRemove)
+			{
+				WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
+			}
 		}
+		
 		//Update FileInfo list with new data
 		checkConversion();
 	}

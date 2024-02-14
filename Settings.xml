@@ -3,6 +3,8 @@
     <Requester>Lars</Requester>  
     <Converter>Lars</Converter>
 	<ChecksumHashing>sha256</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
+	<InputFolder></InputFolder>
+	<OutputFolder></OutputFolder>
 	<!-- 
 			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935
