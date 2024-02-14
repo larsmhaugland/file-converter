@@ -38,12 +38,101 @@ public class GhostscriptConverter : Converter
 		SupportedConversions = listOfSupportedConversions();
 	}
 
-	/// <summary>
-	/// Convert a file to a new format
-	/// </summary>
-	/// <param name="filePath">The file to be converted</param>
-	/// <param name="pronom">The file format to convert to</param>
-	public override void ConvertFile(string filePath, string pronom)
+    List<string> ImagePronoms = [
+    //PNG
+    "fmt/11",
+        "fmt/12",
+        "fmt/13",
+        "fmt/935",
+
+        //JPG
+        "fmt/41",
+        "fmt/42",
+        "fmt/43",
+        "fmt/44",
+        "x-fmt/398",
+        "x-fmt/390",
+        "x-fmt/391",
+        "fmt/645",
+        "fmt/1507",
+        "fmt/112",
+        //TIFF
+        "fmt/1917",
+        "x-fmt/399",
+        "x-fmt/388",
+        "x-fmt/387",
+        "fmt/155",
+        "fmt/353",
+        "fmt/154",
+        "fmt/153",
+        "fmt/156",
+        //BMP
+        "x-fmt/270",
+        "fmt/115",
+        "fmt/118",
+        "fmt/119",
+        "fmt/114",
+        "fmt/116",
+        "fmt/117",
+    ];
+    List<string> PDFPronoms = [
+        "fmt/15",
+        "fmt/16",
+        "fmt/17",
+        "fmt/18",
+        "fmt/19",
+        "fmt/20",
+        "fmt/276",
+        "fmt/1129"
+    ];
+    List<string> PostScriptPronoms = [
+        "fmt/124",
+        "x-fmt/91",
+        "x-fmt/406",
+        "x-fmt/407",
+        "x-fmt/408",
+        "fmt/501"
+        ];
+
+    Dictionary<string, double> pdfVersionMap = new Dictionary<string, double>()
+    {
+        {"fmt/15", 1.1},
+        {"fmt/16", 1.2},
+        {"fmt/17", 1.3},
+        {"fmt/18", 1.4},
+        {"fmt/19", 1.5},
+        {"fmt/20", 1.6},
+        {"fmt/276", 1.7},
+        {"fmt/1129", 2 }
+};
+
+    /// <summary>
+    /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
+    /// </summary>
+    /// <returns>List of all conversions</returns>
+    public override Dictionary<string, List<string>> listOfSupportedConversions()
+    {
+        var supportedConversions = new Dictionary<string, List<string>>();
+        //PDF to Image
+        foreach (string pdfPronom in PDFPronoms)
+        {
+            supportedConversions.Add(pdfPronom, ImagePronoms);
+        }
+        //PostScript to PDF
+        foreach (string postScriptPronom in PostScriptPronoms)
+        {
+            supportedConversions.Add(postScriptPronom, PDFPronoms);
+        }
+
+        return supportedConversions;
+    }
+
+    /// <summary>
+    /// Convert a file to a new format
+    /// </summary>
+    /// <param name="filePath">The file to be converted</param>
+    /// <param name="pronom">The file format to convert to</param>
+    public override void ConvertFile(string filePath, string pronom)
 	{
 		string outputDirectory = GlobalVariables.parsedOptions.Output;
 		string outputFileName = System.IO.Path.Combine(outputDirectory, System.IO.Path.GetFileNameWithoutExtension(filePath));
@@ -261,112 +350,6 @@ public class GhostscriptConverter : Converter
 			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
 		}
 	}
-
-
-	/// <summary>
-	/// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
-	/// </summary>
-	/// <returns>List of all conversions</returns>
-	public override Dictionary<string, List<string>> listOfSupportedConversions()
-	{
-		var supportedConversions = new Dictionary<string, List<string>>();
-		//Image to PDF
-		foreach (string imagePronom in ImagePronoms)
-		{
-			supportedConversions.Add(imagePronom, PDFPronoms);
-		}
-		//PDF to Image
-		foreach (string pdfPronom in PDFPronoms)
-		{
-			supportedConversions.Add(pdfPronom, ImagePronoms);
-		}
-		//PostScript to PDF
-		foreach (string postScriptPronom in PostScriptPronoms)
-		{
-			supportedConversions.Add(postScriptPronom, PDFPronoms);
-		}
-
-		return supportedConversions;
-	}
-
-	//TODO: Clean up PRONOM list, not all of these are supported by GhostScript
-	List<string> ImagePronoms = [
-		//PNG
-		"fmt/11",
-		"fmt/12",
-		"fmt/13",
-		"fmt/935",
-
-		//JPG
-		"fmt/41",
-		"fmt/42",
-		"fmt/43",
-		"fmt/44",
-		"x-fmt/398",
-		"x-fmt/390",
-		"x-fmt/391",
-		"fmt/645",
-		"fmt/1507",
-		"fmt/112",
-		//TIFF
-		"fmt/1917",
-		"x-fmt/399",
-		"x-fmt/388",
-		"x-fmt/387",
-		"fmt/155",
-		"fmt/353",
-		"fmt/154",
-		"fmt/153",
-		"fmt/156",
-		//BMP
-		"x-fmt/270",
-		"fmt/115",
-		"fmt/118",
-		"fmt/119",
-		"fmt/114",
-		"fmt/116",
-		"fmt/117",
-	];
-	List<string> PDFPronoms = [
-		"fmt/95",
-		"fmt/354",
-		"fmt/476",
-		"fmt/477",
-		"fmt/478",
-		"fmt/479",
-		"fmt/480",
-		"fmt/14",
-		"fmt/15",
-		"fmt/16",
-		"fmt/17",
-		"fmt/18",
-		"fmt/19",
-		"fmt/20",
-		"fmt/276",
-		"fmt/1129"
-	];
-	List<string> PostScriptPronoms = [
-		"fmt/124",
-		"x-fmt/91",
-		"x-fmt/406",
-		"x-fmt/407",
-		"x-fmt/408",
-		"fmt/501"
-		];
-
-	Dictionary<string, double> pdfVersionMap = new Dictionary<string, double>()
-	{
-		{"fmt/14", 1},
-		{"fmt/15", 1.1},
-		{"fmt/16", 1.2},
-		{"fmt/17", 1.3},
-		{"fmt/18", 1.4},
-		{"fmt/19", 1.5},
-		{"fmt/20", 1.6},
-		{"fmt/276", 1.7},
-		{"fmt/1129", 2 }
-}; 
-
 
 }
 
