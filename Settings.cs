@@ -8,9 +8,12 @@ using System.Threading.Tasks;
 using System.Xml;
 public class SettingsData
 {
+	// List of input pronom codes
     public List<string> PronomsList { get; set; } = new List<string>();
     //public string ConvertTo { get; set; } = "";
+	// Default file type to convert to
     public string DefaultType { get; set; } = "";
+	// Whether to merge images or not
 	public bool Merge { get; set; } = false;
 }
 class Settings
@@ -55,9 +58,21 @@ class Settings
 			// Access the Requester and Converter elements
 			XmlNode? requesterNode = root?.SelectSingleNode("Requester");
 			XmlNode? converterNode = root?.SelectSingleNode("Converter");
+            XmlNode? inputNode = root?.SelectSingleNode("InputFolder");
+            XmlNode? outputNode = root?.SelectSingleNode("OutputFolder");
 
-			Logger.JsonRoot.requester = requesterNode?.InnerText.Trim(); 
+            Logger.JsonRoot.requester = requesterNode?.InnerText.Trim(); 
 			Logger.JsonRoot.converter = converterNode?.InnerText.Trim();
+			string? input = inputNode?.InnerText.Trim();
+			string? output = outputNode?.InnerText.Trim();
+			if (!String.IsNullOrEmpty(input))
+			{
+                GlobalVariables.parsedOptions.Input = input;
+            }
+			if(!String.IsNullOrEmpty(output))
+			{
+                GlobalVariables.parsedOptions.Output = output;
+            }
 
 			string? checksumHashing = root?.SelectSingleNode("ChecksumHashing")?.InnerText;
 			if (checksumHashing != null)
@@ -143,7 +158,6 @@ class Settings
 			xmlDoc.Load(pathToSettings);
 
 			if (xmlDoc.DocumentElement == null) { logger.SetUpRunTimeLogMessage("Could not find settings file", true, filename: pathToSettings); return; }
-
 
             XmlNodeList? folderOverrideNodes = xmlDoc.SelectNodes("/root/FolderOverride");
             if (folderOverrideNodes != null)
