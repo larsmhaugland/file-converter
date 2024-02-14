@@ -1,20 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using iText.Kernel.Pdf;
-using iText.Layout;
+﻿using iText.Kernel.Pdf;
 using iText.IO.Image;
 using iText.Pdfa;
 using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
-using SharpCompress.Common;
-using System.Reflection.Metadata;
-using System.Xml;
-
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>

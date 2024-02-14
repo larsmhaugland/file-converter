@@ -92,6 +92,15 @@ public class GhostscriptConverter : Converter
         {"fmt/1129", 2 }
 };
 
+	Dictionary<List<string>, Tuple<string, string>> keyValuePairs = new Dictionary<List<string>, Tuple<string, string>>() 
+	{
+		{new List<string> { "fmt/11", "fmt/12", "fmt/13", "fmt/935" }, new Tuple<string, string>("png16m", ".png")},
+		{new List<string> { "fmt/41", "fmt/42", "fmt/43", "fmt/44", "x-fmt/398", "x-fmt/390", "x-fmt/391", "fmt/645", "fmt/1507", "fmt/112" }, new Tuple<string, string>("jpeg", ".jpg")},
+		{new List<string> { "fmt/1917", "x-fmt/399", "x-fmt/388", "x-fmt/387", "fmt/155", "fmt/353", "fmt/154", "fmt/153", "fmt/156" }, new Tuple<string, string>("tiff24nc", ".tiff")},
+		{new List<string> { "x-fmt/270", "fmt/115", "fmt/118", "fmt/119", "fmt/114", "fmt/116", "fmt/117" }, new Tuple<string, string>("bmp16m", ".bmp")},
+		{new List<string> { "fmt/15", "fmt/16", "fmt/17", "fmt/18", "fmt/19", "fmt/20", "fmt/276", "fmt/1129" }, new Tuple<string, string>("pdfwrite", ".pdf")}
+	};
+
     /// <summary>
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
@@ -118,139 +127,44 @@ public class GhostscriptConverter : Converter
     /// </summary>
     /// <param name="filePath">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-    public override void ConvertFile(string filePath, string pronom)
-	{
-		string outputFileName = Path.GetFileNameWithoutExtension(filePath);
+	public override void ConvertFile(string fileinfo, string pronom)
+    {
+        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo);
 		string extension;
 		string sDevice;
 
-		Logger log = Logger.Instance;
-
-		switch (pronom)
+		try
 		{
-			#region png
-			// PNG
-			case "fmt/11":
-			case "fmt/12":
-			case "fmt/13":
-			case "fmt/935":
-				extension = ".png";
-				sDevice = "png16m";
-				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
-				break;
-			#endregion
-			#region jpg
-			// JPG/JPEG
-			case "fmt/41":
-			case "fmt/42":
-			case "fmt/43":
-			case "fmt/44":
-			case "x-fmt/398":
-			case "x-fmt/390":
-			case "x-fmt/391":
-			case "fmt/645":
-			case "fmt/1507":
-			case "fmt/112":
-			case "fmt/367":
-				extension = ".jpg";
-				sDevice = "jpeg";
-				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
-				break;
-			#endregion
-			#region tif
-			// TIF
-			case "fmt/1917":
-			case "x-fmt/399":
-			case "x-fmt/388":
-			case "x-fmt/387":
-			case "fmt/155":
-			case "fmt/353":
-			case "fmt/154":
-			case "fmt/153":
-			case "fmt/156":
-				extension = ".tiff";
-				sDevice = "tiff24nc";
-				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
-				break;
-			#endregion
-			#region bmp
-			// BMP
-			case "x-fmt/270":
-			case "fmt/115":
-			case "fmt/118":
-			case "fmt/119":
-			case "fmt/114":
-			case "fmt/116":
-			case "fmt/117":
-				extension = ".bmp";
-				sDevice = "bmp16m";
-				convertToImage(filePath, outputFileName, sDevice, extension, pronom);
-				break;
-			#endregion
-			//Check how to make the pronom correct
-			#region pdf
-			case "fmt/559":
-			case "fmt/560":
-			case "fmt/561":
-			case "fmt/562":
-			case "fmt/563":
-			case "fmt/564":
-			case "fmt/565":
-			case "fmt/558":
-			case "fmt/14":
-			case "fmt/15":
-			case "fmt/16":
-			case "fmt/17":
-			case "fmt/18":
-			case "fmt/19":
-			case "fmt/20":
-			case "fmt/276":
-			case "fmt/95":
-			case "fmt/354":
-			case "fmt/476":
-			case "fmt/477":
-			case "fmt/478":
-			case "fmt/479":
-			case "fmt/480":
-			case "fmt/481":
-			case "fmt/1910":
-			case "fmt/1911":
-			case "fmt/1912":
-			case "fmt/493":
-			case "fmt/144":
-			case "fmt/145":
-			case "fmt/157":
-			case "fmt/146":
-			case "fmt/147":
-			case "fmt/158":
-			case "fmt/148":
-			case "fmt/488":
-			case "fmt/489":
-			case "fmt/490":
-			case "fmt/492":
-			case "fmt/491":
-			case "fmt/1129":
-			case "fmt/1451":
-				extension = ".pdf";
-				sDevice = "pdfwrite";
-				string pdfVersion = pdfVersionMap[pronom].ToString();
-				convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion,pronom);
-				break;
-			#endregion
-			default:
-				log.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, filePath);
-				break;
-		}
-	}
+			if (keyValuePairs.Any(kv => kv.Key.Contains(pronom)))
+			{
+				extension = keyValuePairs.First(kv => kv.Key.Contains(pronom)).Value.Item2;
+				sDevice = keyValuePairs.First(kv => kv.Key.Contains(pronom)).Value.Item1;
 
-	/// <summary>
-	/// Convert a file using GhostScript command line
-	/// </summary>
-	/// <param name="filePath">The file to be converted</param>
-	/// <param name="outputFileName">The name of the new file</param>
-	/// <param name="sDevice">What format GhostScript will convert to</param>
-	/// <param name="extension">Extension type for after the conversion</param>
-	void convertToImage(string filePath, string outputFileName, string sDevice, string extension, string pronom)
+				if (extension == ".pdf")
+				{
+					string pdfVersion = pdfVersionMap[pronom].ToString();
+					convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion, pronom);
+				}
+				else if (extension == ".png" || extension == ".jpg" || extension == ".tiff" || extension == ".bmp")
+				{
+					convertToImage(fileinfo, outputFileName, sDevice, extension, pronom);
+				}
+			}
+		}catch(Exception e)
+		{
+			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo);
+		}
+		
+    }
+
+    /// <summary>
+    /// Convert a file using GhostScript command line
+    /// </summary>
+    /// <param name="filePath">The file to be converted</param>
+    /// <param name="outputFileName">The name of the new file</param>
+    /// <param name="sDevice">What format GhostScript will convert to</param>
+    /// <param name="extension">Extension type for after the conversion</param>
+    void convertToImage(string filePath, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
 		string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
