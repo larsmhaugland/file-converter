@@ -1,7 +1,4 @@
-﻿using iText.Forms.Form.Element;
-using System;
-
-/// <summary>
+﻿/// <summary>
 /// Parent class for all converters
 /// </summary>
 public class Converter

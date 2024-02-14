@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using iText.IO.Font.Constants;
 using System.Diagnostics;
 
 public static class GlobalVariables
