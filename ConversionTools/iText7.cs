@@ -5,7 +5,6 @@ using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
 
-
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
 ///                                                                                                  <br></br>
