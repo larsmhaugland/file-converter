@@ -7,7 +7,7 @@ public class FileManager
     private static FileManager? instance;
     private static readonly object lockObject = new object();
 	public List<FileInfo> Files;	// List of files to be converted
-
+	private bool identifyingFiles = false; // True if files are being identified
     private FileManager()
     {
         Files = new List<FileInfo>();
@@ -32,37 +32,39 @@ public class FileManager
     //NOTE: Since this function is async, it may not be finished before the conversion starts, what should we do?
     public async void IdentifyFiles()
     {
-        Siegfried sf = Siegfried.Instance;
-        Logger logger = Logger.Instance;
+		identifyingFiles = true;
+		Siegfried sf = Siegfried.Instance;
+		Logger logger = Logger.Instance;
 
 
 		//Identifying all uncompressed files
 		//TODO: Why do I get a warning here (without '!')?
-		List<FileInfo> ?files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
-		
-		if(files != null)
+		List<FileInfo>? files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
+
+		if (files != null)
 		{
 			//Change path from input to output directory
-			foreach(FileInfo file in files)
+			foreach (FileInfo file in files)
 			{
 				//Replace first occurence of input path with output path
 				file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 			}
 			Files.AddRange(files);
-		} else
+		}
+		else
 		{
 			logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
 		}
 
 		//Identifying all compressed files
-		List<FileInfo> ?compressedFiles = await sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
+		List<FileInfo>? compressedFiles = await sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
 
-		if(compressedFiles != null)
+		if (compressedFiles != null)
 		{
 			Files.AddRange(compressedFiles);
 		}
-
-	}
+        identifyingFiles = false;
+    }
 
 	public void DisplayFileList()
 	{
@@ -71,37 +73,42 @@ public class FileManager
 		foreach(FileInfo file in Files)
 		{
 			string folder = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output, file.FilePath));
-			string overrideFormat = "";
-			/*
-            //Check folder override and output format
-            if (folder != null && FolderOverride.ContainsKey(folder))
+			string? overrideFormat;
+            GlobalVariables.FileSettings.TryGetValue(file.OriginalPronom, out overrideFormat);
+            if (folder != null && GlobalVariables.FolderOverride.ContainsKey(folder))
+            {
+                overrideFormat = GlobalVariables.FolderOverride[folder].DefaultType;
+            }
+
+			if (overrideFormat == null)
 			{
-				overrideFormat = FolderOverride[folder].Key;
+                overrideFormat = "Not set";
+            }
+
+			KeyValuePair<string,string> key = new KeyValuePair<string,string>(file.OriginalPronom, overrideFormat);
+			if (fileCount.ContainsKey(key))
+			{
+				fileCount[key]++;
+			} else
+			{
+				fileCount[key] = 1;
 			}
-            if(fileCount.ContainsKey(file.OriginalPronom))
-			{
-				fileCount[file.OriginalPronom]++;
-            } else
-			{
-				fileCount[file.OriginalPronom] = 1;
-            }*/
         }
 
 		//Print the number of files per pronom code
-		Console.WriteLine("Pronom code: Number of files");
+		Console.WriteLine("Input format | Output format | Count");
 		foreach(KeyValuePair<KeyValuePair<string,string>, int> entry in fileCount)
 		{
-            Console.WriteLine(entry.Key + ": " + entry.Value + " Output format: ");
+            Console.WriteLine("{0,10} | {1,10} | {2, 6}",entry.Key.Key,entry.Key.Value,entry.Value);
         }
 	}
 
 	public List<FileInfo> GetFiles()
 	{
-		if(Files.Count == 0)
+		while (identifyingFiles)
 		{
-			//TODO: Should maybe wait?
-			IdentifyFiles();
-		}
+            Thread.Sleep(100);
+        }
 		return Files;
 	}
 
