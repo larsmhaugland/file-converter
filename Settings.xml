@@ -156,7 +156,7 @@
 	<!-- OPEN DOCUMENT FILE CLASS -->
 	<FileClass>
 		<ClassName>Open Document</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/16</Default>
 		<FileTypes>
 			<Filename>ODT</Filename>
 			<Pronoms>
@@ -185,6 +185,6 @@
 		<FolderPath>apekatter</FolderPath><!-- Path after input folder example: /documents -->
 		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
 		<ConvertTo>fmt/14</ConvertTo>
-		<MergeImages>Yes</MergeImages><!-- Yes, No -->
+		<MergeImages></MergeImages><!-- Yes, No -->
 	</FolderOverride>
 </root>

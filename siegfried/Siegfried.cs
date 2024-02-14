@@ -110,7 +110,7 @@ public class Siegfried
 	public SiegfriedFile? IdentifyFile(string path, bool hash)
 	{
 		// Wrap the file path in quotes
-		string wrappedPath = Path.Combine(path);
+		string wrappedPath = "\"" + path + "\"";
 		string options;
 		if (hash)
 		{
