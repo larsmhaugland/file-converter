@@ -11,6 +11,7 @@ public class SettingsData
     public List<string> PronomsList { get; set; } = new List<string>();
     //public string ConvertTo { get; set; } = "";
     public string DefaultType { get; set; } = "";
+	public bool Merge { get; set; } = false;
 }
 class Settings
 {
@@ -136,8 +137,9 @@ class Settings
 		Logger logger = Logger.Instance;
 		try
 		{
-			// Load the XML document from a file
-			XmlDocument xmlDoc = new XmlDocument();
+			string outputFolder = GlobalVariables.parsedOptions.Output;
+            // Load the XML document from a file
+            XmlDocument xmlDoc = new XmlDocument();
 			xmlDoc.Load(pathToSettings);
 
 			if (xmlDoc.DocumentElement == null) { logger.SetUpRunTimeLogMessage("Could not find settings file", true, filename: pathToSettings); return; }
@@ -150,6 +152,7 @@ class Settings
                 {
                     string? folderPath = folderOverrideNode.SelectSingleNode("FolderPath")?.InnerText;
                     string? pronoms = folderOverrideNode.SelectSingleNode("Pronoms")?.InnerText;
+					string? merge = folderOverrideNode.SelectSingleNode("MergeImages")?.InnerText.ToUpper().Trim();
 
                     List<string> pronomsList = new List<string>();
                     if (!string.IsNullOrEmpty(pronoms))
@@ -158,11 +161,12 @@ class Settings
                                                      .Select(pronom => pronom.Trim()));
                     }
 
-                    SettingsData settings = new SettingsData
-                    {
-                        PronomsList = pronomsList,
-                        DefaultType = folderOverrideNode.SelectSingleNode("ConvertTo")?.InnerText
-                    };
+					SettingsData settings = new SettingsData
+					{
+						PronomsList = pronomsList,
+						DefaultType = folderOverrideNode.SelectSingleNode("ConvertTo")?.InnerText,
+						Merge = merge == "YES",
+					};
 
                     bool folderPathEmpty = String.IsNullOrEmpty(folderPath);
                     bool pronomsEmpty = String.IsNullOrEmpty(pronoms);
@@ -174,18 +178,23 @@ class Settings
                     }
                     else
                     {
-                        GlobalVariables.FolderOverride[folderPath] = settings;
-                        List<string> subfolders = GetSubfolderPaths(GlobalVariables.parsedOptions.Output, folderPath);
-                        if (subfolders.Count > 0)
-                        {
-                            foreach (string subfolder in subfolders)
-                            {
-                                if (!GlobalVariables.FolderOverride.ContainsKey(subfolder))
-                                {
-                                    GlobalVariables.FolderOverride[subfolder] = settings;
-                                }
-                            }
-                        }
+						if (Directory.Exists(outputFolder + "/" + folderPath)) 
+						{ 
+							GlobalVariables.FolderOverride[folderPath] = settings;
+						
+							List<string> subfolders = GetSubfolderPaths(folderPath);
+							if (subfolders.Count > 0)
+							{
+								foreach (string subfolder in subfolders)
+								{
+									// Check if the subfolder is already in the FolderOverride Map
+									if (!GlobalVariables.FolderOverride.ContainsKey(subfolder))
+									{
+										GlobalVariables.FolderOverride[subfolder] = settings;
+									}
+								}
+							}
+						}
                     }
                 }
             }
@@ -198,11 +207,11 @@ class Settings
     /// <summary>
     /// Recursively retrieves all subfolders of a given parent folder.
     /// </summary>
-    /// <param name="outputPath">path to the output folder either absolute path or a relitve path from the working directory</param>
     /// <param name="folderName">the name of the parent folder</param>
     /// <returns>list with paths to all subfolders</returns>
-    private static List<string> GetSubfolderPaths(string outputPath, string folderName)
+    private static List<string> GetSubfolderPaths(string folderName)
     {
+        string outputPath = GlobalVariables.parsedOptions.Output;
         List<string> subfolders = new List<string>();
 
         try
@@ -219,12 +228,13 @@ class Settings
                 foreach (string subfolder in Directory.GetDirectories(targetFolderPath))
                 {
                     // Recursively get subfolders of each subfolder
-                    subfolders.AddRange(GetSubfolderPaths(outputPath, Path.Combine(folderName, Path.GetFileName(subfolder))));
+                    subfolders.AddRange(GetSubfolderPaths(Path.Combine(folderName, Path.GetFileName(subfolder))));
                 }
             }
             else
             {
-                Console.WriteLine($"Folder '{folderName}' does not exist under '{outputPath}'");
+                Console.WriteLine($"Folder '{folderName}' does not exist in '{outputPath}'");
+                Logger.Instance.SetUpRunTimeLogMessage($"Folder '{folderName}' does not exist in '{outputPath}'", true, filename: folderName);
             }
         }
         catch (UnauthorizedAccessException)

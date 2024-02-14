@@ -452,7 +452,7 @@ public class iText7 : Converter
 
 		using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
 		using (var pdfDocument = new PdfDocument(pdfWriter))
-		using (var document = new Document(pdfDocument))
+		using (var document = new iText.Layout.Document(pdfDocument))
 		{
 			pdfDocument.SetTagged();
 			PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
