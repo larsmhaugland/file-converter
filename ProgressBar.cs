@@ -22,7 +22,7 @@ public class ProgressBar : IDisposable, IProgress<double>
 	private int totalJobs = 0;
 	public ProgressBar(string title, int totalItems)
 	{
-		timer = new Timer(TimerHandler);
+		timer = new Timer(TimerHandler!);
 		this.title = title;
 		this.totalJobs = totalItems;
 		// A progress bar is only for temporary display in a console window.

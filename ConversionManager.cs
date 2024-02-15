@@ -1,4 +1,11 @@
 ﻿using System.Collections.Concurrent;
+using Org.BouncyCastle.Asn1;
+using System.IO;
+using System.Threading;
+using iText.Layout.Splitting;
+using System.Threading.Tasks.Sources;
+using Org.BouncyCastle.Asn1.Crmf;
+using System.Diagnostics;
 
 class FileToConvert
 {
@@ -8,7 +15,7 @@ class FileToConvert
 	public List<string> Route { get; set; }         //From Dictionary
 	public bool IsModified { get; set; } = false;   //True if file has been worked on
 
-	public FileToConvert(FileInfo file)
+    public FileToConvert(FileInfo file)
 	{
 		FilePath = file.FilePath;
 		CurrentPronom = file.OriginalPronom;
@@ -31,8 +38,11 @@ public class ConversionManager
 	List<FileInfo> Files;
 	Dictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
 	Dictionary<string,FileInfo> FileInfoMap = new Dictionary<string,FileInfo>();
+	public Dictionary<string,string> WorkingSetMap = new Dictionary<string,string>();
+    private static ConversionManager? instance;
+    private static readonly object lockObject = new object();
 
-	List<Converter> Converters;
+    List<Converter> Converters;
 	List<string> WordPronoms = [
 		"x-fmt/329", "fmt/609", "fmt/39", "x-fmt/274",
 		"x-fmt/275", "x-fmt/276", "fmt/1688", "fmt/37",
@@ -132,7 +142,7 @@ public class ConversionManager
 	{
 		foreach(FileInfo file in Files)
 		{
-			FileInfoMap.Add(file.FilePath, file);
+			FileInfoMap.TryAdd(file.FilePath, file);
 		}
 	}
 
@@ -156,6 +166,21 @@ public class ConversionManager
 		//Initialize FileMap
 		initFileMap();
 	}
+
+	public static ConversionManager Instance
+	{         
+		get
+		{
+            lock (lockObject)
+			{
+                if (instance == null)
+				{
+                    instance = new ConversionManager();
+                }
+                return instance;
+            }
+        }
+    }
 	
 	/// <summary>
 	/// 
@@ -176,8 +201,8 @@ public class ConversionManager
     {
 		int maxThreads = GlobalVariables.maxThreads;
         Dictionary<string, List<FileInfo>> mergingFiles = new Dictionary<string, List<FileInfo>>();
+		ConcurrentDictionary<string,FileToConvert> WorkingSet = new ConcurrentDictionary<string,FileToConvert>();
         //Initialize working set
-        ConcurrentBag<FileToConvert> WorkingSet = new ConcurrentBag<FileToConvert>();
         Siegfried sf = Siegfried.Instance;
         Logger logger = Logger.Instance;
         foreach (FileInfo file in Files)
@@ -205,7 +230,11 @@ public class ConversionManager
 			file.Route = newFile.Route;
 			if (addToWorkingSet)
 			{
-                WorkingSet.Add(newFile);
+				bool added = WorkingSet.TryAdd(file.FilePath, newFile);
+				if (!added)
+				{
+					logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not add file to working set: " + file.FilePath, true);
+				}
             }
 		}
 		SendToCombineFiles(mergingFiles);
@@ -216,29 +245,30 @@ public class ConversionManager
 		//Repeat until all files have been converted/checked
 		while (WorkingSet.Count > 0)
 		{
-			Dictionary<string, CountdownEvent> countdownEvents = new Dictionary<string, CountdownEvent>();
-
+			ConcurrentDictionary<string, CountdownEvent> countdownEvents = new ConcurrentDictionary<string, CountdownEvent>();
+			WorkingSetMap.Clear();
 			//Loop through working set
-			foreach (FileToConvert file in WorkingSet)
+			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, file =>
 			{
+				
 				//If file is already worked on, skip it
 				if (file.IsModified || file.Route.Count == 0)
 				{
-					break;
+					return;
 				}
 				//Loop through converters
 				foreach (Converter converter in Converters)
 				{
 					if (file.IsModified)
 					{
-						break;
+						return;
 					}
 					var dict = converter.SupportedConversions;
 
 					//If the converter supports the current pronom, check if it can convert to the next pronom in the route
 					if (dict == null || !dict.ContainsKey(file.CurrentPronom))
 					{
-						continue;
+						break;
 					}
 					foreach (string outputFormat in dict[file.CurrentPronom])
 					{
@@ -247,8 +277,8 @@ public class ConversionManager
 						{
 							continue;
 						}
-						//Create a countdown event for the current file
-						file.IsModified = true;
+                        //Create a countdown event for the current file
+                        file.IsModified = true;
 						//Try to queue converting file using virtual function
 						if (ThreadPool.QueueUserWorkItem(state =>
 							{
@@ -276,42 +306,70 @@ public class ConversionManager
 							}))
 						{
 							//To be run if the Thread was successfully queued
-							if (!countdownEvents.ContainsKey(file.FilePath))
+							var added = countdownEvents.TryAdd(file.FilePath, new CountdownEvent(1));
+							if(!added)
 							{
-								countdownEvents.Add(file.FilePath, new CountdownEvent(1));
-							}
-							else
-							{
-								Console.WriteLine("What happened here?");
-							}
-							break;
+                                logger.SetUpRunTimeLogMessage("CM ConvertFiles Could not add countdown event: " + file.FilePath, true);
+                            }
+							return;
 						}
 					}
 				}
+			});
 
-			}
+			//Wait for all threads to finish
 			var total = countdownEvents.Count;
 			var current = 0;
 			using (ProgressBar progressBar = new ProgressBar("Awaiting threads", countdownEvents.Count))
 			{
 				await Task.Run(() =>
 				{
-					foreach (var countdownEvent in countdownEvents)
+					bool allDone = false;
+					Stopwatch sw = new Stopwatch();
+					int timeout = 10;
+					sw.Start();
+					while (!allDone && sw.Elapsed.Minutes < timeout) {
+						Thread.Sleep(200);
+						allDone = true;
+						foreach (var countdownEvent in countdownEvents)
+						{
+							if (countdownEvent.Value.IsSet)
+							{
+								progressBar.Report((float)++current / (float)total, current);
+								countdownEvent.Value.Dispose(); // Dispose after completion
+							}
+							else
+							{
+								allDone = false;
+							}
+						}
+					}
+					sw.Stop();
+					if (!allDone)
 					{
-						current++;
-						countdownEvent.Value.Wait();
-						progressBar.Report((float)current / (float)total, current);
-						countdownEvent.Value.Dispose(); // Dispose after completion
+						Console.WriteLine("[DEBUG] Threads should time out!");
+						countdownEvents.Values.AsParallel().ForAll(c => c.Wait());
 					}
 					countdownEvents.Clear();
 				});
                 progressBar.Report(1, current);
-				Thread.Sleep(100);
+				Thread.Sleep(200);
             }
 			//Remove files that have been worked on from the working set and update for the rest
 			var itemsToRemove = new List<FileToConvert>();
-
-			foreach (var item in WorkingSet)
+			foreach (var entry in WorkingSetMap)
+			{
+				var oldFile = WorkingSet[entry.Key];
+				WorkingSet.Remove(oldFile.FilePath, out _);
+				oldFile.FilePath = entry.Value;
+				//WorkingSet[entry.Value] = oldFile;
+				var worked = WorkingSet.TryAdd(entry.Value,oldFile);
+				if (!worked)
+				{
+					Console.WriteLine("[DEBUG] Could not add new entry to WorkingSet");
+				}
+			}
+			foreach (var item in WorkingSet.Values)
 			{
 				if (!item.IsModified)
 				{
@@ -341,16 +399,18 @@ public class ConversionManager
 				if (item.Route.Count == 0)
 				{
 					itemsToRemove.Add(item);
+					continue;
 				}
+				Console.Write("");
 			}
-
 			foreach (var itemToRemove in itemsToRemove)
 			{
-				WorkingSet.TryTake(out _); // TryTake removes the item from ConcurrentBag
+				WorkingSet.TryRemove(itemToRemove.FilePath, out _); // TryTake removes the item from ConcurrentBag
 			}
 		}
 		
 		//Update FileInfo list with new data
+		Console.WriteLine("Checking conversion status...");
 		checkConversion();
 	}
     void SendToCombineFiles(Dictionary<string, List<FileInfo>> mergingFiles)

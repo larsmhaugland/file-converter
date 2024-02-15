@@ -202,8 +202,8 @@ public class Siegfried
 			}
 			else if (parentDir == null)
 			{
-				logger.SetUpRunTimeLogMessage("SF IdentifyList could not create output file/directory " + outputFile, true);
-				throw new Exception("SF IdentifyList could not create output file/directory " + outputFile);
+				logger.SetUpRunTimeLogMessage("SF IdentifyList could not create output directory " + outputFile, true);
+				throw new Exception("SF IdentifyList could not create output directory " + outputFile);
 			}
 			File.Create(outputFile).Close();
 		}
