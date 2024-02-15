@@ -65,7 +65,7 @@ public class Siegfried
 	private static readonly object lockObject = new object();
 	private List<string> CompressedFolders;
 	private List<string> SupportedCompressionExtensions = new List<string>{ ".zip", ".tar", ".gz", ".rar", ".7z" };
-
+	
 	public static Siegfried Instance
 	{
 		get
@@ -289,7 +289,7 @@ public class Siegfried
 		List<string> filePaths = new List<string>(Directory.GetFiles(input, "*.*", SearchOption.AllDirectories));
 		ConcurrentBag<string[]> filePathGroups = new ConcurrentBag<string[]>(GroupPaths(filePaths));
 
-		Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePaths =>
+		Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePaths =>
 		{
 			var output = IdentifyList(filePaths);
 			if (output == null)
@@ -331,14 +331,14 @@ public class Siegfried
 		var fileBag = new ConcurrentBag<FileInfo>();
 		
 		//For eaccompressed folder, identify all files
-		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, folder =>
+		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, folder =>
 		{
 			//Identify all file paths in compressed folder and group them
 			var pathWithoutExt = folder.Split('.')[0]; //TODO: This might not work for paths with multiple file extensions
 			var paths = Directory.GetFiles(pathWithoutExt, "*.*", SearchOption.AllDirectories);
 			var filePathGroups = GroupPaths(new List<string>(paths));
 			//Identify all files in each group
-			Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, paths =>
+			Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, paths =>
 			{
 				var files = IdentifyList(paths);
 				if (files != null)
@@ -562,7 +562,7 @@ public class Siegfried
 	public void CompressFolders()
 	{
 		//In Parallel: Identify original compression formats and compress the previously identified folders
-		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePath =>
+		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePath =>
 		{
 			var extention = Path.GetExtension(filePath);
 			//Switch for different compression formats
@@ -626,7 +626,7 @@ public class Siegfried
 		}
 		ConcurrentBag<string> unpackedFolders = new ConcurrentBag<string>();
 		//In Parallel: Unpack compressed folders and delete the compressed folder
-		Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, filePath =>
+		Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePath =>
 		{
 			var extension = Path.GetExtension(filePath);
 			//Switch for different compression formats

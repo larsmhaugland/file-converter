@@ -200,6 +200,7 @@ public class ConversionManager
     /// </summary>
     public async Task ConvertFiles()
     {
+		int maxThreads = GlobalVariables.maxThreads;
         Dictionary<string, List<FileInfo>> mergingFiles = new Dictionary<string, List<FileInfo>>();
 		ConcurrentDictionary<string,FileToConvert> WorkingSet = new ConcurrentDictionary<string,FileToConvert>();
         //Initialize working set
@@ -239,7 +240,7 @@ public class ConversionManager
 		}
 		SendToCombineFiles(mergingFiles);
 		List<Task> tasks = new List<Task>();
-		ThreadPool.SetMaxThreads(Environment.ProcessorCount, Environment.ProcessorCount);
+		ThreadPool.SetMaxThreads(maxThreads, maxThreads);
 		int totalFiles = WorkingSet.Count;
 
 		//Repeat until all files have been converted/checked

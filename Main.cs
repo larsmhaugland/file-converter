@@ -9,6 +9,7 @@ public static class GlobalVariables
 	// Map with info about what folders have overrides for specific formats
     public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
     public static HashAlgorithms checksumHash;
+	public static int maxThreads = Environment.ProcessorCount*2;
 }
 public class Options
 {
