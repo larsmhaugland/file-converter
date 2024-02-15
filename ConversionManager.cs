@@ -6,6 +6,7 @@ using iText.Layout.Splitting;
 using System.Threading.Tasks.Sources;
 using Org.BouncyCastle.Asn1.Crmf;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 class FileToConvert
 {
@@ -321,28 +322,34 @@ public class ConversionManager
 			var current = 0;
 			using (ProgressBar progressBar = new ProgressBar("Awaiting threads", countdownEvents.Count))
 			{
+				//TODO: This needs optimization
 				await Task.Run(() =>
 				{
 					bool allDone = false;
 					Stopwatch sw = new Stopwatch();
-					int timeout = 10;
+					int timeout = 5;
 					sw.Start();
 					while (!allDone && sw.Elapsed.Minutes < timeout) {
-						Thread.Sleep(200);
+						Thread.Sleep(300);
 						allDone = true;
 						foreach (var countdownEvent in countdownEvents)
 						{
-							if (countdownEvent.Value.IsSet)
+							if (!countdownEvent.Value.IsSet)
 							{
-								progressBar.Report((float)++current / (float)total, current);
-								countdownEvent.Value.Dispose(); // Dispose after completion
-							}
-							else
-							{
-								allDone = false;
-							}
+                                allDone = false;
+                            }
 						}
-					}
+                        // Get the keys that are finished
+                        var keysToRemove = countdownEvents.Keys.Where(key => countdownEvents[key].IsSet).ToList();
+
+                        // Remove the keys from the dictionary
+                        Parallel.ForEach(keysToRemove, key =>
+                        {
+							countdownEvents[key].Dispose(); // Dispose after completion
+                            countdownEvents.TryRemove(key, out _);
+                        });
+						progressBar.Report(total - countdownEvents.Count / total, total - countdownEvents.Count);
+                    }
 					sw.Stop();
 					if (!allDone)
 					{
@@ -351,7 +358,7 @@ public class ConversionManager
 					}
 					countdownEvents.Clear();
 				});
-                progressBar.Report(1, current);
+                progressBar.Report(1, total);
 				Thread.Sleep(200);
             }
 			//Remove files that have been worked on from the working set and update for the rest
@@ -368,6 +375,7 @@ public class ConversionManager
 					Console.WriteLine("[DEBUG] Could not add new entry to WorkingSet");
 				}
 			}
+
 			foreach (var item in WorkingSet.Values)
 			{
 				if (!item.IsModified)
@@ -377,7 +385,7 @@ public class ConversionManager
 				}
 
 				item.IsModified = false;
-
+				//TODO: Shouldn't need to check if file was converted correctly - this should be done in Converter
 				// Check if file was converted correctly
 				var file = sf.IdentifyFile(item.FilePath, false);
 

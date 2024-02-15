@@ -11,7 +11,7 @@ class AddConverters
         List<Converter> converters = new List<Converter>();
         converters.Add(new iText7());
         converters.Add(new GhostscriptConverter());
-       // converters.Add(new CogniddoxConverter());
+        converters.Add(new CogniddoxConverter());
         return converters;
     }
     private static AddConverters? instance;
