@@ -57,6 +57,8 @@ public class Converter
 				file.FilePath = filepathAfter;
 			}
 		}
+		ConversionManager cm = ConversionManager.Instance;
+		cm.WorkingSetMap[filepathBefore] = filepathAfter;
 	}
 
 	/// <summary>

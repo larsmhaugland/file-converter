@@ -68,7 +68,7 @@ class Program
 			return;
 		}
 
-		ConversionManager cm = new ConversionManager();
+		ConversionManager cm = ConversionManager.Instance;
 		logger.AskAboutReqAndConv();
 
 		if (fileManager.Files.Count > 0)

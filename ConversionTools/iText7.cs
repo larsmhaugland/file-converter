@@ -216,30 +216,26 @@ public class iText7 : Converter
 
 		try
 		{
-			using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-			using (var pdfDocument = new PdfDocument(pdfWriter))
-			using (var document = new iText.Layout.Document(pdfDocument))
-			{
-				pdfDocument.SetTagged();
-				PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-				iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filePath));
-				document.Add(image);
-			}
-			if (conformanceLevel != null)
-			{
-				convertFromPDFToPDFA(output, conformanceLevel, filePath);
-			}
-			int count = 1;
-			bool converted = false;
-			do
-			{
-				converted = CheckConversionStatus(filePath, output, pronom);
-				count++;
-				if (!converted)
-				{
-					convertFromImageToPDF(filePath, pdfVersion, pronom);
-				}
-			} while (!converted && count < 4);
+            int count = 0;
+            bool converted = false;
+            do
+            {
+                using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+		        using (var pdfDocument = new PdfDocument(pdfWriter))
+		        using (var document = new iText.Layout.Document(pdfDocument))
+		        {
+			        pdfDocument.SetTagged();
+			        PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+			        iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filePath));
+			        document.Add(image);
+		        }
+		        if (conformanceLevel != null)
+		        {
+			        convertFromPDFToPDFA(output, conformanceLevel, filePath);
+		        }
+			
+			    converted = CheckConversionStatus(filePath, output, pronom);
+			} while (!converted && ++count < 3);
 			if (!converted)
 			{
 				throw new Exception("File was not converted");
@@ -266,38 +262,32 @@ public class iText7 : Converter
 
 		try
 		{
-			using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-			using (var pdfDocument = new PdfDocument(pdfWriter))
-			using (var document = new iText.Layout.Document(pdfDocument))
-			{
-				pdfDocument.SetTagged();
-				PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-				using(var htmlSource = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
-				{
-					HtmlConverter.ConvertToPdf(htmlSource, pdfDocument);
-					document.Close();
-				}
-				pdfDocument.Close();
-				pdfWriter.Close();
-				pdfWriter.Dispose();
-			}
-			
-			if (conformanceLevel != null)
-			{
-				convertFromPDFToPDFA(output, conformanceLevel, filePath);
-			}
-
-            int count = 1;
+            int count = 0;
             bool converted = false;
             do
             {
-                converted = CheckConversionStatus(filePath, output, pronom);
-                count++;
-                if (!converted)
+                using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+			    using (var pdfDocument = new PdfDocument(pdfWriter))
+			    using (var document = new iText.Layout.Document(pdfDocument))
+			    {
+				    pdfDocument.SetTagged();
+				    PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+				    using(var htmlSource = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+				    {
+					    HtmlConverter.ConvertToPdf(htmlSource, pdfDocument);
+					    document.Close();
+				    }
+				    pdfDocument.Close();
+				    pdfWriter.Close();
+				    pdfWriter.Dispose();
+			    }
+
+                if (conformanceLevel != null)
                 {
-                    convertFromHTMLToPDF(filePath, pdfVersion, pdfA, pronom, conformanceLevel);
+                    convertFromPDFToPDFA(output, conformanceLevel, filePath);
                 }
-            } while (!converted && count < 4);
+                converted = CheckConversionStatus(filePath, output, pronom);
+            } while (!converted && ++count < 3);
             if (!converted)
             {
                 throw new Exception("File was not converted");
@@ -327,57 +317,47 @@ public class iText7 : Converter
         try
         {
             string newFileName = Path.Combine(Path.GetDirectoryName(filePath) ?? "", Path.GetFileNameWithoutExtension(filePath) + "_PDFA.pdf");
-            lock (padlock)
-            {
-                using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
-                {
-                    PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
-
-                    using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
-                    using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
-                    using (PdfReader reader = new PdfReader(filePath))
-                    {
-                        PdfDocument pdfDocument = new PdfDocument(reader);
-						pdfADocument.SetTagged();
-
-                        for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
-                        {
-                            PdfPage page = pdfADocument.AddNewPage();
-                            PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
-                            PdfCanvas canvas = new PdfCanvas(page);
-                            canvas.AddXObject(pageCopy); // Add the XObject at the origin
-                        }
-
-                        // Close the PDF documents
-                        pdfDocument.Close();
-                    }
-                }
-            }
-
-            int count = 1;
+            int count = 0;
             bool converted = false;
             do
             {
-                converted = CheckConversionStatus(filePath, newFileName, pronom);
-                count++;
-                if (!converted)
+                lock (padlock)
                 {
-                    convertFromPDFToPDFA(filePath, conformanceLevel, pronom, originalFile);
+                    using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
+                    {
+                        PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
+
+                        using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
+                        using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
+                        using (PdfReader reader = new PdfReader(filePath))
+                        {
+                            PdfDocument pdfDocument = new PdfDocument(reader);
+						    pdfADocument.SetTagged();
+
+                            for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
+                            {
+                                PdfPage page = pdfADocument.AddNewPage();
+                                PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
+                                PdfCanvas canvas = new PdfCanvas(page);
+                                canvas.AddXObject(pageCopy); // Add the XObject at the origin
+                            }
+
+                            // Close the PDF documents
+                            pdfDocument.Close();
+                        }
+                    }
                 }
-            } while (!converted && count < 4);
+                converted = CheckConversionStatus(filePath, newFileName, pronom);
+            } while (!converted && ++count < 3);
             if (!converted)
             {
                 throw new Exception("File was not converted");
-            }
-
-            File.Delete(filePath);
-            File.Move(newFileName, filePath);
-
-            if (originalFile != null)
+            } else
             {
-                deleteOriginalFileFromOutputDirectory(originalFile);
+                File.Delete(filePath);
+                File.Move(newFileName, filePath);
+                replaceFileInList(newFileName, filePath);
             }
-            
         }
         catch (Exception e)
         {
