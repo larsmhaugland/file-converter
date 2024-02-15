@@ -53,9 +53,18 @@ class Settings
 			XmlNode? converterNode = root?.SelectSingleNode("Converter");
             XmlNode? inputNode = root?.SelectSingleNode("InputFolder");
             XmlNode? outputNode = root?.SelectSingleNode("OutputFolder");
+            XmlNode? maxThreadsNode = root?.SelectSingleNode("MaxThreads");
 
-            Logger.JsonRoot.requester = requesterNode?.InnerText.Trim(); 
-			Logger.JsonRoot.converter = converterNode?.InnerText.Trim();
+			string? requester = requesterNode?.InnerText.Trim();
+            string? converter = converterNode?.InnerText.Trim();
+            if (!String.IsNullOrEmpty(requester))
+			{
+                Logger.JsonRoot.requester = requester;
+            } 
+			if (!String.IsNullOrEmpty(converter))
+			{
+                Logger.JsonRoot.converter = converter;
+            }
 			string? input = inputNode?.InnerText.Trim();
 			string? output = outputNode?.InnerText.Trim();
 			if (!String.IsNullOrEmpty(input))
@@ -66,8 +75,12 @@ class Settings
 			{
                 GlobalVariables.parsedOptions.Output = output;
             }
-
-			string? checksumHashing = root?.SelectSingleNode("ChecksumHashing")?.InnerText;
+            string? inputMaxThreads = maxThreadsNode?.InnerText;
+            if (!String.IsNullOrEmpty(inputMaxThreads) && int.TryParse(inputMaxThreads, out int maxThreads))
+            {
+                GlobalVariables.maxThreads = maxThreads;
+            }
+            string? checksumHashing = root?.SelectSingleNode("ChecksumHashing")?.InnerText;
 			if (checksumHashing != null)
 			{
 				checksumHashing = checksumHashing.ToUpper().Trim();
