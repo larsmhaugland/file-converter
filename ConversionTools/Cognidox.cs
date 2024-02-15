@@ -28,7 +28,7 @@ public class CogniddoxConverter : Converter
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
         string parentDirectory = Directory.GetParent(filePath).ToString();
         string fileName = Path.GetFileNameWithoutExtension(filePath);
-        string targetFileExtension = "";
+        //string targetFileExtension = "";
         // Logic here for getting the correct file extenstion based on the pronom (fmt format) sent as parameter
         string filePathWithNewExtension = Path.Combine(parentDirectory, fileName + ".pdf");
 
@@ -126,7 +126,7 @@ public class CogniddoxConverter : Converter
             using (Process process = new Process())
             {
                 process.StartInfo.FileName = exePath;
-                process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}  /verbose /readonly";
+                process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}  /verbose /readonly /pdfa";
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardInput = true;
                 process.StartInfo.RedirectStandardError = true;
@@ -152,16 +152,14 @@ public class CogniddoxConverter : Converter
                // Console.WriteLine("Conversion Output:");
                 //Console.WriteLine(output);
 
-                if (!string.IsNullOrEmpty(error))
-                {
-                    //Console.WriteLine("Conversion Error:");
-                    //Console.WriteLine(error);
-                    // Consider logging the error to a file or another logging mechanism
-                }
-                bool converted = CheckConversionStatus(sourceDoc, output, pronom);
+                bool converted = CheckConversionStatus(sourceDoc, destinationPdf, pronom);
                 if (!converted)
                 {
                     throw new Exception("File was not converted");
+                }
+                else
+                {
+                    deleteOriginalFileFromOutputDirectory(sourceDoc);  
                 }
             }
         }
@@ -216,6 +214,7 @@ public class CogniddoxConverter : Converter
         "fmt/20",
         "fmt/276",
         "fmt/1129",
+        "fmt/479", // PDFA
     ];
     List<string> WORDPronoms =
     [

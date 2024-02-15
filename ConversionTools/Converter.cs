@@ -1,7 +1,4 @@
-﻿using iText.Forms.Form.Element;
-using System;
-
-/// <summary>
+﻿/// <summary>
 /// Parent class for all converters
 /// </summary>
 public class Converter
@@ -41,12 +38,11 @@ public class Converter
 	/// Delete an original file, that has been converted, from the output directory
 	/// </summary>
 	/// <param name="fileInfo">The specific file to be deleted</param>
-	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo) {
-		string outputDirectory = GlobalVariables.parsedOptions.Output;
-		string fileToDelete = Path.Combine(outputDirectory, Path.GetFileName(fileInfo));
-		if (File.Exists(fileToDelete))
+	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo)
+	{
+		if (File.Exists(fileInfo))
 		{
-			File.Delete(fileToDelete);
+			File.Delete(fileInfo);
 		}
 	}
 	public virtual void replaceFileInList(string filepathBefore, string filepathAfter)
@@ -79,6 +75,10 @@ public class Converter
 				deleteOriginalFileFromOutputDirectory(oldFilepath);
 				return true;
 			}
+			else
+			{
+                Console.WriteLine("File not found");
+            }
 		}
 		else
 		{

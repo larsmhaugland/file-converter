@@ -1,19 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using iText.Kernel.Pdf;
-using iText.Layout;
+﻿using iText.Kernel.Pdf;
 using iText.IO.Image;
 using iText.Pdfa;
 using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
-using SharpCompress.Common;
-using System.Reflection.Metadata;
-
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -407,13 +397,14 @@ public class iText7 : Converter
 
             if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
             {
+                pdfVersion = PdfVersion.PDF_2_0;
                 conformanceLevel = PronomToPdfAConformanceLevel[pronom];
-                MergeFilesToPDFA(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", GlobalVariables.parsedOptions.Output, conformanceLevel);
+                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pronom, pdfVersion, conformanceLevel);
             }
             else if (PronomToPdfVersion.ContainsKey(pronom))
             {
                 pdfVersion = PronomToPdfVersion[pronom];
-                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pdfVersion);
+                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pronom, pdfVersion);
             }
         }
         catch (Exception e)
@@ -429,7 +420,7 @@ public class iText7 : Converter
     /// <param name="outputFileName"></param>
     /// <param name="outputFolder"></param>
     /// <param name="pdfVersion"></param>
-    void MergeFilesToPDF(string[] files, string outputFileName, PdfVersion pdfVersion)
+    void MergeFilesToPDF(string[] files, string outputFileName, string pronom, PdfVersion pdfVersion, PdfAConformanceLevel? pdfa = null)
      {
         try
         {
@@ -449,9 +440,14 @@ public class iText7 : Converter
                     document.Add(image);
                 }
             }
+
             foreach (string file in files)
             {
                 deleteOriginalFileFromOutputDirectory(file);
+            }
+            if(pdfa != null)
+            {
+                convertFromPDFToPDFA(output, pdfa, pronom);
             }
         }
         catch (Exception e)
@@ -459,35 +455,4 @@ public class iText7 : Converter
             Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true);
         }
      }
-
-    /// <summary>
-    /// Merge several image files into one pdf-a
-    /// </summary>
-    /// <param name="files"></param>
-    /// <param name="outputFileName"></param>
-    /// <param name="outputFolder"></param>
-    /// <param name="conformanceLevel"></param>
-    void MergeFilesToPDFA(string[] files, string outputFileName, string outputFolder, PdfAConformanceLevel conformanceLevel)
-	{
-		string output = Path.Combine(outputFolder, outputFileName);
-
-        PdfOutputIntent? outputIntent = null;
-        using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(PdfVersion.PDF_2_0)))
-        using (var pdfDocument = new PdfADocument(pdfWriter, conformanceLevel, outputIntent))
-        using (var document = new iText.Layout.Document(pdfDocument))
-        {
-            pdfDocument.SetTagged();
-            PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-            foreach (string file in files)
-            {
-                iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file));
-                document.Add(image);
-            }
-        }
-        foreach (string file in files)
-        {
-            deleteOriginalFileFromOutputDirectory(file);
-        }
-    }
-
 }

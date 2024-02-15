@@ -110,7 +110,7 @@ public class Siegfried
 	public SiegfriedFile? IdentifyFile(string path, bool hash)
 	{
 		// Wrap the file path in quotes
-		string wrappedPath = Path.Combine(path);
+		string wrappedPath = "\"" + path + "\"";
 		string options;
 		if (hash)
 		{
@@ -148,7 +148,7 @@ public class Siegfried
 
 		if (error.Length > 0)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyFile " + error, true);
 		}
 		var parsedData = ParseJSONOutput(output, false);
 		if (parsedData == null || parsedData.files == null)
@@ -202,15 +202,15 @@ public class Siegfried
 			}
 			else if (parentDir == null)
 			{
-				logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile, true);
-				throw new Exception("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile);
+				logger.SetUpRunTimeLogMessage("SF IdentifyList could not create output file/directory " + outputFile, true);
+				throw new Exception("SF IdentifyList could not create output file/directory " + outputFile);
 			}
 			File.Create(outputFile).Close();
 		}
 		catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file " + e.Message, true);
-			throw new Exception("FileManager IdentifyFilesJSON could not create output file " + e.Message);
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList could not create output file " + e.Message, true);
+			throw new Exception("SF IdentifyList could not create output file " + e.Message);
 		}
 
 		// Define the process start info
@@ -249,7 +249,7 @@ public class Siegfried
 		//TODO: Check error and possibly continue
 		if (error.Length > 0)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF " + error, true);
 			//return; 
 		}
 		var parsedData = ParseJSONOutput(outputFile, true);
@@ -294,7 +294,7 @@ public class Siegfried
 			var output = IdentifyList(filePaths);
 			if (output == null)
 			{
-				logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesIndividually could not identify files", true);
+				logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually could not identify files", true);
 				return; //Skip current group
 			}
 			//TODO: Check if all files were identified
@@ -350,7 +350,7 @@ public class Siegfried
 				}
 				else
 				{
-					logger.SetUpRunTimeLogMessage(folder + " could not be identified", true);
+					logger.SetUpRunTimeLogMessage("SF IdentifyCompressedFilesJSON: " + folder + " could not be identified", true);
 				}
 			});
 		});
@@ -383,15 +383,15 @@ public class Siegfried
 				Directory.CreateDirectory(parentDir);
 			} else if(parentDir == null)
 			{
-				logger.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile, true);
-				throw new Exception("FileManager IdentifyFilesJSON could not create output file/directory " + outputFile);
+				logger.SetUpRunTimeLogMessage("SF IdentifyFilesJSON could not create output file/directory " + outputFile, true);
+				throw new Exception("SF IdentifyFilesJSON could not create output file/directory " + outputFile);
 			}
 			File.Create(outputFile).Close();
 		}
 		catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager IdentifyFilesJSON could not create output file " + e.Message, true);
-			throw new Exception("FileManager IdentifyFilesJSON could not create output file " + e.Message);
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyFilesJSON could not create output file " + e.Message, true);
+			throw new Exception("SF IdentifyFilesJSON could not create output file " + e.Message);
 		}
 		// Define the process start info
 		ProcessStartInfo psi = new ProcessStartInfo
@@ -496,7 +496,7 @@ public class Siegfried
 		catch (Exception e)
 		{
 			Console.WriteLine(e.Message);
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager JSON " + e.Message, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON " + e.Message, true);
 			return null;
 		}
 	}
@@ -684,7 +684,7 @@ public class Siegfried
 			Directory.Delete(pathWithoutExtension, true);
 		} catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager CompressFolder " + e.Message, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF CompressFolder " + e.Message, true);
 		}
 	}
 
@@ -704,23 +704,31 @@ public class Siegfried
 			{
 				Directory.CreateDirectory(pathWithoutExtension);
 			}
-
-			// Extract the contents of the compressed file
-			using (var archive = ArchiveFactory.Open(path))
+			try
 			{
-				foreach (var entry in archive.Entries)
+				// Extract the contents of the compressed file
+				using (var archive = ArchiveFactory.Open(path))
 				{
-					if (!entry.IsDirectory)
+					foreach (var entry in archive.Entries)
 					{
-						entry.WriteToDirectory(pathWithoutExtension, new ExtractionOptions { ExtractFullPath = true, Overwrite = true });
+						if (!entry.IsDirectory)
+						{
+							entry.WriteToDirectory(pathWithoutExtension, new ExtractionOptions { ExtractFullPath = true, Overwrite = true });
+						}
 					}
 				}
-			}
+			} catch (CryptographicException)
+			{
+				Logger.Instance.SetUpRunTimeLogMessage("SF UnpackFolder " + path + " is encrypted", true);
+			} catch (Exception e)
+			{
+                Logger.Instance.SetUpRunTimeLogMessage("SF UnpackFolder " + e.Message, true);
+            }
 			//TODO: Delete the compressed folder
 
 		} catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager UnpackFolder " + e.Message, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF UnpackFolder " + e.Message, true);
 		}
 	}
 }

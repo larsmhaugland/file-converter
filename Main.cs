@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using iText.IO.Font.Constants;
 using System.Diagnostics;
 
 public static class GlobalVariables
@@ -21,7 +20,6 @@ public class Options
 }
 class Program
 { 
-	
 	static void Main(string[] args)
 	{
 		
@@ -47,7 +45,6 @@ class Program
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
-		Console.WriteLine("Done!");
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
@@ -57,11 +54,11 @@ class Program
 		try
 		{
 			Console.WriteLine("Copying and unpacking files...");
-			//Copy and unpack files
+			//Copy files
 			sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 			settings.SetUpFolderOverride("./Settings.xml");
 			Console.WriteLine("Identifying files...");
-			//Identify files
+			//Identify and unpack files
 			fileManager.IdentifyFiles();
 		} catch (Exception e)
 		{
@@ -75,7 +72,13 @@ class Program
 
 		if (fileManager.Files.Count > 0)
 		{
-			Console.WriteLine("Files identified: " + fileManager.Files.Count);
+			fileManager.DisplayFileList();
+			Console.Write("Proceed? (Y/N): ");
+			string input = Console.ReadLine();
+			if (input.ToLower() != "y")
+			{
+                return;
+            }
 			Console.WriteLine("Converting files...");
 			try
 			{
@@ -85,15 +88,10 @@ class Program
 				logger.SetUpDocumentation(fileManager.Files);
 				logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
 			}
-			//Console.WriteLine("Done!");
-			//Console.WriteLine("Compressing folders...");
+			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();
-			//Console.WriteLine("Done!");
-			//Console.WriteLine("Documenting conversion...");
+			Console.WriteLine("Documenting conversion...");
 			logger.SetUpDocumentation(fileManager.Files);
-			//Console.WriteLine("Done!");
 		}
-		stopwatch.Stop();
-		//Console.WriteLine("Time elapsed: " + stopwatch.Elapsed);
 	}
 }
