@@ -1,0 +1,57 @@
+Azumarill @ Sitrus Berry  
+Ability: Huge Power  
+EVs: 92 HP / 252 Atk / 164 Spe  
+Adamant Nature  
+- Belly Drum  
+- Aqua Jet  
+- Play Rough  
+- Waterfall  
+
+Serperior @ Life Orb  
+Ability: Contrary  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Leaf Storm  
+- Dragon Pulse  
+- Hidden Power [Fire]  
+- Giga Drain  
+
+Talonflame @ Sharp Beak  
+Ability: Gale Wings  
+EVs: 252 Atk / 4 Def / 252 Spe  
+Jolly Nature  
+- Brave Bird  
+- Flare Blitz  
+- Swords Dance  
+- Roost  
+
+Landorus-Therian @ Leftovers  
+Ability: Intimidate  
+EVs: 252 HP / 240 Def / 8 SpD / 8 Spe  
+Impish Nature  
+- Earthquake  
+- U-turn  
+- Stealth Rock  
+- Stone Edge  
+
+Chansey @ Eviolite  
+Ability: Natural Cure  
+EVs: 4 HP / 252 Def / 252 SpD  
+Bold Nature  
+IVs: 0 Atk  
+- Toxic  
+- Soft-Boiled  
+- Wish  
+- Heal Bell  
+
+Manectric @ Manectite  
+Ability: Lightning Rod  
+EVs: 4 Def / 252 SpA / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Volt Switch  
+- Thunderbolt  
+- Flamethrower  
+- Hidden Power [Ice]  
+
