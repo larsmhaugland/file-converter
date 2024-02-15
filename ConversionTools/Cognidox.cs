@@ -1,4 +1,6 @@
-﻿using System;
+﻿using iText.Kernel.Pdf;
+using SharpCompress.Common;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -26,13 +28,13 @@ public class CogniddoxConverter : Converter
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
         string parentDirectory = Directory.GetParent(filePath).ToString();
         string fileName = Path.GetFileNameWithoutExtension(filePath);
-        string targetFileExtension = "";
+        //string targetFileExtension = "";
         // Logic here for getting the correct file extenstion based on the pronom (fmt format) sent as parameter
-        string filePathWithNewExtension = Path.Combine(parentDirectory, fileName + targetFileExtension);
+        string filePathWithNewExtension = Path.Combine(parentDirectory, fileName + ".pdf");
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            RunOfficeToPdfConversionWindows(covnersionExePath, filePath, filePathWithNewExtension);
+            RunOfficeToPdfConversionWindows(covnersionExePath, filePath, filePathWithNewExtension, pronom);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
@@ -72,6 +74,10 @@ public class CogniddoxConverter : Converter
         foreach (string odtPronom in OpenDocumentPronoms)
         {
             supportedConversions.Add(odtPronom, PDFPronoms);
+        }
+        foreach(string rtfPronom in RTFPronoms)
+        {
+            supportedConversions.Add(rtfPronom, PDFPronoms);    
         }
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -113,33 +119,55 @@ public class CogniddoxConverter : Converter
         return supportedConversions;
     }
 
-    static void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf)
+    void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf, string pronom)
     {
-        Process process = new Process();
-        process.StartInfo.FileName = exePath;
-        process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}";
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.CreateNoWindow = true;
-
-        process.Start();
-        process.WaitForExit();
-
-        // Capture standard output and standard error
-        string output = process.StandardOutput.ReadToEnd();
-        string error = process.StandardError.ReadToEnd();
-
-        // Print standard output and standard error to the console or log it
-        Console.WriteLine("Conversion Output:");
-        Console.WriteLine(output);
-
-        if (!string.IsNullOrEmpty(error))
+        try
         {
-            Console.WriteLine("Conversion Error:");
-            Console.WriteLine(error);
-        }
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = exePath;
+                process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}  /verbose /readonly /pdfa";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
 
-        process.Close();
+                process.Start();
+
+                // Redirect standard input to send "yes" (or any other response) to dialog boxes
+                process.StandardInput.WriteLine("yes");
+                process.StandardInput.Close();
+
+                process.WaitForExit();
+                int exitCode = process.ExitCode;
+
+                // Use the exit code as needed
+                Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
+                // Capture standard output and standard error
+                string output = process.StandardOutput.ReadToEnd();
+                string error = process.StandardError.ReadToEnd();
+
+                // Print standard output and standard error to the console or log it
+               // Console.WriteLine("Conversion Output:");
+                //Console.WriteLine(output);
+
+                bool converted = CheckConversionStatus(sourceDoc, destinationPdf, pronom);
+                if (!converted)
+                {
+                    throw new Exception("File was not converted");
+                }
+                else
+                {
+                    deleteOriginalFileFromOutputDirectory(sourceDoc);  
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: sourceDoc);
+            throw;
+        }
     }
 
     static void RunOfficeConversionLinuxMacOS(string filePath, string outputdir)
@@ -186,6 +214,7 @@ public class CogniddoxConverter : Converter
         "fmt/20",
         "fmt/276",
         "fmt/1129",
+        "fmt/479", // PDFA
     ];
     List<string> WORDPronoms =
     [

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Collections.Generic;
-using Org.BouncyCastle.Bcpg.OpenPgp;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Org.BouncyCastle.Asn1;
 using System.IO;
 using System.Threading;
@@ -159,10 +154,13 @@ public class ConversionManager
 		//Initialize conversion map
 		initMap();
 		//Initialize converters
-		Converters = new List<Converter>();
+
+		/*Converters = new List<Converter>();
 		Converters.Add(new iText7());
 		Converters.Add(new GhostscriptConverter());
-		Converters.Add(new CogniddoxConverter());
+		Converters.Add(new CogniddoxConverter());*/
+
+		Converters = AddConverters.Instance.GetConverters();
 		//Get files from FileManager
 		Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
@@ -208,36 +206,10 @@ public class ConversionManager
         Logger logger = Logger.Instance;
         foreach (FileInfo file in Files)
         {
-            var newFile = new FileToConvert(file);
-			bool addToWorkingSet = true;
+            var newFile = new FileToConvert(file);			
             string? parentDirName = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output,file.FilePath));
-            //check if there is a folderoverride on the folder this file is in  
-            if (GlobalVariables.FolderOverride.ContainsKey(parentDirName))
-            {
-                foreach(string pronom in GlobalVariables.FolderOverride[parentDirName].PronomsList)
-                {
-                    if(file.OriginalPronom == pronom)
-                    {
-						if (!GlobalVariables.FolderOverride[parentDirName].Merge)
-						{
-                            newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
-                        }
-                        else
-						{
-                            // Check if the key exists in the dictionary
-                            if (!mergingFiles.ContainsKey(parentDirName))
-                            {
-                                // If the key does not exist, add it along with a new list
-                                mergingFiles[parentDirName] = new List<FileInfo>();
-                            }
-
-                            // Add the file to the list associated with the key
-                            mergingFiles[parentDirName].Add(file);
-							addToWorkingSet = false;
-                        }
-                    }
-                }
-            }
+			bool addToWorkingSet = CheckInOverride(parentDirName,file,newFile,mergingFiles);
+            
             //Use current and target pronom to create a key for the conversion map
             var key = new KeyValuePair<string, string>(newFile.CurrentPronom, newFile.TargetPronom);
 
@@ -365,10 +337,10 @@ public class ConversionManager
 								progressBar.Report((float)++current / (float)total, current);
 								countdownEvent.Value.Dispose(); // Dispose after completion
 							}
-                            else
+							else
 							{
-                                allDone = false;
-                            }
+								allDone = false;
+							}
 						}
 					}
 					sw.Stop();
@@ -460,5 +432,37 @@ public class ConversionManager
 		{
             Logger.Instance.SetUpRunTimeLogMessage(e.Message,true);
         }
-    }	
+    }
+	
+	bool CheckInOverride(string? parentDirName,FileInfo file, FileToConvert newFile, Dictionary<string, List<FileInfo>> mergingFiles)
+	{
+        //check if there is a folderoverride on the folder this file is in  
+        if (parentDirName != null && GlobalVariables.FolderOverride.ContainsKey(parentDirName))
+        {
+            foreach (string pronom in GlobalVariables.FolderOverride[parentDirName].PronomsList)
+            {
+                if (file.OriginalPronom == pronom)
+                {
+                    if (!GlobalVariables.FolderOverride[parentDirName].Merge)
+                    {
+                        newFile.TargetPronom = GlobalVariables.FolderOverride[parentDirName].DefaultType;
+                    }
+                    else
+                    {
+                        // Check if the key exists in the dictionary
+                        if (!mergingFiles.ContainsKey(parentDirName))
+                        {
+                            // If the key does not exist, add it along with a new list
+                            mergingFiles[parentDirName] = new List<FileInfo>();
+                        }
+
+                        // Add the file to the list associated with the key
+                        mergingFiles[parentDirName].Add(file);
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+	}
 }

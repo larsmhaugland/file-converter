@@ -1,7 +1,4 @@
-﻿using iText.Forms.Form.Element;
-using System;
-
-/// <summary>
+﻿/// <summary>
 /// Parent class for all converters
 /// </summary>
 public class Converter
@@ -80,6 +77,10 @@ public class Converter
 				deleteOriginalFileFromOutputDirectory(oldFilepath);
 				return true;
 			}
+			else
+			{
+                Console.WriteLine("File not found");
+            }
 		}
 		else
 		{

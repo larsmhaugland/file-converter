@@ -3,6 +3,8 @@
     <Requester>Lars</Requester>  
     <Converter>Lars</Converter>
 	<ChecksumHashing>sha256</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
+	<InputFolder></InputFolder>
+	<OutputFolder></OutputFolder>
 	<!-- 
 			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935
@@ -52,7 +54,7 @@
 	<!--WORD DOCUMENT CLASS -->
 	<FileClass>
 		<ClassName>Word</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/479</Default>
 		<FileTypes>
 			<Filename>doc</Filename>
 			<Pronoms>
@@ -100,7 +102,7 @@
 	<!-- POWER POINT DOCUMENT CLASS-->
 	<FileClass>
 		<ClassName>PowerPoint</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/479</Default>
 		<FileTypes>
 			<Filename>ppt</Filename>
 			<Pronoms>
@@ -127,7 +129,7 @@
 	<!-- EXCEL FILE CLASS-->
 	<FileClass>
 		<ClassName>EXCEL</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>xls</Filename>
 			<Pronoms>
@@ -154,7 +156,7 @@
 	<!-- OPEN DOCUMENT FILE CLASS -->
 	<FileClass>
 		<ClassName>Open Document</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/479</Default>
 		<FileTypes>
 			<Filename>ODT</Filename>
 			<Pronoms>
@@ -174,6 +176,18 @@
 			<Pronoms>
 				fmt/1755,fmt/137,fmt/294,fmt/295
 			</Pronoms>
+			<Default>fmt/276</Default>
+		</FileTypes>
+	</FileClass>
+
+	<FileClass>
+		<ClassName>Rich Text Format</ClassName>
+		<Default>fmt/479</Default>
+		<FileTypes>
+			<Filename>RTF</Filename>
+			<Pronoms>
+				fmt/969,fmt/45,fmt/50,fmt/52,fmt/53,fmt/355
+			</Pronoms>
 			<Default></Default>
 		</FileTypes>
 	</FileClass>
@@ -183,6 +197,6 @@
 		<FolderPath>apekatter</FolderPath><!-- Path after input folder example: /documents -->
 		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
 		<ConvertTo>fmt/14</ConvertTo>
-		<MergeImages>Yes</MergeImages><!-- Yes, No -->
+		<MergeImages></MergeImages><!-- Yes, No -->
 	</FolderOverride>
 </root>

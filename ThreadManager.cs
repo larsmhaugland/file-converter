@@ -17,8 +17,8 @@ class ThreadManager
 	{
 		int threadCount = Environment.ProcessorCount * 2;
 
-		// Initialize threads
-		for (int i = 0; i < threadCount; i++)
+        // Initialize threads
+        for (int i = 0; i < threadCount; i++)
 		{
 			Thread t = new Thread(ThreadWorker);
 			t.Start();

@@ -1,6 +1,4 @@
-﻿using iText.Barcodes.Dmcode;
-using System.Xml;
-
+﻿
 
 public class FileManager
 {
