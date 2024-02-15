@@ -156,7 +156,7 @@ public class ConversionManager
 		Converters = new List<Converter>();
 		Converters.Add(new iText7());
 		Converters.Add(new GhostscriptConverter());
-		//Converters.Add(new CogniddoxConverter());
+		Converters.Add(new CogniddoxConverter());
 		//Get files from FileManager
 		Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
