@@ -1,0 +1,21 @@
+Bitcoin and Blockchain overview:
+
+Bitcoin:
+- Currency bare på internett
+- completely detached from banks, everyone can use it
+- Only required internett connection, can send and recieve transaction.
+- Not controlled by anyone, no company, no government so on thats behind, completely decenteralised no central power
+- What stops me from duplicating Bitcoin? 
+answer: Blockchain
+
+Blockchain:
+- Is the technology that makes the cryptocurrencies work
+- Digital stone, viking stones; you can add data, but you cant remove data
+- database where you can only add and not remove things
+- Used to track all transactions, whenever a transaction happens it goes into the database the digital stone.
+- Not possible to cheat because theyh will always know how much you had.
+- Blockhain is a network of computers, every computer have a copy of the entire blockhain with all the transactions, called a ledger. As soon as one computer makes a transaction all the other computers will verify if the transaction makes sense, therefore you cant cheat. 
+- Blockchain is a public ledger because the databases are open to the public, you can download your own version of the blockhain and see for example all transactions of bitcoin since it started.
+ 
+
+
