@@ -23,9 +23,6 @@ class Program
 { 
 	static void Main(string[] args)
 	{
-		
-		Stopwatch stopwatch = new Stopwatch();
-		stopwatch.Start();
 		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
 		{
 			GlobalVariables.parsedOptions = options;
