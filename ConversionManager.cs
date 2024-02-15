@@ -326,9 +326,9 @@ public class ConversionManager
 				{
 					bool allDone = false;
 					Stopwatch sw = new Stopwatch();
-					int timeout = 10;
+					int timeout = 1;
 					sw.Start();
-					while (!allDone && sw.Elapsed.Minutes < timeout) {
+					while (!allDone && sw.Elapsed.Seconds < timeout) {
 						Thread.Sleep(200);
 						allDone = true;
 						foreach (var countdownEvent in countdownEvents)
