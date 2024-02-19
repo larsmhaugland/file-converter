@@ -186,7 +186,8 @@ public class iText7 : Converter
         }
         catch(Exception e)
 		{
-			   Logger.Instance.SetUpRunTimeLogMessage("Error converting file with iText7. Error message: " + e.Message, true, filename: fileinfo);
+		    Logger.Instance.SetUpRunTimeLogMessage("Error converting file with iText7. Error message: " + e.Message, true, filename: fileinfo);
+            throw;
 		}
     }
 
@@ -284,13 +285,13 @@ public class iText7 : Converter
             else
             {
                 deleteOriginalFileFromOutputDirectory(filePath);
-				
             }
 
         }
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: filePath);
+            throw;
 		}
 
 	}

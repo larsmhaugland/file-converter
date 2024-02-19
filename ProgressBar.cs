@@ -20,10 +20,9 @@ public class ProgressBar : IDisposable, IProgress<double>
 	private int animationIndex = 0;
 	private string title = "";
 	private int totalJobs = 0;
-	public ProgressBar(string title, int totalItems)
+	public ProgressBar(int totalItems)
 	{
 		timer = new Timer(TimerHandler!);
-		this.title = title;
 		this.totalJobs = totalItems;
 		// A progress bar is only for temporary display in a console window.
 		// If the console output is redirected to a file, draw nothing.
@@ -57,7 +56,7 @@ public class ProgressBar : IDisposable, IProgress<double>
 			animation[animationIndex++ % animation.Length],
 			currentDone, totalJobs);
 
-			string displayText = $"{title}:\n{progressBar}";
+			string displayText = $"{progressBar}";
 			UpdateText(displayText);
 			ResetTimer();
 		}

@@ -61,6 +61,9 @@ public class FileManager
 		{
 			Files.AddRange(compressedFiles);
 		}
+        Files = Files.GroupBy(file => file.FilePath)
+                     .Select(group => group.First())
+                     .ToList();
         identifyingFiles = false;
     }
 
@@ -99,6 +102,9 @@ public class FileManager
 		{
             Console.WriteLine("{0,10} | {1,10} | {2, 6}",entry.Key.Key,entry.Key.Value,entry.Value);
         }
+		//Sum total from all entries in fileCount where key. is not "Not set"
+		int total = fileCount.Where(x => x.Key.Value != "Not set").Sum(x => x.Value);
+		Console.WriteLine("Number of files: {0,-10}\nNumber of files with output specified: {1,-10}", Files.Count,total);
 	}
 
 	public List<FileInfo> GetFiles()

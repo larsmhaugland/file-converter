@@ -55,7 +55,7 @@ public class Converter
 			}
 		}
 		ConversionManager cm = ConversionManager.Instance;
-		cm.WorkingSetMap[filepathBefore] = filepathAfter;
+		cm.WorkingSetMap.TryAdd(filepathBefore, filepathAfter);
 	}
 
 	/// <summary>
@@ -79,12 +79,12 @@ public class Converter
 			}
 			else
 			{
-                Console.WriteLine("File not found");
+                //Console.WriteLine("File not found 1");
             }
 		}
 		else
 		{
-			Console.WriteLine("File not found");
+			//Console.WriteLine("File not found 2");
 		}
 		return false;
 	}

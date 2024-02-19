@@ -8,12 +8,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public class CogniddoxConverter : Converter
+public class CognidoxConverter : Converter
 {
     Logger log = Logger.Instance;
-    public CogniddoxConverter()
+    public CognidoxConverter()
     {
-        Name = "";
+        Name = "Cognidox";
         Version = "";
         SupportedConversions = listOfSupportedConversions();
     }
@@ -143,7 +143,7 @@ public class CogniddoxConverter : Converter
                 int exitCode = process.ExitCode;
 
                 // Use the exit code as needed
-                Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
+                //Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
                 // Capture standard output and standard error
                 string output = process.StandardOutput.ReadToEnd();
                 string error = process.StandardError.ReadToEnd();
