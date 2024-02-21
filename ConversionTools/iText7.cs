@@ -4,6 +4,7 @@ using iText.Pdfa;
 using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -25,7 +26,8 @@ public class iText7 : Converter
 	{
 		Name = "iText7";
 		Version = "8.0.2";
-		SupportedConversions = listOfSupportedConversions();
+		SupportedConversions = getListOfSupportedConvesions();
+        SupportedOperatingSystems = getSupportedOS();
 	}
 
     List<string> ImagePronoms = [
@@ -129,7 +131,7 @@ public class iText7 : Converter
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
     /// <returns>List of all conversions</returns>
-    public override Dictionary<string, List<string>> listOfSupportedConversions()
+    public override Dictionary<string, List<string>> getListOfSupportedConvesions()
     {
         var supportedConversions = new Dictionary<string, List<string>>();
         foreach (string imagePronom in ImagePronoms)
@@ -146,6 +148,14 @@ public class iText7 : Converter
         }
 
         return supportedConversions;
+    }
+
+    public override List<string> getSupportedOS()
+    {
+        var supportedOS = new List<string>();
+        supportedOS.Add(PlatformID.Win32NT.ToString());
+        //Add more supported OS here
+        return supportedOS;
     }
 
     /// <summary>

@@ -15,7 +15,8 @@ public class CognidoxConverter : Converter
     {
         Name = "Cognidox";
         Version = "";
-        SupportedConversions = listOfSupportedConversions();
+        SupportedConversions = getListOfSupportedConvesions();
+        SupportedOperatingSystems = getSupportedOS();
     }
 
     /// <summary>
@@ -51,7 +52,7 @@ public class CognidoxConverter : Converter
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
     /// <returns>List of all conversions</returns>
-    public override Dictionary<string, List<string>> listOfSupportedConversions()
+    public override Dictionary<string, List<string>> getListOfSupportedConvesions()
     {
         var supportedConversions = new Dictionary<string, List<string>>();
 
@@ -117,6 +118,14 @@ public class CognidoxConverter : Converter
         }
 
         return supportedConversions;
+    }
+
+    public override List<string> getSupportedOS()
+    {
+        var supportedOS = new List<string>();
+        supportedOS.Add(PlatformID.Win32NT.ToString());
+        //Add more supported OS here
+        return supportedOS;
     }
 
     void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf, string pronom)

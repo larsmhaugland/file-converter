@@ -10,53 +10,25 @@ public enum HashAlgorithms
 
 public class FileInfo
 {
-	[JsonPropertyName("filePath")]
-	public string FilePath { get; set; } = "";                // TODO: Remove?
-
-	[JsonPropertyName("fileName")]
-	public string FileName { get; set; } = "";              // Filename with extention
-
-	[JsonPropertyName("originalPronom")]
+	public string FilePath { get; set; } = "";                // Filepath relative to input directory
+	public string FileName { get; set; } = "";                // Filename with extension
+	public string ShortFilePath { get; set; } = "";					// Filepath without input/output directory
 	public string OriginalPronom { get; set; } = "";            // Original Pronom ID
-
-	[JsonPropertyName("newPronom")]
 	public string NewPronom { get; set; } = "";             // New Pronom ID
-
-	[JsonPropertyName("originalMime")]
 	public string OriginalMime { get; set; } = "";          // Original Mime Type
-
-	[JsonPropertyName("newMime")]
 	public string NewMime { get; set; } = "";                 // New Mime Type
-
-	[JsonPropertyName("originalFormatName")]
 	public string OriginalFormatName { get; set; } = "";      // Original Format Name
-
-	[JsonPropertyName("newFormatName")]
 	public string NewFormatName { get; set; } = "";           // New Format Name
-
-	[JsonPropertyName("originalChecksum")]
 	public string OriginalChecksum { get; set; } = "";        // Original Checksum
-
-	[JsonPropertyName("newChecksum")]
 	public string NewChecksum { get; set; } = "";             // New Checksum
-
-	[JsonPropertyName("conversionTools")]
 	public List<string> ConversionTools { get; set; } = new List<string>();   // List of conversion tools used
-
-	[JsonPropertyName("originalSize")]
 	public long OriginalSize { get; set; } = 0;              // Original file size (bytes)
-
-	[JsonPropertyName("newSize")]
 	public long NewSize { get; set; } = 0;                   // New file size (bytes)
-
-	[JsonPropertyName("isConverted")]
 	public bool IsConverted { get; set; } = false;				// True if file is converted
-
-
 	public bool IsModified { get; set; } = false;				// True if file is modified
 	public List<string> Route { get; set; } = new List<string>();   // List of modification tools used
 	public string TargetPronom { get; set; } = "";				// The pronom the file should be converted to
-	[JsonPropertyName("hashingAlgorithm")]
+
 	private HashAlgorithms HashingAlgorithm = HashAlgorithms.SHA256;
 
 
@@ -91,11 +63,19 @@ public class FileInfo
 	public FileInfo(SiegfriedFile siegfriedFile)
 	{
 		OriginalSize = siegfriedFile.filesize;
-		FileName = siegfriedFile.filename;
+		FileName = Path.GetFileName(siegfriedFile.filename);
 		OriginalPronom = siegfriedFile.matches[0].id;
 		OriginalFormatName = siegfriedFile.matches[0].format;
 		OriginalMime = siegfriedFile.matches[0].mime;
 		FilePath = siegfriedFile.filename;
+		//Remove input or output path from filepath
+		var pathWithoutInput = siegfriedFile.filename.Replace(GlobalVariables.parsedOptions.Input,"");
+		ShortFilePath = Path.Combine(pathWithoutInput.Replace(GlobalVariables.parsedOptions.Output,""));
+		while (ShortFilePath[0] == '\\')
+		{
+			//Remove leading backslashes
+			ShortFilePath = ShortFilePath.Substring(1);
+		}
 	}
 
 	public bool CheckIfConverted()

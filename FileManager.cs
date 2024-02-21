@@ -1,5 +1,8 @@
 ﻿
 
+
+
+
 public class FileManager
 {
     private static FileManager? instance;
@@ -55,7 +58,7 @@ public class FileManager
 		}
 
 		//Identifying all compressed files
-		List<FileInfo>? compressedFiles = await sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
+		List<FileInfo>? compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
 
 		if (compressedFiles != null)
 		{
@@ -67,8 +70,61 @@ public class FileManager
         identifyingFiles = false;
     }
 
+    public void ImportFiles(List<FileInfo> files)
+    {	
+		try
+		{
+            //Remove files that no longer exist
+            files.RemoveAll(file => !File.Exists(file.FilePath));
+            //Remove files that are not in the input directory
+            files.RemoveAll(file => !FileExistsInDirectory(GlobalVariables.parsedOptions.Input, file.ShortFilePath));
+
+            //Copy files to output directory
+            Parallel.ForEach(Files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+            {
+				if (!FileExistsInDirectory(GlobalVariables.parsedOptions.Output, file.ShortFilePath))
+				{
+					var newPath = Path.Combine(GlobalVariables.parsedOptions.Output, file.ShortFilePath);
+					File.Copy(file.FilePath,newPath);
+				}
+			});
+		} catch (Exception e)
+		{
+            Logger logger = Logger.Instance;
+            logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
+        }
+		Files.AddRange(files);
+    }
+
+	public void ImportCompressedFiles(List<FileInfo> files)
+	{
+        try
+        {
+            //Remove files that no longer exist
+            files.RemoveAll(file => !File.Exists(file.FilePath));
+        }
+        catch (Exception e)
+        {
+            Logger logger = Logger.Instance;
+            logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
+        }
+        Files.AddRange(files);
+    }
+
 	public void DisplayFileList()
 	{
+		//Get converters supported formats
+		var converters = AddConverters.Instance.GetConverters();
+		List<Dictionary<string,List<string>>> supportedConversions = new List<Dictionary<string,List<string>>>();
+		foreach (var converter in converters)
+		{
+			var formats = converter.getListOfSupportedConvesions();
+			if (formats != null)
+			{
+				supportedConversions.Add(formats);
+			}
+		}
+
 		//Count the number of files per pronom code
 		Dictionary<KeyValuePair<string,string>, int> fileCount = new Dictionary<KeyValuePair<string,string>, int>();
 		foreach(FileInfo file in Files)
@@ -95,12 +151,42 @@ public class FileManager
 				fileCount[key] = 1;
 			}
         }
+		Siegfried sf = Siegfried.Instance;
 
-		//Print the number of files per pronom code
-		Console.WriteLine("Input format | Output format | Count");
+
+		//Find the longest format name for current and target formats
+		int currentMax = 0;
+		int targetMax = 0;
 		foreach(KeyValuePair<KeyValuePair<string,string>, int> entry in fileCount)
 		{
-            Console.WriteLine("{0,10} | {1,10} | {2, 6}",entry.Key.Key,entry.Key.Value,entry.Value);
+            var currentFormat = PronomHelper.PronomToFullName(entry.Key.Key);
+            var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
+            if (currentFormat.Length > currentMax)
+			{
+                currentMax = currentFormat.Length;
+            }
+            if (targetFormat.Length > targetMax)
+			{
+                targetMax = targetFormat.Length;
+            }
+        }
+
+		//Sort the fileCount dictionary by the number of files
+		fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+		//Print the number of files per pronom code
+		var oldColor = Console.ForegroundColor;
+		Console.ForegroundColor = ConsoleColor.Blue;
+		Console.WriteLine("{0,15} - {1,-" + currentMax+ "} | {2,15} - {3,-" + targetMax + "} | {4,6}","Input pronom","Full name", "Output pronom", "Full name", "Count");
+		Console.ForegroundColor = oldColor;
+		foreach(KeyValuePair<KeyValuePair<string,string>, int> entry in fileCount)
+		{
+			var currentPronom = entry.Key.Key;
+			var targetPronom = entry.Key.Value;
+			var count = entry.Value;
+			var currentFormat = PronomHelper.PronomToFullName(currentPronom);
+			var targetFormat = PronomHelper.PronomToFullName(targetPronom);
+            Console.WriteLine("{0,15} - {1,-" + currentMax + "} | {2,15} - {3,-" + targetMax + "} | {4,6}", currentPronom,currentFormat,targetPronom,targetFormat,count);
         }
 		//Sum total from all entries in fileCount where key. is not "Not set"
 		int total = fileCount.Where(x => x.Key.Value != "Not set").Sum(x => x.Value);
@@ -120,5 +206,33 @@ public class FileManager
 	{
 		Logger logger = Logger.Instance;
 		logger.SetUpDocumentation(Files);
-	} 
+	}
+
+    private static bool FileExistsInDirectory(string directoryPath, string fileName)
+    {
+		try
+		{
+			// Check if the directory exists
+			if (Directory.Exists(directoryPath))
+			{
+				// Check if parent directory exists
+				if (!Directory.Exists(Directory.GetParent(fileName).FullName))
+				{
+					return false;
+				}
+				// Search for the file with the specified pattern in the directory and its subdirectories
+				string[] files = Directory.GetFiles(directoryPath, fileName, SearchOption.AllDirectories);
+
+				// If any matching file is found, return true
+				return files.Length > 0;
+			}
+		} 
+		catch 
+		{
+			return false; 
+		}
+        // If the directory doesn't exist, return false
+        return false;
+
+    }
 }

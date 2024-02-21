@@ -6,14 +6,18 @@ public class Converter
 	public string? Name { get; set; } // Name of the converter
 	public string? Version { get; set; } // Version of the converter
 	public Dictionary<string, List<string>>? SupportedConversions { get; set; }
+	public List<string> SupportedOperatingSystems { get; set; } = new List<string>();
 
 	private List<FileInfo> files = new List<FileInfo>(FileManager.Instance.Files);
 	public Converter()
 	{ }
 
 
-
-	public virtual Dictionary<string, List<string>>? listOfSupportedConversions()
+	public virtual List<string> getSupportedOS() 
+	{
+		return new List<string>();
+	}
+	public virtual Dictionary<string, List<string>>? getListOfSupportedConvesions()
 	{
 		return new Dictionary<string, List<string>>();
 	}

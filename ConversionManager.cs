@@ -249,7 +249,7 @@ public class ConversionManager
 			ConcurrentDictionary<string, CountdownEvent> countdownEvents = new ConcurrentDictionary<string, CountdownEvent>();
 			WorkingSetMap.Clear();
 			//Loop through working set
-			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, file =>
+			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
 			{
 				
 				//If file is already worked on, skip it
