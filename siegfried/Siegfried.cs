@@ -1,5 +1,7 @@
 ﻿using Ghostscript.NET;
 using iText.IO.Source;
+using iText.Kernel.Pdf.Function;
+using iText.Kernel.Utils.Objectpathitems;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509.SigI;
@@ -62,10 +64,10 @@ public class Siegfried
 	private static Siegfried? instance;
 	public string ?Version = null;
 	public string ?ScanDate = null;
-	private static readonly object lockObject = new object();
+	public string OutputFolder = "siegfried/JSONoutput";
+    private static readonly object lockObject = new object();
 	private List<string> CompressedFolders;
-	private List<string> SupportedCompressionExtensions = new List<string>{ ".zip", ".tar", ".gz", ".rar", ".7z" };
-	
+	public ConcurrentBag<FileInfo> Files = new ConcurrentBag<FileInfo>();
 	public static Siegfried Instance
 	{
 		get
@@ -86,9 +88,58 @@ public class Siegfried
 
 	private Siegfried()
 	{
+		Logger logger = Logger.Instance;
 		//TODO: Should check Version and ScanDate here
 		CompressedFolders = new List<string>();
+        //Look for Siegfried files
+        var found = Path.Exists("siegfried/sf.exe");
+		logger.SetUpRunTimeLogMessage("SF Siegfried executable " + (found ? "" : "not") + "found", !found);
+		if (!found)
+		{
+			Console.WriteLine("Cannot find Siegfried executable");
+			throw new FileNotFoundException("Cannot find Siegfried executable");
+		}
+		found = Path.Exists("siegfried/pronom64k.sig");
+		logger.SetUpRunTimeLogMessage("SF Pronom signature file " + (found ? "" : "not") + "found", !found);
+		if (!found)
+		{
+            Console.WriteLine("Cannot find Pronom signature file");
+            throw new FileNotFoundException("Cannot find Pronom signature file");
+        }
 	}
+
+	public void AskReadFiles()
+	{
+        //Check if json files exist
+        if (Directory.Exists(OutputFolder))
+        {
+            string? input;
+            do
+            {
+                Console.Write("Siegfried data found, do you want to parse it? (Y/N): ");
+                input = Console.ReadLine().ToLower(); //TODO: Why does this give a warning?
+            } while (input != "y" && input != "n");
+            if (input == "y")
+            {
+                ReadFromFiles();
+            }
+        }
+    }
+
+	public void ClearOutputFolder()
+	{
+        if (Directory.Exists(OutputFolder))
+		{
+			try
+			{
+				Directory.Delete(OutputFolder, true);
+			} catch 
+			{
+				Logger logger = Logger.Instance;
+				logger.SetUpRunTimeLogMessage("SF Could not delete Siegfried output folder", true);
+			}
+        }
+    }
 
 	static string HashEnumToString(HashAlgorithms hash)
 	{
@@ -98,6 +149,34 @@ public class Siegfried
 				return "md5";
 			default:
 				return "sha256";
+		}
+	}
+
+	private void ReadFromFiles()
+	{
+		//TODO: Compressed files are not handled correctly here
+		var paths = Directory.GetFiles(OutputFolder, "*.*", SearchOption.AllDirectories);
+		using (ProgressBar progressBar = new ProgressBar(paths.Length))
+		{
+			//Parallel.ForEach(paths, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, (path, state, index) =>
+			for(int i = 0; i < paths.Length; i++)
+			{
+				progressBar.Report((i+1) / (double)paths.Length,i+1);
+				var parsedData = ParseJSONOutput(paths[i], true);
+				if (parsedData == null)
+					return; //TODO: Check error and possibly continue
+
+				if (instance.Version == null || instance.ScanDate == null)
+				{
+					instance.Version = parsedData.siegfriedVersion;
+					instance.ScanDate = parsedData.scandate;
+				}
+
+				foreach (var f in parsedData.files)
+				{
+					instance.Files.Add(new FileInfo(f));
+				}
+			}//);
 		}
 	}
 
@@ -188,9 +267,7 @@ public class Siegfried
 		string wrappedPaths = String.Join(" ",tempPaths);
 		string options = $"-home siegfried -multi 64 -json -coe -hash " +  HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
 
-		string outputFolder = "siegfried/JSONoutput/";
-		string dir = Path.Combine(outputFolder);
-		string outputFile = dir + Guid.NewGuid().ToString() + ".json";
+		string outputFile = Path.Combine(OutputFolder, Guid.NewGuid().ToString(), ".json");
 		string? parentDir = Directory.GetParent(outputFile)?.FullName;
 
 		//Create output file
@@ -324,7 +401,7 @@ public class Siegfried
 		return filePathGroups;
 	}
 
-	public Task<List<FileInfo>>? IdentifyCompressedFilesJSON(string input)
+	public List<FileInfo> IdentifyCompressedFilesJSON(string input)
 	{
 		Logger logger = Logger.Instance;
 		UnpackCompressedFolders();
@@ -354,145 +431,47 @@ public class Siegfried
 				}
 			});
 		});
-		return Task.FromResult(fileBag.ToList());
+		return fileBag.ToList();
 	}
 
-	/// <summary>
-	/// Identifies all files in input directory and returns a list of FileInfo objects. 
-	/// Siegfried output is put in a JSON file.
-	/// </summary>
-	/// <param name="inputFolder">Path to root folder for files to be identified</param>
-	/// <returns>List of all identified files or null</returns>
-	public Task<List<FileInfo>>? IdentifyFilesJSON(string inputFolder)
-	{
-		Logger logger = Logger.Instance;
-		var files = new List<FileInfo>();
-		// Wrap the file path in quotes
-		string wrappedPath = "\"" + inputFolder + "\"";
-		string options = $"-home siegfried -multi 64 -hash sha256 -json -sig pronom64k.sig ";
-		string outputFolder = "siegfried/JSONoutput/";
-		string dir = Path.Combine(outputFolder,inputFolder);
-		string outputFile = dir + ".json";
-		string ?parentDir = Directory.GetParent(outputFile)?.FullName;
-		
-		//Create output file
-		try
-		{
-			if (parentDir != null && !Directory.Exists(parentDir))
-			{
-				Directory.CreateDirectory(parentDir);
-			} else if(parentDir == null)
-			{
-				logger.SetUpRunTimeLogMessage("SF IdentifyFilesJSON could not create output file/directory " + outputFile, true);
-				throw new Exception("SF IdentifyFilesJSON could not create output file/directory " + outputFile);
-			}
-			File.Create(outputFile).Close();
-		}
-		catch (Exception e)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyFilesJSON could not create output file " + e.Message, true);
-			throw new Exception("SF IdentifyFilesJSON could not create output file " + e.Message);
-		}
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
-		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
-			Arguments = options + wrappedPath,
-			RedirectStandardInput = false,
-			RedirectStandardOutput = true,
-			RedirectStandardError = true,
-			UseShellExecute = false,
-			CreateNoWindow = true
-		};
-
-		string error = "";
-		// Create the process
-		using (Process process = new Process { StartInfo = psi })
-		{
-			// Create the StreamWriter to write to the file
-			using (StreamWriter sw = new StreamWriter(outputFile))
-			{
-				// Set the output stream for the process
-				process.OutputDataReceived += (sender, e) => { if (e.Data != null) sw.WriteLine(e.Data); };
-
-				// Start the process
-				process.Start();
-
-				// Begin asynchronous read operations for output and error streams
-				process.BeginOutputReadLine();
-				error = process.StandardError.ReadToEnd();
-
-				// Wait for the process to exit
-				process.WaitForExit();
-			}
-		}
-		//TODO: Check error and possibly continue
-		/*
-		if (error.Length > 0)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("FileManager SF " + error, true);
-			return; 
-		}*/
-		var parsedData = ParseJSONOutput(outputFile, true);
-		if (parsedData == null)
-			return null; //TODO: Check error and possibly continue
-
-		Version = parsedData.siegfriedVersion;
-		ScanDate = parsedData.scandate;
-		for (int i = 0; i < parsedData.files.Length; i++)
-		{
-			var file = new FileInfo(parsedData.files[i]);
-			if (file != null) 
-			{
-				files.Add(file);
-			}
-		}
-		return Task.FromResult(files);
-	}
-
-	SiegfriedJSON? ParseJSONOutput(string json, bool file)
+	SiegfriedJSON? ParseJSONOutput(string json, bool readFromFile)
 	{
 		try
-		{
-			if (file)
+		{ 
+			SiegfriedJSON siegfriedJson;
+			FileStream ?file = null;
+			if (readFromFile)
 			{
-				using (JsonDocument document = JsonDocument.Parse(File.OpenRead(json)))
-				{
-					// Access the root of the JSON document
-					JsonElement root = document.RootElement;
-
-					// Deserialize JSON into a SiegfriedJSON object
-					SiegfriedJSON siegfriedJson = new SiegfriedJSON
-					{
-						siegfriedVersion = root.GetProperty("siegfried").GetString() ?? "",
-						scandate = root.GetProperty("scandate").GetString() ?? "",
-						files = root.GetProperty("files").EnumerateArray()
-							.Select(fileElement => ParseSiegfriedFile(fileElement))
-							.ToArray()
-					};
-					return siegfriedJson;
-				}
+				file = File.OpenRead(json);
 			}
-			else
+
+			if (readFromFile && file == null)
 			{
-				using (JsonDocument document = JsonDocument.Parse(json))
-				{
-					// Access the root of the JSON document
-					JsonElement root = document.RootElement;
+                Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON file not found", true);
+                return null;
+            }
 
-					// Deserialize JSON into a SiegfriedJSON object
-					SiegfriedJSON siegfriedJson = new SiegfriedJSON
-					{
-						siegfriedVersion = root.GetProperty("siegfried").GetString() ?? "",
-						scandate = root.GetProperty("scandate").GetString() ?? "",
-						files = root.GetProperty("files").EnumerateArray()
-							.Select(fileElement => ParseSiegfriedFile(fileElement))
-							.ToArray()
-					};
-					return siegfriedJson;
-				}
+			using (JsonDocument document = readFromFile ? JsonDocument.Parse(file!) : JsonDocument.Parse(json))
+			{
+				// Access the root of the JSON document
+				JsonElement root = document.RootElement;
+
+				// Deserialize JSON into a SiegfriedJSON object
+				siegfriedJson = new SiegfriedJSON
+				{
+					siegfriedVersion = root.GetProperty("siegfried").GetString() ?? "",
+					scandate = root.GetProperty("scandate").GetString() ?? "",
+					files = root.GetProperty("files").EnumerateArray()
+						.Select(fileElement => ParseSiegfriedFile(fileElement))
+						.ToArray()
+				};
 			}
-		}
+			if (readFromFile && file != null)
+			{
+				file.Close();
+			}
+            return siegfriedJson;
+        }
 		catch (Exception e)
 		{
 			Console.WriteLine(e.Message);
@@ -731,4 +710,104 @@ public class Siegfried
 			Logger.Instance.SetUpRunTimeLogMessage("SF UnpackFolder " + e.Message, true);
 		}
 	}
+	/*
+    public string PronomToFullName(string pronom)
+    {
+        string output;
+        switch (pronom)
+        {
+            #region PDF
+            case "fmt/14": output = "Acrobat PDF 1.0"; break;
+            case "fmt/15": output = "Acrobat PDF 1.1"; break;
+            case "fmt/16": output = "Acrobat PDF 1.2"; break;
+            case "fmt/17": output = "Acrobat PDF 1.3"; break;
+            case "fmt/18": output = "Acrobat PDF 1.4"; break;
+            case "fmt/19": output = "Acrobat PDF 1.5"; break;
+            case "fmt/20": output = "Acrobat PDF 1.6"; break;
+            case "fmt/276": output = "Acrobat PDF 1.7"; break;
+            case "fmt/1129": output = "Acrobat PDF 2.0"; break;
+            case "fmt/95": output = "Acrobat PDF/A - 1A"; break;
+            case "fmt/354": output = "Acrobat PDF/A - 1B"; break;
+            case "fmt/476": output = "Acrobat PDF/A - 2A"; break;
+            case "fmt/477": output = "Acrobat PDF/A - 2B"; break;
+            case "fmt/478": output = "Acrobat PDF/A - 2U"; break;
+            case "fmt/479": output = "Acrobat PDF/A - 3A"; break;
+            case "fmt/480": output = "Acrobat PDF/A - 3B"; break;
+            case "fmt/481": output = "Acrobat PDF/A - 3U"; break;
+            case "fmt/1910": output = "Acrobat PDF/A - 4"; break;
+            case "fmt/1911": output = "Acrobat PDF/A - 4E"; break;
+            case "fmt/1912": output = "Acrobat PDF/A - 4F"; break;
+            //TODO: PDF/X?
+            #endregion
+            #region Word
+            case "fmt/37": output = "Microsoft Word 1.0"; break;
+            case "fmt/38": output = "Microsoft Word 2.0"; break;
+            case "fmt/39": output = "Microsoft Word 6.0/95"; break;
+            case "fmt/40": output = "Microsoft Word 97-2003"; break;
+            case "fmt/412": output = "Microsoft Word 2007 onwards"; break;
+            case "fmt/523": output = "Microsoft Word Macro enabled 2007 onwards"; break;
+            #endregion
+            #region Excel
+            case "fmt/55": output = "Microsoft Excel 2.x"; break;
+            case "fmt/56": output = "Microsoft Excel 3.0"; break;
+            case "fmt/57": output = "Microsoft Excel 4.0"; break;
+            case "fmt/59": output = "Microsoft Excel 5.0/95"; break;
+            case "fmt/61": output = "Microsoft Excel 97"; break;
+            case "fmt/62": output = "Microsoft Excel 2000-2003"; break;
+            case "fmt/214": output = "Microsoft Excel 2007 onwards"; break;
+            case "fmt/445": output = "Microsoft Excel Macro enabled 2007"; break;
+			#endregion
+			#region PowerPoint
+
+			#endregion
+			#region PNG
+			case "fmt/11": output = "PNG 1.0"; break;
+			case "fmt/12": output = "PNG 1.1"; break;
+			case "fmt/13": output = "PNG 1.2"; break;
+			#endregion
+			#region JPG
+			case "fmt/41": output = "RAW JPEG"; break;
+			case "fmt/42": output = "JPEG 1.00"; break;
+            case "fmt/43": output = "JPEG 1.01"; break;
+            case "fmt/44": output = "JPEG 1.02"; break;
+			//TODO: Hva er Exchagable Image File Format?
+			#endregion
+			#region GIF
+			case "fmt/3": output = "GIF 87a"; break;
+			case "fmt/4": output = "GIF 89a"; break;
+			#endregion
+			#region TIF
+			case "fmt/": output = "TIFF 6.0"; break;
+            #endregion
+            #region Open Document Standard
+
+            #endregion
+            #region RTF
+
+            #endregion
+            #region Email
+
+            #endregion
+            #region HTML
+            case "fmt/96":	output = "HTML 1.0"; break;
+            case "fmt/97":	output = "HTML 2.0"; break;
+            case "fmt/98":	output = "HTML 3.2"; break;
+            case "fmt/99":	output = "HTML 4.0"; break;
+            case "fmt/100":	output = "HTML 4.01"; break;
+			case "fmt/471":	output = "HTML 5.0"; break;
+			case "fmt/102": output = "Extenxible HTML 1.0"; break;
+			case "fmt/103": output = "Extenxible HTML 1.1"; break;
+            #endregion
+            #region PostScript
+            case "x-fmt/91":	output = "PostScript 1.0"; break;
+            case "x-fmt/406":	output = "PostScript 2.0"; break;
+            case "x-fmt/407":	output = "PostScript 2.1"; break;
+            case "x-fmt/408":	output = "PostScript 3.0"; break;
+            case "fmt/501":		output = "PostScript 3.1"; break;
+            #endregion
+            case "fmt/494": output = "Microsoft Office Encrypted Document"; break;
+            default: output = pronom; break;
+        }
+        return output;
+    }*/
 }

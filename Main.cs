@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using iText.Layout.Splitting;
 using System.Diagnostics;
 
 public static class GlobalVariables
@@ -43,53 +44,75 @@ class Program
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
-		Logger logger = Logger.Instance;
+        settings.SetUpFolderOverride("./Settings.xml");
+        Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
-		Siegfried sf = Siegfried.Instance;
+        Siegfried sf = Siegfried.Instance;
+		
 
-		//TODO: Check for malicous input files
-		try
+        //TODO: Check for malicous input files
+        try
 		{
-			Console.WriteLine("Copying and unpacking files...");
-			//Copy files
-			sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-			settings.SetUpFolderOverride("./Settings.xml");
-			Console.WriteLine("Identifying files...");
-			//Identify and unpack files
-			fileManager.IdentifyFiles();
+			sf.AskReadFiles();
+			if (!sf.Files.IsEmpty)
+			{
+				Console.WriteLine("Checking files from previous run...");
+				fileManager.ImportFiles(sf.Files.ToList());
+				var compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input);
+				fileManager.ImportCompressedFiles(compressedFiles);
+			}
+			else
+			{
+				Console.WriteLine("Copying and unpacking files...");
+				//Copy files
+				sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+				Console.WriteLine("Identifying files...");
+				//Identify and unpack files
+				fileManager.IdentifyFiles();
+			}
 		} catch (Exception e)
 		{
 			Console.WriteLine("Could not identify files: " + e.Message);
 			logger.SetUpRunTimeLogMessage("Error when copying/unpacking/identifying files: " + e.Message, true);
 			return;
 		}
-
 		ConversionManager cm = ConversionManager.Instance;
 		logger.AskAboutReqAndConv();
 
 		if (fileManager.Files.Count > 0)
 		{
 			fileManager.DisplayFileList();
-			Console.Write("Proceed? (Y/N): ");
-			string input = Console.ReadLine();
-			if (input.ToLower() != "y")
+			string input;
+			do
 			{
+				Console.Write("Proceed? (Y/N): ");
+				input = Console.ReadLine().ToLower();
+			} while (input != "y" && input != "n");
+			if (input == "n")
+			{
+				//TODO: Ask if user wants to just update settings and reload settings
                 return;
             }
+
 			Console.WriteLine("Converting files...");
 			try
 			{
 				cm.ConvertFiles().Wait();
+				//Delete siegfrieds json files
+				sf.ClearOutputFolder();
 			} catch (Exception e)
 			{
-				logger.SetUpDocumentation(fileManager.Files);
-				logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
+                Console.WriteLine("[FATAL] Error while converting " + e.Message);
+                logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
+			}
+			finally
+			{
+                Console.WriteLine("Documenting conversion...");
+                fileManager.DocumentFiles();
 			}
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();
-			Console.WriteLine("Documenting conversion...");
-			logger.SetUpDocumentation(fileManager.Files);
 		}
 	}
 }

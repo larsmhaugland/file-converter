@@ -8,14 +8,15 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-public class CogniddoxConverter : Converter
+public class CognidoxConverter : Converter
 {
     Logger log = Logger.Instance;
-    public CogniddoxConverter()
+    public CognidoxConverter()
     {
-        Name = "";
+        Name = "Cognidox";
         Version = "";
-        SupportedConversions = listOfSupportedConversions();
+        SupportedConversions = getListOfSupportedConvesions();
+        SupportedOperatingSystems = getSupportedOS();
     }
 
     /// <summary>
@@ -51,7 +52,7 @@ public class CogniddoxConverter : Converter
     /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
     /// </summary>
     /// <returns>List of all conversions</returns>
-    public override Dictionary<string, List<string>> listOfSupportedConversions()
+    public override Dictionary<string, List<string>> getListOfSupportedConvesions()
     {
         var supportedConversions = new Dictionary<string, List<string>>();
 
@@ -119,6 +120,14 @@ public class CogniddoxConverter : Converter
         return supportedConversions;
     }
 
+    public override List<string> getSupportedOS()
+    {
+        var supportedOS = new List<string>();
+        supportedOS.Add(PlatformID.Win32NT.ToString());
+        //Add more supported OS here
+        return supportedOS;
+    }
+
     void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf, string pronom)
     {
         try
@@ -143,7 +152,7 @@ public class CogniddoxConverter : Converter
                 int exitCode = process.ExitCode;
 
                 // Use the exit code as needed
-                Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
+                //Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
                 // Capture standard output and standard error
                 string output = process.StandardOutput.ReadToEnd();
                 string error = process.StandardError.ReadToEnd();

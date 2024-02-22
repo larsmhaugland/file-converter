@@ -40,6 +40,8 @@
 			<Default></Default>
 		</FileTypes>
 	</FileClass>
+
+	<!--POST SCRIPT CLASS -->
 	<FileClass>
 		<ClassName>ps</ClassName>
 		<Default>fmt/14</Default>
@@ -181,6 +183,7 @@
 		</FileTypes>
 	</FileClass>
 
+	<!-- RTF FILE CLASS -->
 	<FileClass>
 		<ClassName>Rich Text Format</ClassName>
 		<Default>fmt/479</Default>
@@ -188,6 +191,19 @@
 			<Filename>RTF</Filename>
 			<Pronoms>
 				fmt/969,fmt/45,fmt/50,fmt/52,fmt/53,fmt/355
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
+	</FileClass>
+
+	<!-- HTML FILE CLASS -->
+	<FileClass>
+		<ClassName>Hypertext Markup Language</ClassName>
+		<Default>fmt/14</Default>
+		<FileTypes>
+			<Filename>HTML</Filename>
+			<Pronoms>
+				fmt/103,fmt/102,fmt/96,fmt/97,fmt/98,fmt/99,fmt/100,fmt/471
 			</Pronoms>
 			<Default></Default>
 		</FileTypes>

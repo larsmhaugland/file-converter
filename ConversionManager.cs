@@ -38,7 +38,7 @@ public class ConversionManager
 {
 	List<FileInfo> Files;
 	Dictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new Dictionary<KeyValuePair<string, string>, List<string>>();
-	Dictionary<string,FileInfo> FileInfoMap = new Dictionary<string,FileInfo>();
+	ConcurrentDictionary<string,FileInfo> FileInfoMap = new ConcurrentDictionary<string,FileInfo>();
 	public Dictionary<string,string> WorkingSetMap = new Dictionary<string,string>();
     private static ConversionManager? instance;
     private static readonly object lockObject = new object();
@@ -249,7 +249,7 @@ public class ConversionManager
 			ConcurrentDictionary<string, CountdownEvent> countdownEvents = new ConcurrentDictionary<string, CountdownEvent>();
 			WorkingSetMap.Clear();
 			//Loop through working set
-			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, file =>
+			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
 			{
 				
 				//If file is already worked on, skip it
@@ -269,7 +269,7 @@ public class ConversionManager
 					//If the converter supports the current pronom, check if it can convert to the next pronom in the route
 					if (dict == null || !dict.ContainsKey(file.CurrentPronom))
 					{
-						break;
+						continue;
 					}
 					foreach (string outputFormat in dict[file.CurrentPronom])
 					{
@@ -294,8 +294,8 @@ public class ConversionManager
 								}
 								catch (Exception e)
 								{
-									logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
 									file.IsModified = false;
+									logger.SetUpRunTimeLogMessage("Error when converting file: " + e.Message, true);
 								}
 								finally
 								{
@@ -320,8 +320,7 @@ public class ConversionManager
 
 			//Wait for all threads to finish
 			var total = countdownEvents.Count;
-			var current = 0;
-			using (ProgressBar progressBar = new ProgressBar("Awaiting threads", countdownEvents.Count))
+			using (ProgressBar progressBar = new ProgressBar(countdownEvents.Count))
 			{
 				//TODO: This needs optimization
 				await Task.Run(() =>
@@ -331,6 +330,7 @@ public class ConversionManager
 					int timeout = 5;
 					sw.Start();
 					while (!allDone && sw.Elapsed.Minutes < timeout) {
+						var keysToRemove = new List<string>();
 						Thread.Sleep(300);
 						allDone = true;
 						foreach (var countdownEvent in countdownEvents)
@@ -338,18 +338,19 @@ public class ConversionManager
 							if (!countdownEvent.Value.IsSet)
 							{
                                 allDone = false;
-                            }
+                            } else
+							{
+								keysToRemove.Add(countdownEvent.Key);
+							}
 						}
-                        // Get the keys that are finished
-                        var keysToRemove = countdownEvents.Keys.Where(key => countdownEvents[key].IsSet).ToList();
-
+                        
                         // Remove the keys from the dictionary
                         Parallel.ForEach(keysToRemove, key =>
                         {
 							countdownEvents[key].Dispose(); // Dispose after completion
                             countdownEvents.TryRemove(key, out _);
                         });
-						progressBar.Report(total - countdownEvents.Count / total, total - countdownEvents.Count);
+						progressBar.Report(((float)total - (float)countdownEvents.Count) / (float)total, total - countdownEvents.Count);
                     }
 					sw.Stop();
 					if (!allDone)
