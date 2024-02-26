@@ -39,7 +39,9 @@ class Program
 
 		if (GlobalVariables.parsedOptions == null)
 			return;
-
+		//Only maximize and center the console window if the OS is Windows
+		
+		MaximizeAndCenterConsoleWindow();
 		Directory.SetCurrentDirectory("../../../");
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
@@ -50,7 +52,6 @@ class Program
 		FileManager fileManager = FileManager.Instance;
         Siegfried sf = Siegfried.Instance;
 		
-
         //TODO: Check for malicous input files
         try
 		{
@@ -64,9 +65,13 @@ class Program
 			}
 			else
 			{
-				Console.WriteLine("Copying and unpacking files...");
+				Console.WriteLine("Copying files from {0} to {1}...",GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 				//Copy files
+				Stopwatch sw = new Stopwatch();
+				sw.Start();
 				sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+				sw.Stop();
+				Console.WriteLine("Time to copy files: " + sw.Elapsed);
 				Console.WriteLine("Identifying files...");
 				//Identify and unpack files
 				fileManager.IdentifyFiles();
@@ -81,17 +86,30 @@ class Program
 		logger.AskAboutReqAndConv();
 
 		if (fileManager.Files.Count > 0)
-		{
-			fileManager.DisplayFileList();
+		{			
 			string input;
 			do
 			{
-				Console.Write("Proceed? (Y/N): ");
-				input = Console.ReadLine().ToLower();
-			} while (input != "y" && input != "n");
-			if (input == "n")
+                fileManager.DisplayFileList();
+                Console.Write("Do you want to proceed with these settings (Y(Yes) / N (No) / R (Reload) / G (Change in GUI): ");
+                string ?r = Console.ReadLine();
+				r = r?.ToUpper() ?? " ";
+				input = r;
+                if (input == "R")
+                {
+                    Console.WriteLine("Change settings file and hit enter when finished (Remember to save file)");
+                    Console.ReadLine();
+                    settings.ReadSettings("./Settings.xml");
+                    settings.SetUpFolderOverride("./Settings.xml");
+                }
+				if (input == "G")
+				{
+					//TODO: Start GUI
+					Console.WriteLine("Not implemented yet...");
+				}
+            } while (input != "Y" && input != "N");
+			if (input == "N")
 			{
-				//TODO: Ask if user wants to just update settings and reload settings
                 return;
             }
 
@@ -115,4 +133,26 @@ class Program
 			sf.CompressFolders();
 		}
 	}
+    static void MaximizeAndCenterConsoleWindow()
+    {
+		//Only maximize and center the console window if the OS is Windows
+		if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+		{
+			return;
+		}
+        int screenWidth = Console.LargestWindowWidth;
+        int screenHeight = Console.LargestWindowHeight;
+
+        int windowWidth = screenWidth ;  // You can adjust this as needed
+        int windowHeight = screenHeight; // You can adjust this as needed
+
+        Console.SetWindowSize(windowWidth, windowHeight);
+        Console.BufferHeight = windowHeight;
+        Console.BufferWidth = windowWidth;
+
+        int left = Math.Max((screenWidth - windowWidth) / 2, 0);
+        int top = Math.Max((screenHeight - windowHeight) / 2, 0);
+
+        //Console.SetWindowPosition(left, top);
+    }
 }

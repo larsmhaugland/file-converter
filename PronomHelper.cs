@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 class PronomHelper
 {
     PronomHelper() { }
+    /// <summary>
+    /// Returns the full name of a file type from its pronom code <br></br>
+    /// Data fetched from https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatSearch.aspx?status=new at 2024-02-21
+    /// </summary>
+    /// <param name="pronom">The pronom code get name from</param>
+    /// <returns> Full name of file type or "Not found"</returns>
     public static string PronomToFullName(string pronom)
     {
         string output = "";
@@ -26,13 +32,13 @@ class PronomHelper
             case "fmt/11": output = "Portable Network Graphics 1.0"; break;
             case "fmt/12": output = "Portable Network Graphics 1.1"; break;
             case "fmt/13": output = "Portable Network Graphics 1.2"; break;
-            case "fmt/14": output = "Acrobat PDF 1.0 - Portable Document Format 1.0"; break;
-            case "fmt/15": output = "Acrobat PDF 1.1 - Portable Document Format 1.1"; break;
-            case "fmt/16": output = "Acrobat PDF 1.2 - Portable Document Format 1.2"; break;
-            case "fmt/17": output = "Acrobat PDF 1.3 - Portable Document Format 1.3"; break;
-            case "fmt/18": output = "Acrobat PDF 1.4 - Portable Document Format 1.4"; break;
-            case "fmt/19": output = "Acrobat PDF 1.5 - Portable Document Format 1.5"; break;
-            case "fmt/20": output = "Acrobat PDF 1.6 - Portable Document Format 1.6"; break;
+            case "fmt/14": output = "Acrobat PDF 1.0 "; break;
+            case "fmt/15": output = "Acrobat PDF 1.1"; break;
+            case "fmt/16": output = "Acrobat PDF 1.2"; break;
+            case "fmt/17": output = "Acrobat PDF 1.3"; break;
+            case "fmt/18": output = "Acrobat PDF 1.4"; break;
+            case "fmt/19": output = "Acrobat PDF 1.5"; break;
+            case "fmt/20": output = "Acrobat PDF 1.6"; break;
             case "fmt/21": output = "AutoCAD Drawing 1.0"; break;
             case "fmt/22": output = "AutoCAD Drawing 1.2"; break;
             case "fmt/23": output = "AutoCAD Drawing 1.3"; break;
@@ -107,7 +113,7 @@ class PronomHelper
             case "fmt/92": output = "Scalable Vector Graphics 1.1"; break;
             case "fmt/93": output = "Virtual Reality Modeling Language 1.0"; break;
             case "fmt/94": output = "Virtual Reality Modeling Language 2.0"; break;
-            case "fmt/95": output = "Acrobat PDF/A - Portable Document Format 1a"; break;
+            case "fmt/95": output = "Acrobat PDF/A 1a"; break;
             case "fmt/96": output = "Hypertext Markup Language "; break;
             case "fmt/97": output = "Hypertext Markup Language 2.0"; break;
             case "fmt/98": output = "Hypertext Markup Language 3.2"; break;
@@ -156,11 +162,11 @@ class PronomHelper
             case "fmt/141": output = "Waveform Audio (PCMWAVEFORMAT) "; break;
             case "fmt/142": output = "Waveform Audio (WAVEFORMATEX) "; break;
             case "fmt/143": output = "Waveform Audio (WAVEFORMATEXTENSIBLE) "; break;
-            case "fmt/144": output = "Acrobat PDF/X - Portable Document Format - Exchange 1:1999 "; break;
-            case "fmt/145": output = "Acrobat PDF/X - Portable Document Format - Exchange 1:2001 "; break;
-            case "fmt/146": output = "Acrobat PDF/X - Portable Document Format - Exchange 1a:2003 "; break;
-            case "fmt/147": output = "Acrobat PDF/X - Portable Document Format - Exchange 2:2003 "; break;
-            case "fmt/148": output = "Acrobat PDF/X - Portable Document Format - Exchange 3:2003 "; break;
+            case "fmt/144": output = "Acrobat PDF/X - Exchange 1:1999 "; break;
+            case "fmt/145": output = "Acrobat PDF/X - Exchange 1:2001 "; break;
+            case "fmt/146": output = "Acrobat PDF/X - Exchange 1a:2003 "; break;
+            case "fmt/147": output = "Acrobat PDF/X - Exchange 2:2003 "; break;
+            case "fmt/148": output = "Acrobat PDF/X - Exchange 3:2003 "; break;
             case "fmt/149": output = "JTIP (JPEG Tiled Image Pyramid) "; break;
             case "fmt/150": output = "JPEG-LS "; break;
             case "fmt/151": output = "JPX (JPEG 2000 part 2) "; break;
@@ -169,8 +175,8 @@ class PronomHelper
             case "fmt/154": output = "Tagged Image File Format for Electronic Photography (TIFF/EP) "; break;
             case "fmt/155": output = "Geographic Tagged Image File Format (GeoTIFF) "; break;
             case "fmt/156": output = "Tagged Image File Format for Internet Fax (TIFF-FX) "; break;
-            case "fmt/157": output = "Acrobat PDF/X - Portable Document Format - Exchange 1a:2001 "; break;
-            case "fmt/158": output = "Acrobat PDF/X - Portable Document Format - Exchange 3:2002 "; break;
+            case "fmt/157": output = "Acrobat PDF/X - Exchange 1a:2001 "; break;
+            case "fmt/158": output = "Acrobat PDF/X - Exchange 3:2002 "; break;
             case "fmt/159": output = "EBCDIC-US "; break;
             case "fmt/160": output = "TeX/LaTeX Device Independent Document "; break;
             case "fmt/161": output = "SIARD (Software-Independent Archiving of Relational Databases) 1.0"; break;
@@ -288,7 +294,7 @@ class PronomHelper
             case "fmt/273": output = "Microsoft Works Word Processor Macintosh 4"; break;
             case "fmt/274": output = "SPSS Output File (spv) "; break;
             case "fmt/275": output = "Microsoft Access Database File 2007"; break;
-            case "fmt/276": output = "Acrobat PDF 1.7 - Portable Document Format 1.7"; break;
+            case "fmt/276": output = "Acrobat PDF 1.7"; break;
             case "fmt/277": output = "ESRI Arc/View Shapefile Index "; break;
             case "fmt/278": output = "Internet Message Format "; break;
             case "fmt/279": output = "FLAC (Free Lossless Audio Codec) 1.2.1"; break;
@@ -346,11 +352,11 @@ class PronomHelper
             case "fmt/331": output = "Autorun Configuration File "; break;
             case "fmt/332": output = "ESRI Arc/View Project 3.x"; break;
             case "fmt/333": output = "Chemical Markup Language "; break;
-            case "fmt/334": output = "Crystallographic Information Framework "; break;
-            case "fmt/335": output = "Dreamweaver Lock File "; break;
-            case "fmt/336": output = "Graphic Workshop for Windows Thumbnail File "; break;
-            case "fmt/337": output = "MJ2 (Motion JPEG 2000) "; break;
-            case "fmt/338": output = "Interchange File Format Interleaved Bitmap "; break;
+            case "fmt/334": output = "Crystallographic Information Framework"; break;
+            case "fmt/335": output = "Dreamweaver Lock File"; break;
+            case "fmt/336": output = "Graphic Workshop for Windows Thumbnail File"; break;
+            case "fmt/337": output = "MJ2 (Motion JPEG 2000)"; break;
+            case "fmt/338": output = "Interchange File Format Interleaved Bitmap"; break;
             case "fmt/339": output = "Interchange File Format 8-bit Sampled Voice "; break;
             case "fmt/340": output = "Lotus WordPro Document 97/Millennium"; break;
             case "fmt/341": output = "Macintosh PICT Image 2.0"; break;
@@ -365,13 +371,13 @@ class PronomHelper
             case "fmt/350": output = "Paradox Database Table 3.0"; break;
             case "fmt/351": output = "Paradox Database Table 4.0"; break;
             case "fmt/352": output = "Paradox Database Table 5.0"; break;
-            case "fmt/353": output = "Tagged Image File Format "; break;
-            case "fmt/354": output = "Acrobat PDF/A - Portable Document Format 1b"; break;
+            case "fmt/353": output = "Tagged Image File Format"; break;
+            case "fmt/354": output = "Acrobat PDF/A 1b"; break;
             case "fmt/355": output = "Rich Text Format 1.9"; break;
-            case "fmt/356": output = "Adaptive Multi-Rate Audio "; break;
+            case "fmt/356": output = "Adaptive Multi-Rate Audio"; break;
             case "fmt/357": output = "3GPP Audio/Video File "; break;
             case "fmt/358": output = "Internet Data Query File "; break;
-            case "fmt/359": output = "Microsoft Front Page Binary Tree Index "; break;
+            case "fmt/359": output = "Microsoft Front Page Binary Tree Index"; break;
             case "fmt/360": output = "pulse EKKO data file "; break;
             case "fmt/361": output = "pulse EKKO header file "; break;
             case "fmt/362": output = "GSSI SIR-10 RADAN data file "; break;
@@ -488,24 +494,24 @@ class PronomHelper
             case "fmt/473": output = "Microsoft Office Owner File "; break;
             case "fmt/474": output = "Windows Help File "; break;
             case "fmt/475": output = "Microsoft Management Console Snap-in Control file "; break;
-            case "fmt/476": output = "Acrobat PDF/A - Portable Document Format 2a"; break;
-            case "fmt/477": output = "Acrobat PDF/A - Portable Document Format 2b"; break;
-            case "fmt/478": output = "Acrobat PDF/A - Portable Document Format 2u"; break;
-            case "fmt/479": output = "Acrobat PDF/A - Portable Document Format 3a"; break;
-            case "fmt/480": output = "Acrobat PDF/A - Portable Document Format 3b"; break;
-            case "fmt/481": output = "Acrobat PDF/A - Portable Document Format 3u"; break;
+            case "fmt/476": output = "Acrobat PDF/A 2a"; break;
+            case "fmt/477": output = "Acrobat PDF/A 2b"; break;
+            case "fmt/478": output = "Acrobat PDF/A 2u"; break;
+            case "fmt/479": output = "Acrobat PDF/A 3a"; break;
+            case "fmt/480": output = "Acrobat PDF/A 3b"; break;
+            case "fmt/481": output = "Acrobat PDF/A 3u"; break;
             case "fmt/482": output = "Apple iBook format "; break;
             case "fmt/483": output = "ePub format "; break;
             case "fmt/484": output = "7Zip format "; break;
             case "fmt/485": output = "Rocket Book eBook format "; break;
             case "fmt/486": output = "Macromedia (Adobe) Director Compressed Resource file "; break;
-            case "fmt/487": output = "Macro Enabled Microsoft Powerpoint 2007 Onwards"; break;
-            case "fmt/488": output = "Acrobat PDF/X - Portable Document Format - Exchange PDF/X-4 "; break;
-            case "fmt/489": output = "Acrobat PDF/X - Portable Document Format - Exchange PDF/X-4p "; break;
-            case "fmt/490": output = "Acrobat PDF/X - Portable Document Format - Exchange PDF/X-5g "; break;
-            case "fmt/491": output = "Acrobat PDF/X - Portable Document Format - Exchange PDF/X-5pg "; break;
-            case "fmt/492": output = "Acrobat PDF/X - Portable Document Format - Exchange PDF/X-5n "; break;
-            case "fmt/493": output = "Acrobat PDF/E - Portable Document Format for Engineering PDF/E-1 "; break;
+            case "fmt/487": output = "Macro Enabled Powerpoint 2007 Onwards"; break;
+            case "fmt/488": output = "Acrobat PDF/X - Exchange PDF/X-4 "; break;
+            case "fmt/489": output = "Acrobat PDF/X - Exchange PDF/X-4p "; break;
+            case "fmt/490": output = "Acrobat PDF/X - Exchange PDF/X-5g "; break;
+            case "fmt/491": output = "Acrobat PDF/X - Exchange PDF/X-5pg "; break;
+            case "fmt/492": output = "Acrobat PDF/X - Exchange PDF/X-5n "; break;
+            case "fmt/493": output = "Acrobat PDF/E for Engineering PDF/E-1 "; break;
             case "fmt/494": output = "Microsoft Office Encrypted Document 2007 Onwards"; break;
             case "fmt/495": output = "ATCO-CIF "; break;
             case "fmt/496": output = "TransXchange File Format "; break;
@@ -535,7 +541,7 @@ class PronomHelper
             case "fmt/520": output = "OpenType Font File "; break;
             case "fmt/521": output = "Adobe Multiple Master Metrics font file "; break;
             case "fmt/522": output = "Open Project File "; break;
-            case "fmt/523": output = "Macro enabled Microsoft Word Document OOXML 2007 Onwards"; break;
+            case "fmt/523": output = "Macro Enabled Word Document OOXML 2007 Onwards"; break;
             case "fmt/524": output = "Microsoft Office Theme "; break;
             case "fmt/525": output = "Adobe Printer Font Binary "; break;
             case "fmt/526": output = "Adobe Font List "; break;
@@ -1012,15 +1018,6 @@ class PronomHelper
             case "fmt/997": output = "SPSS Portable Data Format "; break;
             case "fmt/998": output = "OpenRaster Image Format "; break;
             case "fmt/999": output = "Krita Document Format "; break;
-            case "x-fmt/1": output = "Microsoft Word for Macintosh Document 3.0"; break;
-            case "x-fmt/2": output = "Microsoft Word for Macintosh Document 6.0"; break;
-            case "x-fmt/3": output = "Online Description Tool Format "; break;
-            case "x-fmt/4": output = "Write for Windows Document 3.1"; break;
-            case "x-fmt/5": output = "Works for Macintosh Document 4.0"; break;
-            case "x-fmt/6": output = "FoxPro Database 2.0"; break;
-            case "x-fmt/7": output = "FoxPro Database 2.5"; break;
-            case "x-fmt/8": output = "dBASE Database II"; break;
-            case "x-fmt/9": output = "dBASE Database III"; break;
             case "fmt/1000": output = "TZX Format "; break;
             case "fmt/1001": output = "OpenEXR 2"; break;
             case "fmt/1002": output = "Nearly Raw Raster Data 1"; break;
@@ -1150,7 +1147,7 @@ class PronomHelper
             case "fmt/1126": output = "Sony SR2 RAW Image File "; break;
             case "fmt/1127": output = "Sony ARW RAW Image File 2.x"; break;
             case "fmt/1128": output = "Progressive Graphics File "; break;
-            case "fmt/1129": output = "PDF 2.0 - Portable Document Format 2.0"; break;
+            case "fmt/1129": output = "PDF 2.0"; break;
             case "fmt/1130": output = "C3D File Format "; break;
             case "fmt/1131": output = "Gatan Digital Micrograph File Format (DM3) 3"; break;
             case "fmt/1132": output = "Netscape Bookmark File Format "; break;
@@ -1931,9 +1928,9 @@ class PronomHelper
             case "fmt/1907": output = "Micrografx Icon File "; break;
             case "fmt/1908": output = "Jupiter Tesselation (JT) File "; break;
             case "fmt/1909": output = "TibetDoc Word Document "; break;
-            case "fmt/1910": output = "Acrobat PDF/A - Portable Document Format 4"; break;
-            case "fmt/1911": output = "Acrobat PDF/A - Portable Document Format 4e"; break;
-            case "fmt/1912": output = "Acrobat PDF/A - Portable Document Format 4f"; break;
+            case "fmt/1910": output = "Acrobat PDF/A 4"; break;
+            case "fmt/1911": output = "Acrobat PDF/A 4e"; break;
+            case "fmt/1912": output = "Acrobat PDF/A 4f"; break;
             case "fmt/1913": output = "Graphisoft Archicad Project 17+"; break;
             case "fmt/1914": output = "Graphisoft BIMx Hyper-Model "; break;
             case "fmt/1915": output = "ActiveMime Object "; break;
@@ -1967,6 +1964,15 @@ class PronomHelper
             case "fmt/1943": output = "Digital Negative Format (DNG) 1.7"; break;
             case "fmt/1944": output = "Common Loudspeaker Format (CLF) 1"; break;
             case "fmt/1945": output = "Common Loudspeaker Format (CLF) 2"; break;
+            case "x-fmt/1":  output = "Microsoft Word for Macintosh Document 3.0"; break;
+            case "x-fmt/2":  output = "Microsoft Word for Macintosh Document 6.0"; break;
+            case "x-fmt/3":  output = "Online Description Tool Format "; break;
+            case "x-fmt/4":  output = "Write for Windows Document 3.1"; break;
+            case "x-fmt/5":  output = "Works for Macintosh Document 4.0"; break;
+            case "x-fmt/6":  output = "FoxPro Database 2.0"; break;
+            case "x-fmt/7":  output = "FoxPro Database 2.5"; break;
+            case "x-fmt/8":  output = "dBASE Database II"; break;
+            case "x-fmt/9":  output = "dBASE Database III"; break;
             case "x-fmt/10": output = "dBASE Database IV"; break;
             case "x-fmt/11": output = "Revisable-Form-Text Document Content Architecture "; break;
             case "x-fmt/12": output = "Write for Windows Document 3.0"; break;
