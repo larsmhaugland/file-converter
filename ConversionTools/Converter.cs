@@ -12,7 +12,6 @@ public class Converter
 	public Converter()
 	{ }
 
-
 	public virtual List<string> getSupportedOS() 
 	{
 		return new List<string>();

@@ -186,7 +186,7 @@ public class GhostscriptConverter : Converter
 				{
 					rasterizer.Open(stream, versionInfo, false);
 
-					ImageFormat imageFormat = GetImageFormat(extension);
+					ImageFormat? imageFormat = GetImageFormat(extension);
 
 					if (imageFormat != null)
 					{

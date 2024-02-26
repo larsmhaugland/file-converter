@@ -522,7 +522,8 @@ public class Siegfried
 	public void CopyFiles(string source, string destination)
 	{
 		string[] files = Directory.GetFiles(source, "*.*", SearchOption.AllDirectories);
-		foreach (string file in files)
+		Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+			// (string file in files)
 		{
 			string relativePath = file.Replace(source, "");
 			string outputPath = destination + relativePath;
@@ -532,7 +533,7 @@ public class Siegfried
 				Directory.CreateDirectory(outputFolder);
 			}
 			File.Copy(file, outputPath, true);
-		}
+		});
 	}
 
 	/// <summary>
