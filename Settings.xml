@@ -6,6 +6,7 @@
 	<InputFolder></InputFolder>
 	<OutputFolder></OutputFolder>
 	<MaxThreads></MaxThreads>	<!--Write a number, deafult is cores*2-->
+	<Timeout></Timeout>			<!--Timout in minutes, default is 30min-->
 	<!-- 
 			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935
