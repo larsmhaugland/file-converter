@@ -29,9 +29,6 @@ public class FileInfo
 	public List<string> Route { get; set; } = new List<string>();   // List of modification tools used
 	public string TargetPronom { get; set; } = "";				// The pronom the file should be converted to
 
-	private HashAlgorithms HashingAlgorithm = HashAlgorithms.SHA256;
-
-
 	public FileInfo()
 	{
 	}
@@ -46,9 +43,8 @@ public class FileInfo
 		FilePath = path;
 		ParseOutput(output);
 		//TODO: Hashing algorithm should be set in settings
-		//HashingAlgorithm = GlobalVariables.HashingAlgorithm;
 		//Get checksum
-		switch (HashingAlgorithm)
+		switch (GlobalVariables.checksumHash)
 		{
 			case HashAlgorithms.MD5:
 				OriginalChecksum = CalculateFileChecksum(MD5.Create());
@@ -64,38 +60,27 @@ public class FileInfo
 	{
 		OriginalSize = siegfriedFile.filesize;
 		FileName = Path.GetFileName(siegfriedFile.filename);
-		OriginalPronom = siegfriedFile.matches[0].id;
-		OriginalFormatName = siegfriedFile.matches[0].format;
-		OriginalMime = siegfriedFile.matches[0].mime;
-		FilePath = siegfriedFile.filename;
-		//Remove input or output path from filepath
-		var pathWithoutInput = siegfriedFile.filename.Replace(GlobalVariables.parsedOptions.Input,"");
-		ShortFilePath = Path.Combine(pathWithoutInput.Replace(GlobalVariables.parsedOptions.Output,""));
-		while (ShortFilePath[0] == '\\')
-		{
-			//Remove leading backslashes
-			ShortFilePath = ShortFilePath.Substring(1);
+		if (siegfriedFile.matches.Length > 0) { 
+			OriginalPronom = siegfriedFile.matches[0].id;
+			OriginalFormatName = siegfriedFile.matches[0].format;
+			OriginalMime = siegfriedFile.matches[0].mime;
 		}
+		FilePath = siegfriedFile.filename;
+		OriginalChecksum = siegfriedFile.hash;
 	}
 
-	public bool CheckIfConverted()
+	/// <summary>
+	/// Update the properties of the FileInfo object based on a FileInfo object
+	/// </summary>
+	/// <param name="f">FileInfo that has new data in it</param>
+	public void UpdateSelf(FileInfo f)
 	{
-		//Get new pronom
-		var newInfo = Siegfried.Instance.IdentifyFile(FilePath, true);
-		if (newInfo != null && GlobalVariables.FileSettings.ContainsKey(OriginalPronom) && newInfo.matches[0].id == GlobalVariables.FileSettings[OriginalPronom])
-		{
-			IsConverted = true;
-		} else if (newInfo == null)
-		{
-			return false;
-		}
-		NewPronom = newInfo.matches[0].id;
-		NewFormatName = newInfo.matches[0].format;
-		NewMime = newInfo.matches[0].mime;
-		NewSize = newInfo.filesize;
-		NewChecksum = newInfo.hash;
-
-		return IsConverted;
+		//Set new values based on the input FileInfo
+		NewPronom = f.OriginalPronom;
+		NewFormatName = f.OriginalFormatName;
+		NewMime = f.OriginalMime;
+		NewSize = f.OriginalSize;
+		NewChecksum = f.OriginalChecksum;
 	}
 
 	public void AddConversionTool(string tool)
