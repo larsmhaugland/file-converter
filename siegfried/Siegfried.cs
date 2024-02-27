@@ -227,7 +227,7 @@ public class Siegfried
 
 		if (error.Length > 0)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyFile " + error, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyFile: " + error, true);
 		}
 		var parsedData = ParseJSONOutput(output, false);
 		if (parsedData == null || parsedData.files == null)
@@ -277,17 +277,16 @@ public class Siegfried
 			{
 				Directory.CreateDirectory(parentDir);
 			}
-			else if (parentDir == null)
+			if (parentDir != null) { 
+				File.Create(outputFile).Close();
+			} else
 			{
-				logger.SetUpRunTimeLogMessage("SF IdentifyList could not create output directory " + outputFile, true);
-				throw new Exception("SF IdentifyList could not create output directory " + outputFile);
+				Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: parentDir is null " + outputFile, true);
 			}
-			File.Create(outputFile).Close();
 		}
 		catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList could not create output file " + e.Message, true);
-			throw new Exception("SF IdentifyList could not create output file " + e.Message);
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: could not create output file " + e.Message, true);
 		}
 
 		// Define the process start info
@@ -326,8 +325,9 @@ public class Siegfried
 		//TODO: Check error and possibly continue
 		if (error.Length > 0)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("SF " + error, true);
-			//return; 
+			//Remove \n from error message
+			error = error.Replace("\n", " - ");
+			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: " + error, true);
 		}
 		var parsedData = ParseJSONOutput(outputFile, true);
 		if (parsedData == null)
@@ -340,16 +340,16 @@ public class Siegfried
 		for (int i = 0; i < parsedData.files.Length; i++)
 		{
 			var file = new FileInfo(parsedData.files[i]);
-			if (file != null)
-			{
-				file.OriginalChecksum = parsedData.files[i].hash;
-				if (paths.Length - 1 >= i)
-				{
-					file.FilePath = paths[i];
-					file.FileName = Path.GetFileName(file.FileName);
-				}
-				files.Add(file);
-			}
+			file.FilePath = paths[i];
+			file.FileName = Path.GetFileName(file.FilePath);
+            var pathWithoutInput = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, "");
+            file.ShortFilePath = Path.Combine(pathWithoutInput.Replace(GlobalVariables.parsedOptions.Output, ""));
+            while (file.ShortFilePath[0] == '\\')
+            {
+                //Remove leading backslashes
+                file.ShortFilePath = file.ShortFilePath.Substring(1);
+            }
+            files.Add(file);
 		}
 		return files;
 	}
@@ -371,7 +371,7 @@ public class Siegfried
 			var output = IdentifyList(filePaths);
 			if (output == null)
 			{
-				logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually could not identify files", true);
+				logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually: could not identify files", true);
 				return; //Skip current group
 			}
 			//TODO: Check if all files were identified
@@ -447,7 +447,7 @@ public class Siegfried
 
 			if (readFromFile && file == null)
 			{
-                Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON file not found", true);
+                Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON: file not found", true);
                 return null;
             }
 
@@ -475,7 +475,7 @@ public class Siegfried
 		catch (Exception e)
 		{
 			Console.WriteLine(e.Message);
-			Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON " + e.Message, true);
+			Logger.Instance.SetUpRunTimeLogMessage("SF ParseJSON: " + e.Message, true);
 			return null;
 		}
 	}
@@ -522,18 +522,54 @@ public class Siegfried
 	public void CopyFiles(string source, string destination)
 	{
 		string[] files = Directory.GetFiles(source, "*.*", SearchOption.AllDirectories);
+		List<string> retryFiles = new List<string>();
 		Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
 			// (string file in files)
 		{
 			string relativePath = file.Replace(source, "");
 			string outputPath = destination + relativePath;
 			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+			//TODO: THIS BEHAVIOUR SHOULD BE DOCUMENTED
+			//If file already exists in target destination, skip it
+			if (File.Exists(outputPath))
+			{
+				return;
+			}
 			if (!Directory.Exists(outputFolder))
 			{
 				Directory.CreateDirectory(outputFolder);
 			}
-			File.Copy(file, outputPath, true);
+			try
+			{
+				File.Copy(file, outputPath, true);
+			} catch (IOException ex)
+			{
+				Console.WriteLine("Could not open file '{0}', it may be used in another process");
+				retryFiles.Add(file);
+            }
 		});
+		if (retryFiles.Count > 0)
+		{
+			Console.WriteLine("Some files could not be copied, close the processes using them and hit enter");
+			Console.ReadLine();
+			Parallel.ForEach(retryFiles, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+			{
+                string relativePath = file.Replace(source, "");
+                string outputPath = destination + relativePath;
+                string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+                if (!Directory.Exists(outputFolder))
+				{
+                    Directory.CreateDirectory(outputFolder);
+                }
+				try
+				{
+					File.Copy(file, outputPath, true);
+				} catch (Exception e)
+				{
+					Logger.Instance.SetUpRunTimeLogMessage("SF CopyFiles: " + e.Message, true);
+				}
+            });
+		}
 	}
 
 	/// <summary>
@@ -676,9 +712,8 @@ public class Siegfried
 	{
 		try
 		{
-			//TODO: There may be a problem with this method of getting the path
 			// Get path to folder without extention
-			string pathWithoutExtension = path.Split('.')[0];
+			string pathWithoutExtension = path.LastIndexOf('.') > 0 ? path.Substring(0, path.LastIndexOf('.')) : path;
 			// Ensure the extraction directory exists
 			if (!Directory.Exists(pathWithoutExtension))
 			{
