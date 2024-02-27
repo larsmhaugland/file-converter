@@ -22,6 +22,21 @@ public class Converter
 	}
 
 	/// <summary>
+	/// Checks if the converter supports the conversion of a file from one format to another
+	/// </summary>
+	/// <param name="originalPronom">The pronom code of the current file format</param>
+	/// <param name="targetPronom">The pronom code of the target file format</param>
+	/// <returns>True if the converter supports it, otherwise False</returns>
+	public bool SupportsConversion(string originalPronom, string targetPronom)
+	{
+        if (SupportedConversions != null && SupportedConversions.ContainsKey(originalPronom))
+		{
+			return SupportedConversions[originalPronom].Contains(targetPronom);           
+        }
+		return false;
+    }
+
+	/// <summary>
 	/// Convert a file to a new format
 	/// </summary>
 	/// <param name="fileinfo">The file to be converted</param>
