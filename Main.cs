@@ -11,6 +11,7 @@ public static class GlobalVariables
     public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
     public static HashAlgorithms checksumHash;
 	public static int maxThreads = Environment.ProcessorCount*2;
+	public static int timeout = 30;
 }
 public class Options
 {
@@ -55,9 +56,12 @@ class Program
         //TODO: Check for malicous input files
         try
 		{
+			//Check if user wants to use files from previous run
 			sf.AskReadFiles();
+			//Check if files were added from previous run
 			if (!sf.Files.IsEmpty)
 			{
+				//Import files from previous run
 				Console.WriteLine("Checking files from previous run...");
 				fileManager.ImportFiles(sf.Files.ToList());
 				var compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input);
@@ -67,19 +71,15 @@ class Program
 			{
 				Console.WriteLine("Copying files from {0} to {1}...",GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
 				//Copy files
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
 				sf.CopyFiles(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
-				sw.Stop();
-				Console.WriteLine("Time to copy files: " + sw.Elapsed);
 				Console.WriteLine("Identifying files...");
 				//Identify and unpack files
 				fileManager.IdentifyFiles();
 			}
 		} catch (Exception e)
 		{
-			Console.WriteLine("Could not identify files: " + e.Message);
-			logger.SetUpRunTimeLogMessage("Error when copying/unpacking/identifying files: " + e.Message, true);
+			Console.WriteLine("[FATAL] Could not identify files: " + e.Message);
+			logger.SetUpRunTimeLogMessage("Main: Error when copying/unpacking/identifying files: " + e.Message, true);
 			return;
 		}
 		ConversionManager cm = ConversionManager.Instance;
@@ -91,7 +91,7 @@ class Program
 			do
 			{
                 fileManager.DisplayFileList();
-                Console.Write("Do you want to proceed with these settings (Y(Yes) / N (No) / R (Reload) / G (Change in GUI): ");
+                Console.Write("Do you want to proceed with these settings (Y (Yes) / N (No) / R (Reload) / G (Change in GUI): ");
                 string ?r = Console.ReadLine();
 				r = r?.ToUpper() ?? " ";
 				input = r;
@@ -116,13 +116,13 @@ class Program
 			Console.WriteLine("Converting files...");
 			try
 			{
-				cm.ConvertFiles().Wait();
+				cm.ConvertFiles();
 				//Delete siegfrieds json files
 				sf.ClearOutputFolder();
 			} catch (Exception e)
 			{
-                Console.WriteLine("[FATAL] Error while converting " + e.Message);
-                logger.SetUpRunTimeLogMessage("Error when converting files: " + e.Message, true);
+                Console.WriteLine("Error while converting " + e.Message);
+                logger.SetUpRunTimeLogMessage("Main: Error when converting files: " + e.Message, true);
 			}
 			finally
 			{
