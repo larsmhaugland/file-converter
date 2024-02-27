@@ -3,6 +3,8 @@
 
 
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 public class FileManager
 {
     private static FileManager? instance;
@@ -115,57 +117,33 @@ public class FileManager
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
-		List<Dictionary<string,List<string>>> supportedConversions = new List<Dictionary<string,List<string>>>();
-		foreach (var converter in converters)
-		{
-			var formats = converter.getListOfSupportedConvesions();
-			if (formats != null)
-			{
-				supportedConversions.Add(formats);
-			}
-		}
-		
+
 		//Count the number of files per pronom code
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files)
 		{
-			string folder = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output, file.FilePath));
-			string? overrideFormat;
-			//Fetch the standard format for the file type
-			GlobalVariables.FileSettings.TryGetValue(file.OriginalPronom, out overrideFormat);
-			//Check if the file is in a folder with an override
-			if (folder != null && GlobalVariables.FolderOverride.ContainsKey(folder))
-			{
-				overrideFormat = GlobalVariables.FolderOverride[folder].DefaultType;
-			}
+			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
-			//Check if the override format is supported by any of the converters
-			foreach (var supportedConversion in supportedConversions)
+
+			//Check if the conversion is supported by any of the converters
+			converters.ForEach(c =>
 			{
-				if (supportedConversion.ContainsKey(file.OriginalPronom))
+                if (c.SupportsConversion(file.OriginalPronom, targetPronom))
 				{
-					foreach (var outputFormat in supportedConversion[file.OriginalPronom])
-					{
-						if (outputFormat == overrideFormat)
-						{
-							supported = true;
-							break;
-						}
-					}
-					if (supported) break;
-				}
-			}
+                    supported = true;
+                }
+            });
 			//If no supported format is found, set the overrideFormat to "Not set"
-			if (overrideFormat == null)
+			if (targetPronom == null)
 			{
-				overrideFormat = "Not set";
+				targetPronom = "Not set";
 			}
-			if (!supported && overrideFormat != null)
+			if (!supported && targetPronom != null)
 			{
-                overrideFormat = "Not supported";
+                targetPronom = "Not supported";
             }
 
-			KeyValuePair<string, string> key = new KeyValuePair<string, string>(file.OriginalPronom, overrideFormat);
+			KeyValuePair<string, string> key = new KeyValuePair<string, string>(file.OriginalPronom, targetPronom);
 			if (fileCount.ContainsKey(key))
 			{
 				fileCount[key]++;
@@ -216,8 +194,10 @@ public class FileManager
 		}
 		//Sum total from all entries in fileCount where key. is not "Not set"
 		int total = fileCount.Where(x => x.Key.Value != "Not set" && x.Key.Value != "Not supported").Sum(x => x.Value);
-		Console.WriteLine("Number of files: {0,-10}\nNumber of files with output specified: {1,-10}", Files.Count, total);
-		
+        int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
+        Console.WriteLine("Number of files: {0,-10}", Files.Count);
+		Console.WriteLine("Number of files with output specified: {0,-10}", total);
+		Console.WriteLine("Number of files not at target pronom: {0,-10}\n", total-totalFinished);
 	}
 
 	public List<FileInfo> GetFiles()
