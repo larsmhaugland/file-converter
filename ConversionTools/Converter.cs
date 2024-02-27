@@ -82,11 +82,10 @@ public class Converter
 	/// <param name="oldFilepath">Filepath to original file</param>
 	/// <param name="newFilepath">Filepath to new file</param>
 	/// <param name="newFormat">Target pronom code</param>
-	/// <returns></returns>
+	/// <returns>True if the conversion succeeded, otherwise false</returns>
 	public bool CheckConversionStatus(string oldFilepath, string newFilepath, string newFormat)
 	{
-		Siegfried sf = Siegfried.Instance;
-		var file = sf.IdentifyFile(newFilepath, false);
+		var file = Siegfried.Instance.IdentifyFile(newFilepath, false);
 		if (file != null)
 		{
 			if (file.matches[0].id == newFormat)

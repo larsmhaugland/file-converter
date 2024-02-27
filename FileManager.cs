@@ -1,9 +1,4 @@
-﻿
-
-
-
-
-using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class FileManager
 {
@@ -32,18 +27,15 @@ public class FileManager
             return instance;
         }
     }
-    //NOTE: Since this function is async, it may not be finished before the conversion starts, what should we do?
+  
     public async void IdentifyFiles()
     {
 		identifyingFiles = true;
 		Siegfried sf = Siegfried.Instance;
 		Logger logger = Logger.Instance;
-
-
+		//TODO: Can maybe run both individually and compressed files at the same time
 		//Identifying all uncompressed files
-		//TODO: Why do I get a warning here (without '!')?
 		List<FileInfo>? files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
-
 		if (files != null)
 		{
 			//Change path from input to output directory
@@ -113,6 +105,10 @@ public class FileManager
         Files.AddRange(files);
     }
 
+	/// <summary>
+	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
+	/// Also gives a count of how many files are in each group.
+	/// </summary>
 	public void DisplayFileList()
 	{
 		//Get converters supported formats
@@ -192,9 +188,11 @@ public class FileManager
 			var targetFormat = PronomHelper.PronomToFullName(targetPronom);
 			Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
 		}
-		//Sum total from all entries in fileCount where key. is not "Not set"
+		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
 		int total = fileCount.Where(x => x.Key.Value != "Not set" && x.Key.Value != "Not supported").Sum(x => x.Value);
+		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
+		//Print totals to user
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}\n", total-totalFinished);
