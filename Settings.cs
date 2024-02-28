@@ -278,7 +278,10 @@ class Settings
         //If the file is in a folder that has a folder override, check if the file is at the correct output format for that folder
         if (parentDir != null && GlobalVariables.FolderOverride.ContainsKey(parentDir))
         {
-            return GlobalVariables.FolderOverride[parentDir].DefaultType;
+			if (GlobalVariables.FolderOverride[parentDir].PronomsList.Contains(f.OriginalPronom))
+			{
+				return GlobalVariables.FolderOverride[parentDir].DefaultType;
+			}
         }
         //Otherwise, check if the new type matches the global settings for the input format
         if (GlobalVariables.FileSettings.ContainsKey(f.OriginalPronom))
