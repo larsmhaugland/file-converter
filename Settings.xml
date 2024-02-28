@@ -6,6 +6,7 @@
 	<InputFolder></InputFolder>
 	<OutputFolder></OutputFolder>
 	<MaxThreads></MaxThreads>	<!--Write a number, deafult is cores*2-->
+	<Timeout></Timeout>			<!--Timout in minutes, default is 30min-->
 	<!-- 
 			Images supported formats:
 			png: fmt/11 fmt/12 fmt/13 fmt/935
@@ -28,6 +29,11 @@
 			<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
 			<Default></Default>
 		</FileTypes>
+		<FileTypes>
+			<Filename>gif</Filename>
+			<Pronoms>fmt/3, fmt/4</Pronoms>
+			<Default></Default>
+		</FileTypes>
 	</FileClass>
 	<FileClass>
 		<ClassName>pdf</ClassName>
@@ -44,7 +50,7 @@
 	<!--POST SCRIPT CLASS -->
 	<FileClass>
 		<ClassName>ps</ClassName>
-		<Default>fmt/14</Default>
+		<Default>fmt/15</Default>
 		<FileTypes>
 			<Filename>ps</Filename>
 			<Pronoms>
@@ -57,7 +63,7 @@
 	<!--WORD DOCUMENT CLASS -->
 	<FileClass>
 		<ClassName>Word</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>doc</Filename>
 			<Pronoms>
@@ -105,7 +111,7 @@
 	<!-- POWER POINT DOCUMENT CLASS-->
 	<FileClass>
 		<ClassName>PowerPoint</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>ppt</Filename>
 			<Pronoms>
@@ -154,12 +160,19 @@
 			</Pronoms>
 			<Default></Default>
 		</FileTypes>
+		<FileTypes>
+			<Filename>csv</Filename>
+			<Pronoms>
+				x-fmt/18
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
 	</FileClass>
 	
 	<!-- OPEN DOCUMENT FILE CLASS -->
 	<FileClass>
 		<ClassName>Open Document</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>ODT</Filename>
 			<Pronoms>
@@ -186,7 +199,7 @@
 	<!-- RTF FILE CLASS -->
 	<FileClass>
 		<ClassName>Rich Text Format</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>RTF</Filename>
 			<Pronoms>

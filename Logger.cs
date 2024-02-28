@@ -38,6 +38,7 @@ public class Logger
 		public string? OriginalPronom { get; set; }
 		public string? OriginalChecksum { get; set; }
 		public long OriginalSize { get; set; }
+		public string? TargetPronom { get; set; }
 		public string? NewPronom { get; set; }
 		public string? NewChecksum { get; set; }
 		public long NewSize { get; set; }
@@ -135,12 +136,14 @@ public class Logger
 		}
 		foreach (FileInfo file in files)
 		{
+
 			JsonData jsondata = new JsonData
 			{
 				Filename = file.FilePath,
 				OriginalPronom = file.OriginalPronom,
 				OriginalChecksum = file.OriginalChecksum,
 				OriginalSize = file.OriginalSize,
+				TargetPronom = Settings.GetTargetPronom(file),
 				NewPronom = file.NewPronom,
 				NewChecksum = file.NewChecksum,
 				NewSize = file.NewSize,

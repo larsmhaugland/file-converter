@@ -1,7 +1,4 @@
-﻿
-
-
-
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
 
 public class FileManager
 {
@@ -30,18 +27,15 @@ public class FileManager
             return instance;
         }
     }
-    //NOTE: Since this function is async, it may not be finished before the conversion starts, what should we do?
+  
     public async void IdentifyFiles()
     {
 		identifyingFiles = true;
 		Siegfried sf = Siegfried.Instance;
 		Logger logger = Logger.Instance;
-
-
+		//TODO: Can maybe run both individually and compressed files at the same time
 		//Identifying all uncompressed files
-		//TODO: Why do I get a warning here (without '!')?
 		List<FileInfo>? files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
-
 		if (files != null)
 		{
 			//Change path from input to output directory
@@ -111,61 +105,44 @@ public class FileManager
         Files.AddRange(files);
     }
 
+	/// <summary>
+	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
+	/// Also gives a count of how many files are in each group.
+	/// </summary>
 	public void DisplayFileList()
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
-		List<Dictionary<string,List<string>>> supportedConversions = new List<Dictionary<string,List<string>>>();
-		foreach (var converter in converters)
-		{
-			var formats = converter.getListOfSupportedConvesions();
-			if (formats != null)
-			{
-				supportedConversions.Add(formats);
-			}
-		}
-		
+		string notSupportedString = " NS"; //Needs to have a space in front to extract the pronom code from the string
 		//Count the number of files per pronom code
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files)
 		{
-			string folder = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output, file.FilePath));
-			string? overrideFormat;
-			//Fetch the standard format for the file type
-			GlobalVariables.FileSettings.TryGetValue(file.OriginalPronom, out overrideFormat);
-			//Check if the file is in a folder with an override
-			if (folder != null && GlobalVariables.FolderOverride.ContainsKey(folder))
-			{
-				overrideFormat = GlobalVariables.FolderOverride[folder].DefaultType;
-			}
+			string currentPronom = file.NewPronom != "" ? file.NewPronom : file.OriginalPronom;
+			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
-			//Check if the override format is supported by any of the converters
-			foreach (var supportedConversion in supportedConversions)
-			{
-				if (supportedConversion.ContainsKey(file.OriginalPronom))
+
+            //Check if the conversion is supported by any of the converters
+            if (targetPronom != null) { 
+				converters.ForEach(c =>
 				{
-					foreach (var outputFormat in supportedConversion[file.OriginalPronom])
+					if (c.SupportsConversion(currentPronom, targetPronom))
 					{
-						if (outputFormat == overrideFormat)
-						{
-							supported = true;
-							break;
-						}
+						supported = true;
 					}
-					if (supported) break;
-				}
+				});
 			}
 			//If no supported format is found, set the overrideFormat to "Not set"
-			if (overrideFormat == null)
+			if (targetPronom == null)
 			{
-				overrideFormat = "Not set";
+				targetPronom = "Not set";
 			}
-			if (!supported && overrideFormat != null)
+			else if (!supported)
 			{
-                overrideFormat = "Not supported";
+                targetPronom = targetPronom + notSupportedString;
             }
 
-			KeyValuePair<string, string> key = new KeyValuePair<string, string>(file.OriginalPronom, overrideFormat);
+			KeyValuePair<string, string> key = new KeyValuePair<string, string>(currentPronom, targetPronom);
 			if (fileCount.ContainsKey(key))
 			{
 				fileCount[key]++;
@@ -175,8 +152,6 @@ public class FileManager
 				fileCount[key] = 1;
 			}
 		}
-		Siegfried sf = Siegfried.Instance;
-
 
 		//Find the longest format name for current and target formats
 		int currentMax = 0;
@@ -185,7 +160,11 @@ public class FileManager
 		{
 			var currentFormat = PronomHelper.PronomToFullName(entry.Key.Key);
 			var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
-			if (currentFormat.Length > currentMax)
+            if (entry.Key.Value.Contains(notSupportedString))
+			{
+				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]);
+			}
+            if (currentFormat.Length > currentMax)
 			{
 				currentMax = currentFormat.Length;
 			}
@@ -206,18 +185,37 @@ public class FileManager
 
 		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
 		{
+			Console.ForegroundColor = oldColor;
 			var currentPronom = entry.Key.Key;
 			var targetPronom = entry.Key.Value;
 			var count = entry.Value;
-			//Get full name of filetype with pronom code
-			var currentFormat = PronomHelper.PronomToFullName(currentPronom);
-			var targetFormat = PronomHelper.PronomToFullName(targetPronom);
-			Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
+            //Get full name of filetype with pronom code
+            var currentFormat = PronomHelper.PronomToFullName(currentPronom);
+            var targetFormat = PronomHelper.PronomToFullName(targetPronom);
+            if (targetPronom.Contains(notSupportedString))
+			{
+				var split = targetPronom.Split(" ")[0];
+                targetFormat = PronomHelper.PronomToFullName(split);
+				Console.ForegroundColor = ConsoleColor.Red;
+            } else if (targetPronom == "Not set")
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
+			} else if (targetPronom == currentPronom)
+			{
+				Console.ForegroundColor = ConsoleColor.Green;
+			}
+
+            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
 		}
-		//Sum total from all entries in fileCount where key. is not "Not set"
-		int total = fileCount.Where(x => x.Key.Value != "Not set" && x.Key.Value != "Not supported").Sum(x => x.Value);
-		Console.WriteLine("Number of files: {0,-10}\nNumber of files with output specified: {1,-10}", Files.Count, total);
-		
+		Console.ForegroundColor = oldColor;
+		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
+		int total = fileCount.Where(x => x.Key.Value != "Not set" && !x.Key.Value.Contains(notSupportedString)).Sum(x => x.Value);
+		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
+        int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
+		//Print totals to user
+        Console.WriteLine("Number of files: {0,-10}", Files.Count);
+		Console.WriteLine("Number of files with output specified: {0,-10}", total);
+		Console.WriteLine("Number of files not at target pronom: {0,-10}\n", total-totalFinished);
 	}
 
 	public List<FileInfo> GetFiles()

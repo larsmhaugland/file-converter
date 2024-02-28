@@ -54,6 +54,7 @@ class Settings
             XmlNode? inputNode = root?.SelectSingleNode("InputFolder");
             XmlNode? outputNode = root?.SelectSingleNode("OutputFolder");
             XmlNode? maxThreadsNode = root?.SelectSingleNode("MaxThreads");
+			XmlNode? timeoutNode = root?.SelectSingleNode("Timeout");
 
 			string? requester = requesterNode?.InnerText.Trim();
             string? converter = converterNode?.InnerText.Trim();
@@ -80,6 +81,11 @@ class Settings
             {
                 GlobalVariables.maxThreads = maxThreads;
             }
+			string? inputTimeout = timeoutNode?.InnerText;
+			if (!String.IsNullOrEmpty(inputTimeout) && int.TryParse(inputTimeout, out int timeout))
+			{
+				GlobalVariables.timeout = timeout;
+			}
             string? checksumHashing = root?.SelectSingleNode("ChecksumHashing")?.InnerText;
 			if (checksumHashing != null)
 			{
@@ -264,5 +270,25 @@ class Settings
 
 		return subfolders;
 	}
+
+	public static string? GetTargetPronom(FileInfo f)
+	{
+        //Get the parent directory of the file
+        var parentDir = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output, f.FilePath));
+        //If the file is in a folder that has a folder override, check if the file is at the correct output format for that folder
+        if (parentDir != null && GlobalVariables.FolderOverride.ContainsKey(parentDir))
+        {
+			if (GlobalVariables.FolderOverride[parentDir].PronomsList.Contains(f.OriginalPronom))
+			{
+				return GlobalVariables.FolderOverride[parentDir].DefaultType;
+			}
+        }
+        //Otherwise, check if the new type matches the global settings for the input format
+        if (GlobalVariables.FileSettings.ContainsKey(f.OriginalPronom))
+        {
+			return GlobalVariables.FileSettings[f.OriginalPronom];
+        }
+		return null;
+    }
 }
 
