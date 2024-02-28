@@ -58,7 +58,7 @@
 	<!--WORD DOCUMENT CLASS -->
 	<FileClass>
 		<ClassName>Word</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>doc</Filename>
 			<Pronoms>

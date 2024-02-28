@@ -13,10 +13,9 @@ public class CognidoxConverter : Converter
     Logger log = Logger.Instance;
     public CognidoxConverter()
     {
-        Name = "Cognidox";
-        Version = "";
+        Name = "Libreoffice";
+        Version = "7.6.4";
         SupportedConversions = getListOfSupportedConvesions();
-        SupportedOperatingSystems = getSupportedOS();
     }
 
     /// <summary>
@@ -27,19 +26,21 @@ public class CognidoxConverter : Converter
     public override void ConvertFile(string filePath, string pronom)
     {
         string covnersionExePath = "ConversionTools/OfficeToPDF.exe";
-        string parentDirectory = Directory.GetParent(filePath).ToString();
-        string fileName = Path.GetFileNameWithoutExtension(filePath);
-        //string targetFileExtension = "";
-        // Logic here for getting the correct file extenstion based on the pronom (fmt format) sent as parameter
-        string filePathWithNewExtension = Path.Combine(parentDirectory, fileName + ".pdf");
+
+        string outputDir = Directory.GetParent(filePath.Replace("input", "output")).ToString();
+        string inputDirectory = Directory.GetParent(filePath).ToString();
+        string inputFilePath = Path.Combine(inputDirectory, Path.GetFileName(filePath));
+        
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            RunOfficeToPdfConversionWindows(covnersionExePath, filePath, filePathWithNewExtension, pronom);
+            bool sofficePath = checkSofficePath();
+            Console.WriteLine(outputDir);
+            RunOfficeToPdfConversionWindows(covnersionExePath, inputFilePath, outputDir, pronom, sofficePath);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            RunOfficeConversionLinuxMacOS(filePath, filePathWithNewExtension);
+           // RunOfficeConversionLinuxMacOS(filePath, filePathWithNewExtension);
         }
         else
         {
@@ -76,9 +77,9 @@ public class CognidoxConverter : Converter
         {
             supportedConversions.Add(odtPronom, PDFPronoms);
         }
-        foreach(string rtfPronom in RTFPronoms)
+        foreach (string rtfPronom in RTFPronoms)
         {
-            supportedConversions.Add(rtfPronom, PDFPronoms);    
+            supportedConversions.Add(rtfPronom, PDFPronoms);
         }
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -120,55 +121,42 @@ public class CognidoxConverter : Converter
         return supportedConversions;
     }
 
-    public override List<string> getSupportedOS()
-    {
-        var supportedOS = new List<string>();
-        supportedOS.Add(PlatformID.Win32NT.ToString());
-        //Add more supported OS here
-        return supportedOS;
-    }
-
-    void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf, string pronom)
+    void RunOfficeToPdfConversionWindows(string exePath, string sourceDoc, string destinationPdf, string pronom, bool sofficePath)
     {
         try
         {
+
             using (Process process = new Process())
             {
-                process.StartInfo.FileName = exePath;
-                process.StartInfo.Arguments = $"{sourceDoc} {destinationPdf}  /verbose /readonly /pdfa";
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
+                process.StartInfo.Arguments = $@"/C soffice --headless --convert-to pdf --outdir ""{destinationPdf}"" ""{sourceDoc}""";
                 process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardInput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.CreateNoWindow = true;
+                
 
                 process.Start();
 
-                // Redirect standard input to send "yes" (or any other response) to dialog boxes
-                process.StandardInput.WriteLine("yes");
-                process.StandardInput.Close();
+                string standardOutput = process.StandardOutput.ReadToEnd();
+                string standardError = process.StandardError.ReadToEnd();
 
                 process.WaitForExit();
                 int exitCode = process.ExitCode;
 
-                // Use the exit code as needed
-                //Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
-                // Capture standard output and standard error
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
-
-                // Print standard output and standard error to the console or log it
-               // Console.WriteLine("Conversion Output:");
-                //Console.WriteLine(output);
-
-                bool converted = CheckConversionStatus(sourceDoc, destinationPdf, pronom);
+                Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
+                Console.WriteLine("Standard Output:\n" + standardOutput);
+                Console.WriteLine("Standard Error:\n" + standardError);
+                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
+                bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
                 if (!converted)
                 {
                     throw new Exception("File was not converted");
                 }
                 else
                 {
-                    deleteOriginalFileFromOutputDirectory(sourceDoc);  
+                    deleteOriginalFileFromOutputDirectory(sourceDoc);
                 }
             }
         }
@@ -212,6 +200,19 @@ public class CognidoxConverter : Converter
         process.Close();
     }
 
+
+    static bool checkSofficePath()
+    {
+        string sofficeCommand = "soffice";
+
+        // Check if soffice is in the PATH
+        string sofficePath = Environment.GetEnvironmentVariable("PATH")
+            .Split(Path.PathSeparator)
+            .Select(path => Path.Combine(path, sofficeCommand))
+            .FirstOrDefault(File.Exists);
+
+        return sofficePath != null;
+    }
     List<string> PDFPronoms =
     [
         "fmt/14",
