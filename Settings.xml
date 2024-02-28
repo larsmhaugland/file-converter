@@ -106,7 +106,7 @@
 	<!-- POWER POINT DOCUMENT CLASS-->
 	<FileClass>
 		<ClassName>PowerPoint</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>ppt</Filename>
 			<Pronoms>
@@ -155,12 +155,19 @@
 			</Pronoms>
 			<Default></Default>
 		</FileTypes>
+		<FileTypes>
+			<Filename>csv</Filename>
+			<Pronoms>
+				x-fmt/18
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
 	</FileClass>
 	
 	<!-- OPEN DOCUMENT FILE CLASS -->
 	<FileClass>
 		<ClassName>Open Document</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>ODT</Filename>
 			<Pronoms>
@@ -187,7 +194,7 @@
 	<!-- RTF FILE CLASS -->
 	<FileClass>
 		<ClassName>Rich Text Format</ClassName>
-		<Default>fmt/479</Default>
+		<Default>fmt/276</Default>
 		<FileTypes>
 			<Filename>RTF</Filename>
 			<Pronoms>

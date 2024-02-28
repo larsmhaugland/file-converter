@@ -158,9 +158,11 @@ public class ConversionManager
 		//Initialize conversion map
 		initMap();
 		//Initialize converters
+
 		Converters = AddConverters.Instance.GetConverters();
-		//Get files from FileManager
-		Files = FileManager.Instance.GetFiles();
+		Converters.Add(new LibreOfficeConverter());
+        //Get files from FileManager
+        Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
 		initFileMap();
 	}
