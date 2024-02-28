@@ -29,11 +29,6 @@
 			<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
 			<Default></Default>
 		</FileTypes>
-		<FileTypes>
-			<Filename>gif</Filename>
-			<Pronoms>fmt/3, fmt/4</Pronoms>
-			<Default></Default>
-		</FileTypes>
 	</FileClass>
 	<FileClass>
 		<ClassName>pdf</ClassName>
@@ -50,7 +45,7 @@
 	<!--POST SCRIPT CLASS -->
 	<FileClass>
 		<ClassName>ps</ClassName>
-		<Default>fmt/15</Default>
+		<Default>fmt/14</Default>
 		<FileTypes>
 			<Filename>ps</Filename>
 			<Pronoms>

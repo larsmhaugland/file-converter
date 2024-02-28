@@ -126,8 +126,6 @@ class Program
 			}
 			finally
 			{
-				Console.WriteLine("Conversion finished:");
-				fileManager.DisplayFileList();
                 Console.WriteLine("Documenting conversion...");
                 fileManager.DocumentFiles();
 			}
