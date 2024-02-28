@@ -113,33 +113,36 @@ public class FileManager
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
-
+		string notSupportedString = " NS"; //Needs to have a space in front to extract the pronom code from the string
 		//Count the number of files per pronom code
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files)
 		{
+			string currentPronom = file.NewPronom != "" ? file.NewPronom : file.OriginalPronom;
 			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
 
-			//Check if the conversion is supported by any of the converters
-			converters.ForEach(c =>
-			{
-                if (c.SupportsConversion(file.OriginalPronom, targetPronom))
+            //Check if the conversion is supported by any of the converters
+            if (targetPronom != null) { 
+				converters.ForEach(c =>
 				{
-                    supported = true;
-                }
-            });
+					if (c.SupportsConversion(currentPronom, targetPronom))
+					{
+						supported = true;
+					}
+				});
+			}
 			//If no supported format is found, set the overrideFormat to "Not set"
 			if (targetPronom == null)
 			{
 				targetPronom = "Not set";
 			}
-			if (!supported && targetPronom != null)
+			else if (!supported)
 			{
-                targetPronom = "Not supported";
+                targetPronom = targetPronom + notSupportedString;
             }
 
-			KeyValuePair<string, string> key = new KeyValuePair<string, string>(file.OriginalPronom, targetPronom);
+			KeyValuePair<string, string> key = new KeyValuePair<string, string>(currentPronom, targetPronom);
 			if (fileCount.ContainsKey(key))
 			{
 				fileCount[key]++;
@@ -149,8 +152,6 @@ public class FileManager
 				fileCount[key] = 1;
 			}
 		}
-		Siegfried sf = Siegfried.Instance;
-
 
 		//Find the longest format name for current and target formats
 		int currentMax = 0;
@@ -159,7 +160,11 @@ public class FileManager
 		{
 			var currentFormat = PronomHelper.PronomToFullName(entry.Key.Key);
 			var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
-			if (currentFormat.Length > currentMax)
+            if (entry.Key.Value.Contains(notSupportedString))
+			{
+				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]);
+			}
+            if (currentFormat.Length > currentMax)
 			{
 				currentMax = currentFormat.Length;
 			}
@@ -180,16 +185,31 @@ public class FileManager
 
 		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
 		{
+			Console.ForegroundColor = oldColor;
 			var currentPronom = entry.Key.Key;
 			var targetPronom = entry.Key.Value;
 			var count = entry.Value;
-			//Get full name of filetype with pronom code
-			var currentFormat = PronomHelper.PronomToFullName(currentPronom);
-			var targetFormat = PronomHelper.PronomToFullName(targetPronom);
-			Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
+            //Get full name of filetype with pronom code
+            var currentFormat = PronomHelper.PronomToFullName(currentPronom);
+            var targetFormat = PronomHelper.PronomToFullName(targetPronom);
+            if (targetPronom.Contains(notSupportedString))
+			{
+				var split = targetPronom.Split(" ")[0];
+                targetFormat = PronomHelper.PronomToFullName(split);
+				Console.ForegroundColor = ConsoleColor.Red;
+            } else if (targetPronom == "Not set")
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
+			} else if (targetPronom == currentPronom)
+			{
+				Console.ForegroundColor = ConsoleColor.Green;
+			}
+
+            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
 		}
+		Console.ForegroundColor = oldColor;
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
-		int total = fileCount.Where(x => x.Key.Value != "Not set" && x.Key.Value != "Not supported").Sum(x => x.Value);
+		int total = fileCount.Where(x => x.Key.Value != "Not set" && !x.Key.Value.Contains(notSupportedString)).Sum(x => x.Value);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
 		//Print totals to user
