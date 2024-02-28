@@ -182,7 +182,8 @@ public class LibreOfficeConverter : Converter
     }
     string GetArguments(string destinationPDF, string sourceDoc, string sofficeCommand)
     {
-        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""{sofficeCommand} --headless --convert-to pdf --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPDF}"" ""{sourceDoc}""";
+
+        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to pdf --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPDF}"" ""{sourceDoc}""";
     }
 
 
