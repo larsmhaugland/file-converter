@@ -113,8 +113,8 @@ public class FileManager
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
+
 		string notSupportedString = " NS"; //Needs to have a space in front to extract the pronom code from the string
-		//Count the number of files per pronom code
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files)
 		{

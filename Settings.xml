@@ -63,7 +63,7 @@
 	<!--WORD DOCUMENT CLASS -->
 	<FileClass>
 		<ClassName>Word</ClassName>
-		<Default>fmt/276</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>doc</Filename>
 			<Pronoms>
@@ -111,7 +111,7 @@
 	<!-- POWER POINT DOCUMENT CLASS-->
 	<FileClass>
 		<ClassName>PowerPoint</ClassName>
-		<Default>fmt/276</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>ppt</Filename>
 			<Pronoms>
@@ -138,7 +138,7 @@
 	<!-- EXCEL FILE CLASS-->
 	<FileClass>
 		<ClassName>EXCEL</ClassName>
-		<Default>fmt/276</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>xls</Filename>
 			<Pronoms>
@@ -172,7 +172,7 @@
 	<!-- OPEN DOCUMENT FILE CLASS -->
 	<FileClass>
 		<ClassName>Open Document</ClassName>
-		<Default>fmt/276</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>ODT</Filename>
 			<Pronoms>
@@ -192,14 +192,14 @@
 			<Pronoms>
 				fmt/1755,fmt/137,fmt/294,fmt/295
 			</Pronoms>
-			<Default>fmt/276</Default>
+			<Default></Default>
 		</FileTypes>
 	</FileClass>
 
 	<!-- RTF FILE CLASS -->
 	<FileClass>
 		<ClassName>Rich Text Format</ClassName>
-		<Default>fmt/276</Default>
+		<Default>fmt/477</Default>
 		<FileTypes>
 			<Filename>RTF</Filename>
 			<Pronoms>

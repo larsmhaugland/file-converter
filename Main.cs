@@ -122,11 +122,12 @@ class Program
 			{
                 return;
             }
+            Console.WriteLine("Converting files...");
 
-			Console.WriteLine("Converting files...");
-			try
+            
+            try
 			{
-				cm.ConvertFiles();
+                cm.ConvertFiles();
 				//Delete siegfrieds json files
 				sf.ClearOutputFolder();
 			} catch (Exception e)
