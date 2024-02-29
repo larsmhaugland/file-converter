@@ -8,6 +8,17 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Libreoffice supports the following conversions for both Linux and Windows:
+/// 
+/// - Word (DOC, DOCX, DOCM, DOTX) to PDF
+/// - PowerPoint (PPT, PPTX, PPTM, POTX) to PDF
+/// - Excel (XLS, XLSX, XLSM, XLTX) to PDF
+/// - CSV to PDF
+/// - RTF to PDF
+/// - OpenDocument (ODT, ODS, ODP) to PDF
+/// 
+/// </summary>
 public class LibreOfficeConverter : Converter
 {
     Logger log = Logger.Instance;
@@ -26,13 +37,19 @@ public class LibreOfficeConverter : Converter
     /// <param name="pronom">The file format to convert to</param>
     public override void ConvertFile(string filePath, string pronom)
     {
-        string outputDir = Directory.GetParent(filePath.Replace("input", "output")).ToString();
+        // Get correct folders and properties required for conversion
+        string inputFolder = GlobalVariables.parsedOptions.Input;
+        string outputFolder = GlobalVariables.parsedOptions.Output;
+
+        string outputDir = Directory.GetParent(filePath.Replace(inputFolder, outputFolder)).ToString();
         string inputDirectory = Directory.GetParent(filePath).ToString();
         string inputFilePath = Path.Combine(inputDirectory, Path.GetFileName(filePath));
         string executableName = "soffice.exe";
+
         bool sofficePathWindows = checkSofficePathWindows(executableName);
         bool sofficePathLinux = checkSofficePathLinux("soffice");
 
+        // Depending on operating system run Libreoffice with different executable path
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             lock (locker)
@@ -51,7 +68,6 @@ public class LibreOfficeConverter : Converter
         {
             log.SetUpRunTimeLogMessage("Operating system not supported for office conversion", true, filePath);
         }
-
     }
 
     /// <summary>
@@ -62,52 +78,184 @@ public class LibreOfficeConverter : Converter
     {
         var supportedConversions = new Dictionary<string, List<string>>();
 
-        // EXcel to all others
-        foreach (string excelPronom in EXCELPronoms)
+        // XLS to XLSX, ODS and PDF
+        foreach (string XLSPronom in XLSPronoms)
         {
-            if (!supportedConversions.ContainsKey(excelPronom))
+            if (!supportedConversions.ContainsKey(XLSPronom))
             {
-                supportedConversions[excelPronom] = new List<string>();
+                supportedConversions[XLSPronom] = new List<string>();
             }
-            supportedConversions[excelPronom].AddRange(WORDPronoms);
-            supportedConversions[excelPronom].AddRange(PowerPointPronoms);
-            supportedConversions[excelPronom].AddRange(OpenDocumentPronoms);
-            supportedConversions[excelPronom].AddRange(PDFPronoms);
+            supportedConversions[XLSPronom].AddRange(XLSXPronoms);
+            supportedConversions[XLSPronom].AddRange(ODSPronoms);
+            supportedConversions[XLSPronom].AddRange(PDFPronoms);
         }
-        // Word to all other
-        foreach (string wordPronom in WORDPronoms)
+        // XLSX to ODS and PDF
+        foreach (string XLSXPronom in XLSXPronoms)
         {
-            if (!supportedConversions.ContainsKey(wordPronom))
+            if (!supportedConversions.ContainsKey(XLSXPronom))
             {
-                supportedConversions[wordPronom] = new List<string>();
+                supportedConversions[XLSXPronom] = new List<string>();
             }
-            supportedConversions[wordPronom].AddRange(PowerPointPronoms);
-            supportedConversions[wordPronom].AddRange(OpenDocumentPronoms);
-            supportedConversions[wordPronom].AddRange(EXCELPronoms);
-            supportedConversions[wordPronom].AddRange(PDFPronoms);
+            supportedConversions[XLSXPronom].AddRange(ODSPronoms);
+            supportedConversions[XLSXPronom].AddRange(PDFPronoms);
         }
-        // PowerPoint to all other
-        foreach (string pptPronom in PowerPointPronoms)
+        // XLSM to PDF, XLSX and ODS
+        foreach (string XLSMPronom in XLSMPronoms)
+        {
+            if (!supportedConversions.ContainsKey(XLSMPronom))
+            {
+                supportedConversions[XLSMPronom] = new List<string>();
+            }
+            supportedConversions[XLSMPronom].AddRange(XLSXPronoms);
+            supportedConversions[XLSMPronom].AddRange(ODSPronoms);
+            supportedConversions[XLSMPronom].AddRange(PDFPronoms);
+        }
+        // XLTX to XLSX. ODS and PDf
+        foreach (string XLTXPronom in XLTXPronoms)
+        {
+            if (!supportedConversions.ContainsKey(XLTXPronom))
+            {
+                supportedConversions[XLTXPronom] = new List<string>();
+            }
+            supportedConversions[XLTXPronom].AddRange(XLSXPronoms);
+            supportedConversions[XLTXPronom].AddRange(ODSPronoms);
+            supportedConversions[XLTXPronom].AddRange(PDFPronoms);
+        }
+        // DOC to ODT, DOCX and PDF
+        foreach (string docPronom in DOCPronoms)
+        {
+            if (!supportedConversions.ContainsKey(docPronom))
+            {
+                supportedConversions[docPronom] = new List<string>();
+            }
+            supportedConversions[docPronom].AddRange(DOCXPronoms);
+            supportedConversions[docPronom].AddRange(ODTPronoms);
+            supportedConversions[docPronom].AddRange(PDFPronoms);
+        }
+        // DOCX to ODT and PDF
+        foreach (string docxPronom in DOCXPronoms)
+        {
+            if (!supportedConversions.ContainsKey(docxPronom))
+            {
+                supportedConversions[docxPronom] = new List<string>();
+            }
+            supportedConversions[docxPronom].AddRange(ODTPronoms);
+            supportedConversions[docxPronom].AddRange(PDFPronoms);
+        }
+        // DOCM to DOCX, ODT and PDF
+        foreach (string docmPronom in DOCMPronoms)
+        {
+            if (!supportedConversions.ContainsKey(docmPronom))
+            {
+                supportedConversions[docmPronom] = new List<string>();
+            }
+            supportedConversions[docmPronom].AddRange(DOCXPronoms);
+            supportedConversions[docmPronom].AddRange(PDFPronoms);
+            supportedConversions[docmPronom].AddRange(ODTPronoms);
+        }
+        // DOTX to DOCX, ODT and PDF
+        foreach (string dotxPronom in DOTXPronoms)
+        {
+            if (!supportedConversions.ContainsKey(dotxPronom))
+            {
+                supportedConversions[dotxPronom] = new List<string>();
+            }
+            supportedConversions[dotxPronom].AddRange(DOCXPronoms);
+            supportedConversions[dotxPronom].AddRange(PDFPronoms);
+            supportedConversions[dotxPronom].AddRange(ODTPronoms);
+        }
+        // PPT to PPTX, ODP and PDF
+        foreach (string pptPronom in PPTPronoms)
         {
             if (!supportedConversions.ContainsKey(pptPronom))
             {
                 supportedConversions[pptPronom] = new List<string>();
             }
-            supportedConversions[pptPronom].AddRange(EXCELPronoms);
-            supportedConversions[pptPronom].AddRange(OpenDocumentPronoms);
-            supportedConversions[pptPronom].AddRange(WORDPronoms);
             supportedConversions[pptPronom].AddRange(PDFPronoms);
+            supportedConversions[pptPronom].AddRange(ODPPronoms);
+            supportedConversions[pptPronom].AddRange(PPTXPronoms);
+        }
+        // PPTX to ODP and PDF
+        foreach (string pptxPronom in PPTXPronoms)
+        {
+            if (!supportedConversions.ContainsKey(pptxPronom))
+            {
+                supportedConversions[pptxPronom] = new List<string>();
+            }
+            supportedConversions[pptxPronom].AddRange(PDFPronoms);
+            supportedConversions[pptxPronom].AddRange(ODPPronoms);
+        }
+        // PPTM to PPTX, ODP and PDF
+        foreach (string pptmPronom in PPTMPronoms)
+        {
+            if (!supportedConversions.ContainsKey(pptmPronom))
+            {
+                supportedConversions[pptmPronom] = new List<string>();
+            }
+            supportedConversions[pptmPronom].AddRange(PDFPronoms);
+            supportedConversions[pptmPronom].AddRange(ODPPronoms);
+            supportedConversions[pptmPronom].AddRange(PPTXPronoms);
+        }
+        // POTX to PPTX, ODP and PDF
+        foreach (string potxPronom in POTXPronoms)
+        {
+            if (!supportedConversions.ContainsKey(potxPronom))
+            {
+                supportedConversions[potxPronom] = new List<string>();
+            }
+            supportedConversions[potxPronom].AddRange(PDFPronoms);
+            supportedConversions[potxPronom].AddRange(ODPPronoms);
+            supportedConversions[potxPronom].AddRange(PPTXPronoms);
+        }
+        // ODP to PPTX and PDF
+        foreach (string odpPronom in ODPPronoms)
+        {
+            if (!supportedConversions.ContainsKey(odpPronom))
+            {
+                supportedConversions[odpPronom] = new List<string>();
+            }
+            supportedConversions[odpPronom].AddRange(PDFPronoms);
+            supportedConversions[odpPronom].AddRange(PPTXPronoms);
+        }
+        // ODS to XLSX and PDF
+        foreach (string odsPronom in ODSPronoms)
+        {
+            if (!supportedConversions.ContainsKey(odsPronom))
+            {
+                supportedConversions[odsPronom] = new List<string>();
+            }
+            supportedConversions[odsPronom].AddRange(PDFPronoms);
+            supportedConversions[odsPronom].AddRange(XLSXPronoms);
+        }
+        // ODT to XLSX and PDF
+        foreach (string odtPronom in ODTPronoms)
+        {
+            if (!supportedConversions.ContainsKey(odtPronom))
+            {
+                supportedConversions[odtPronom] = new List<string>();
+            }
+            supportedConversions[odtPronom].AddRange(PDFPronoms);
+            supportedConversions[odtPronom].AddRange(DOCXPronoms);
         }
 
-        // OpenDocument to PDF
-        foreach (string odtPronom in OpenDocumentPronoms)
-        {
-            supportedConversions.Add(odtPronom, PDFPronoms);
-        }
-        // RTF to PDF
+        // RTF to PDF, DOCX and ODT
         foreach (string rtfPronom in RTFPronoms)
         {
-            supportedConversions.Add(rtfPronom, PDFPronoms);
+            if (!supportedConversions.ContainsKey(rtfPronom))
+            {
+                supportedConversions[rtfPronom] = new List<string>();
+            }
+            supportedConversions[rtfPronom].AddRange(PDFPronoms);
+            supportedConversions[rtfPronom].AddRange(DOCXPronoms);
+            supportedConversions[rtfPronom].AddRange(ODTPronoms);
+        }
+        foreach(string csvPronom in CSVPronoms)
+        {
+            if (!supportedConversions.ContainsKey(csvPronom))
+            {
+                supportedConversions[csvPronom] = new List<string>();
+                supportedConversions[csvPronom].AddRange(PDFPronoms);
+            }
         }
 
         return supportedConversions;
@@ -126,11 +274,12 @@ public class LibreOfficeConverter : Converter
         {
             using (Process process = new Process())
             {
-                process.StartInfo.FileName = GetPlatformCommand();
+                // Set the correct properties for the process thta will run libreoffice
+                process.StartInfo.FileName = GetPlatformExecutionFile();
                 process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
 
-                string sofficeCommand = GetSofficeCommand(sofficePath);
-                string arguments = GetArguments(destinationPdf, sourceDoc, sofficeCommand);
+                string sofficeCommand = GetSofficePath(sofficePath);
+                string arguments = GetLibreOfficeCommand(destinationPdf, sourceDoc, sofficeCommand);
                 process.StartInfo.Arguments = arguments;
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
@@ -139,19 +288,21 @@ public class LibreOfficeConverter : Converter
 
                 process.Start();
 
+                // Get output and potential error
                 string standardOutput = process.StandardOutput.ReadToEnd();
                 string standardError = process.StandardError.ReadToEnd();
 
                 process.WaitForExit();
                 int exitCode = process.ExitCode;
 
-                if (exitCode != 0)
+                if (exitCode != 0)      // Something went wrong, warn the user
                 {
                     Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
                     Console.WriteLine("Standard Output:\n" + standardOutput);
                     Console.WriteLine("Standard Error:\n" + standardError);
                 }
 
+                // Get the new filename and check if the document was converted correctly
                 string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
                 bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
                 if (!converted)
@@ -160,6 +311,7 @@ public class LibreOfficeConverter : Converter
                 }
                 else
                 {
+                    // Delete copy in ouputfolder if converted successfully
                     deleteOriginalFileFromOutputDirectory(sourceDoc);
                 }
             }
@@ -171,23 +323,38 @@ public class LibreOfficeConverter : Converter
         }
     }
 
-    string GetPlatformCommand()
+    /// <summary>
+    /// Get the correct place where the process should be run depending on operating system
+    /// </summary>
+    /// <returns> String - Name of where the process should be run</returns>
+    string GetPlatformExecutionFile()
     {
         return Environment.OSVersion.Platform == PlatformID.Unix ? "bash" : "cmd.exe";
     }
 
-    string GetSofficeCommand(bool sofficePath)
+    /// <summary>
+    /// Gets the path to the soffice executable unless it is added to the systems PATH
+    /// then it just returns "soffice" which the name of the executable
+    /// </summary>
+    /// <param name="sofficePath"> Bool - Indicating if is in the PATH of the environment</param>
+    /// <returns></returns>
+    string GetSofficePath(bool sofficePath)
     {
         return sofficePath ? "soffice" : Environment.OSVersion.Platform == PlatformID.Unix ? "/usr/lib/libreoffice/program/soffice" : "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
     }
-    string GetArguments(string destinationPDF, string sourceDoc, string sofficeCommand)
+
+    /// <summary>
+    /// Gets the command for running Libreoffice with the correct arguments.
+    /// </summary>
+    /// <param name="destinationPDF"> Output folder for the PDF</param>
+    /// <param name="sourceDoc"> Path to the original document</param>
+    /// <param name="sofficeCommand"> Either path to the executable or just 'soffice'</param>
+    /// <returns></returns>
+    string GetLibreOfficeCommand(string destinationPDF, string sourceDoc, string sofficeCommand)
     {
 
         return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to pdf --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPDF}"" ""{sourceDoc}""";
     }
-
-
-
 
     /// <summary>
     /// Checks if the folder with the soffice.exe executable exists in the PATH.
@@ -196,7 +363,7 @@ public class LibreOfficeConverter : Converter
     /// <returns>Bool indicating if the directory containing the executable was found </returns>
     static bool checkSofficePathWindows(string executableName)
     {
-        
+
         string pathVariable = Environment.GetEnvironmentVariable("PATH"); // Get the environment variables as a string
         string[] paths = pathVariable.Split(Path.PathSeparator);          // Split them into individual entries
 
@@ -245,18 +412,10 @@ public class LibreOfficeConverter : Converter
 
     List<string> PDFPronoms =
     [
-        "fmt/14",
-        "fmt/15",
-        "fmt/16",
-        "fmt/17",
-        "fmt/18",
-        "fmt/19",
-        "fmt/20",
         "fmt/276",
-        "fmt/1129",
-        "fmt/479", // PDFA
+        "fmt/477", // PDF 2-A
     ];
-    List<string> WORDPronoms =
+    List<string> DOCPronoms =
     [
         // DOC
         "x-fmt/329",
@@ -278,19 +437,25 @@ public class LibreOfficeConverter : Converter
         "x-fmt/393",
         "x-fmt/394",
         "fmt/892",
+    ];
+    List<string> DOCXPronoms =
+    [
         // DOCX
         "fmt/473",
         "fmt/1827",
         "fmt/412",
-        "fmt/523", // DOCM
-        "fmt/597", // DOTX
-        "fmt/599", // DOTM
-        // DOT
-        "x-fmt/45",
-        "fmt/755",
-
     ];
-    List<string> EXCELPronoms =
+
+    List<string> DOCMPronoms =
+    [
+        "fmt/523", // DOCM
+    ];
+    List<string> DOTXPronoms =
+    [
+         "fmt/597", // DOTX
+    ];
+
+    List<string> XLSPronoms =
     [
         //XLS
         "fmt/55",
@@ -299,17 +464,27 @@ public class LibreOfficeConverter : Converter
         "fmt/61",
         "fmt/62",
         "fmt/59",
+    ];
+    List<string> XLTXPronoms =
+    [
+        "fmt/598", // XLTX
+    ];
+    List<string> XLSMPronoms =
+    [
+        "fmt/445", // XLSM
+    ];
+    List<string> XLSXPronoms =
+    [
         //XLSX
         "fmt/214",
         "fmt/1828",
-        "fmt/445", //XLSM
-        "fmt/595", //XLSB
-        "fmt/598", //XLTX
-        "fmt/627", //XLTM
-        "x-fmt/18", //CSV
     ];
-
-    List<string> PowerPointPronoms =
+    List<string> CSVPronoms =
+   [
+       "x-fmt/18", //CSV
+       "fmt/800",
+   ];
+    List<string> PPTPronoms =
     [
         // PPT
         "fmt/1537",
@@ -322,27 +497,36 @@ public class LibreOfficeConverter : Converter
         "x-fmt/88",
         "fmt/125",
         "fmt/126",
+    ];
+
+    List<string> PPTXPronoms =
+    [
         // PPTX
         "fmt/215",
         "fmt/1829",
         "fmt/494",
+    ];
+    List<string> PPTMPronoms =
+    [
         // PPTM
         "fmt/487",
-        // PPS
-        "x-fmt/87",
-        // PPSM
-        "fmt/630",
-        // PPSX
-        "fmt/629",
-        // POT
-        "x-fmt/84",
+    ];
+    List<string> POTXPronoms =
+    [
         //POTX
         "fmt/631",
-        // POTM
-        "fmt/632",
     ];
 
-    List<string> OpenDocumentPronoms =
+    List<string> ODPPronoms =
+    [
+        // ODT
+        "fmt/293",
+        "fmt/292",
+        "fmt/138",
+        "fmt/1754",
+    ];
+
+    List<string> ODTPronoms =
     [
         // ODT
         "x-fmt/3",
@@ -350,17 +534,17 @@ public class LibreOfficeConverter : Converter
         "fmt/136",
         "fmt/290",
         "fmt/291",
-        // ODP
-        "fmt/1754",
-        "fmt/138",
-        "fmt/292",
-        "fmt/293",
+    ];
+    List<string> ODSPronoms =
+    [
         // ODS
         "fmt/1755",
         "fmt/137",
         "fmt/294",
         "fmt/295",
     ];
+
+
     List<string> RTFPronoms =
     [
         "fmt/969",
@@ -371,118 +555,3 @@ public class LibreOfficeConverter : Converter
         "fmt/355",
     ];
 }
-
-
-
-/*
-
- /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="sourceDoc"></param>
-    /// <param name="destinationPdf"></param>
-    /// <param name="pronom"></param>
-    /// <param name="sofficePath"></param>
-    void RunOfficeToPdfConversionWindows(string sourceDoc, string destinationPdf, string pronom, bool sofficePath)
-    {
-        try
-        {
-            using (Process process = new Process())
-            {
-                process.StartInfo.FileName = "cmd.exe";
-                process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
-                string sofficeCommand = sofficePath ? "soffice" : "C:\\Program Files\\LibreOffice\\program\\soffice";
-                //string sofficeCommand = "soffice";
-                process.StartInfo.Arguments = $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPdf}"" ""{sourceDoc}""";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-                
-
-                process.Start();
-
-                string standardOutput = process.StandardOutput.ReadToEnd();
-                string standardError = process.StandardError.ReadToEnd();
-
-                process.WaitForExit();
-                int exitCode = process.ExitCode;
-                if (exitCode != 0)
-                {
-                    Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
-                    Console.WriteLine("Standard Output:\n" + standardOutput);
-                    Console.WriteLine("Standard Error:\n" + standardError);
-                }
-                
-                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
-                bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
-                if (!converted)
-                {
-                    throw new Exception("File was not converted");
-                }
-                else
-                {
-                    deleteOriginalFileFromOutputDirectory(sourceDoc);
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: sourceDoc);
-            throw;
-        }
-    }
-
-    void RunOfficeToPdfConversionLinux(string sourceDoc, string destinationPdf, string pronom, bool sofficePath)
-    {
-        try
-        {
-            using (Process process = new Process())
-            {
-                process.StartInfo.FileName = "bash";
-                process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
-
-                // Use the full path to soffice if sofficePath is false
-                string sofficeCommand = sofficePath ? "soffice" : "/usr/lib/libreoffice/program/soffice";
-
-                process.StartInfo.Arguments = $@"-c ""{sofficeCommand} --headless --convert-to pdf --outdir '{destinationPdf}' '{sourceDoc}'""";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-
-                process.Start();
-
-                string standardOutput = process.StandardOutput.ReadToEnd();
-                string standardError = process.StandardError.ReadToEnd();
-
-                process.WaitForExit();
-                int exitCode = process.ExitCode;
-
-                if (exitCode != 0)
-                {
-                    Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
-                    Console.WriteLine("Standard Output:\n" + standardOutput);
-                    Console.WriteLine("Standard Error:\n" + standardError);
-                }
-
-                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
-                bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
-                if (!converted)
-                {
-                    throw new Exception("File was not converted");
-                }
-                else
-                {
-                    deleteOriginalFileFromOutputDirectory(sourceDoc);
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: sourceDoc);
-            throw;
-        }
-    }
-
-*/

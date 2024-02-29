@@ -120,28 +120,18 @@ public class ConversionManager
 	/// </summary>
 	private void initMap()
 	{
-		foreach (string pronom in WordPronoms)
+        LibreOfficeConverter converter = new LibreOfficeConverter();
+        List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions.Keys);
+		string pdfA = "fmt/477";
+		foreach(FileInfo file in Files)
 		{
-			foreach (string otherpronom in WordPronoms)
+			if (Settings.GetTargetPronom(file) == pdfA && supportedConversionsLibreOffice.Contains(file.OriginalPronom))
 			{
-				if (pronom != otherpronom)
-				{
-					ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/276", otherpronom]); // word to pdf 1.7 other word
-				}
-			}
+                ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), ["fmt/276", pdfA]);
+            }
 		}
-		foreach (string pronom in ImagePronoms)
-		{
-			foreach (string otherpronom in ImagePronoms)
-			{
-				if (pronom != otherpronom)
-				{
-					ConversionMap.Add(new KeyValuePair<string, string>(pronom, otherpronom), [pronom, "fmt/18", otherpronom]); // Image to pdf 1.4 other Image
-				}
-			}
-		}
-		// TODO: Add more routes
-	}
+    }
+
 	private void initFileMap()
 	{
 		foreach (FileInfo file in Files)
@@ -155,14 +145,15 @@ public class ConversionManager
 	/// </summary>
 	public ConversionManager()
 	{
-		//Initialize conversion map
-		initMap();
-		//Initialize converters
-
-		Converters = AddConverters.Instance.GetConverters();
-		Converters.Add(new LibreOfficeConverter());
         //Get files from FileManager
         Files = FileManager.Instance.GetFiles();
+        //Initialize conversion map
+        initMap();
+
+		//Initialize converters
+		Converters = AddConverters.Instance.GetConverters();
+		Converters.Add(new LibreOfficeConverter());
+        
 		//Initialize FileMap
 		initFileMap();
 	}
