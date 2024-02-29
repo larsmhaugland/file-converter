@@ -83,15 +83,23 @@ class Program
 			return;
 		}
 		ConversionManager cm = ConversionManager.Instance;
-		logger.AskAboutReqAndConv();
+		
 
 		if (fileManager.Files.Count > 0)
 		{			
 			string input;
 			do
 			{
+                logger.AskAboutReqAndConv();
                 fileManager.DisplayFileList();
-                Console.Write("Do you want to proceed with these settings (Y (Yes) / N (No) / R (Reload) / G (Change in GUI): ");
+				var oldColor = Console.ForegroundColor;
+				Console.ForegroundColor = ConsoleColor.Blue;
+				Console.WriteLine("Requester: {0}",Logger.JsonRoot.requester);
+				Console.WriteLine("Converter: {0}",Logger.JsonRoot.converter);
+				Console.WriteLine("MaxThreads: {0}", GlobalVariables.maxThreads);
+				Console.WriteLine("Timeout in minutes: {0}", GlobalVariables.timeout);
+				Console.ForegroundColor = oldColor;
+                Console.Write("Do you want to proceed with these settings (Y (Yes) / A (Abort) / R (Reload) / G (Change in GUI): ");
                 string ?r = Console.ReadLine();
 				r = r?.ToUpper() ?? " ";
 				input = r;
@@ -106,9 +114,11 @@ class Program
 				{
 					//TODO: Start GUI
 					Console.WriteLine("Not implemented yet...");
-				}
-            } while (input != "Y" && input != "N");
-			if (input == "N")
+                    settings.ReadSettings("./Settings.xml");
+                    settings.SetUpFolderOverride("./Settings.xml");
+                }
+            } while (input != "Y" && input != "A");
+			if (input == "A")
 			{
                 return;
             }

@@ -207,16 +207,18 @@ public class FileManager
 
             Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
 		}
-		Console.ForegroundColor = oldColor;
+		
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
 		int total = fileCount.Where(x => x.Key.Value != "Not set" && !x.Key.Value.Contains(notSupportedString)).Sum(x => x.Value);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
-		//Print totals to user
+        //Print totals to user
+        Console.ForegroundColor = ConsoleColor.Blue;
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
-		Console.WriteLine("Number of files not at target pronom: {0,-10}\n", total-totalFinished);
-	}
+		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
+        Console.ForegroundColor = oldColor;
+    }
 
 	public List<FileInfo> GetFiles()
 	{

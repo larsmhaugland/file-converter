@@ -5,7 +5,7 @@
 	<ChecksumHashing>sha256</ChecksumHashing> <!-- SHA256 (standard) or MD5 -->
 	<InputFolder></InputFolder>
 	<OutputFolder></OutputFolder>
-	<MaxThreads></MaxThreads>	<!--Write a number, deafult is cores*2-->
+	<MaxThreads></MaxThreads>	<!--Write a number, deafult is CPU threads * 2-->
 	<Timeout></Timeout>			<!--Timout in minutes, default is 30min-->
 	<!-- 
 			Images supported formats:
