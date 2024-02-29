@@ -235,7 +235,7 @@ public class ConversionManager
 		ThreadPool.SetMaxThreads(maxThreads, maxThreads);
 
 		//Repeat until all files have been converted/checked or there was no change during last run
-		while (WorkingSet.Count > 0 && prevWorkingSet != WorkingSet)
+		while (WorkingSet.Count > 0)
 		{
 			ConcurrentDictionary<string, ThreadInfo> threads = new ConcurrentDictionary<string, ThreadInfo>();
 			//Reset the working set map for the next run
@@ -301,7 +301,7 @@ public class ConversionManager
 			//If the conversion map contains the key, set the route to the value of the key
 			if (ConversionMap.ContainsKey(key))
 			{
-				newFile.Route = ConversionMap[key];
+				newFile.Route = new List<string>(ConversionMap[key]);
 			}
 			//If the conversion map does not contain the key, set the route to the target pronom
 			else if (newFile.CurrentPronom != newFile.TargetPronom)
@@ -379,8 +379,10 @@ public class ConversionManager
 		//Loop through WorkingSetMap and update the file names
 		foreach (var entry in WorkingSetMap)
 		{
+			string relativeFilePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), entry.Key);
 			//Save old data
-			var oldFile = ws[entry.Key];
+			var oldFile = ws[relativeFilePath];
+
 			//Remove old entry
 			ws.Remove(oldFile.FilePath, out _);
 			//Update file path
