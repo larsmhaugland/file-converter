@@ -2,6 +2,7 @@
 >NOTE: This README is currently being updated, information found here might not reflect the current application.
 
 INSERT WORKFLOW BADGE HERE AT SOME POINT
+![Static Badge](https://img.shields.io/badge/.net-8.0-blue)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 A module-based .NET application that converts files and generates documentation for archiving.
@@ -19,6 +20,7 @@ This application provides a framework for different conversion libraries/softwar
   - [CLI](#cli)
   - [Settings](#settings)
   - [Currently supported file formats](#currently-supported-file-formats)
+  - [Documentation and logging](#documentation-and-logging)
   - [Adding a new converter](#adding-a-new-converter)
   - [Adding a new conversion path (Multistep conversion)](#adding-a-new-conversion-path-multistep-conversion)
 - [Acknowledgments](#acknowledgments)
@@ -167,6 +169,36 @@ The following table shows supported file formats one can convert *to.*
 | XLSX | LibreOffice | Yes | Yes |
 | PPT | LibreOffice | Yes | Yes |
 | PPTX | LibreOffice | Yes | Yes |
+
+### Documentation and logging
+The ```.txt```log files use the following convention and is automatically generated each time the program is run:
+```
+Type	| (Error) Message | Format | Filetype | Filename
+```
+All log files can be found in the ```logs``` folder.
+
+Additionally, a ```documentation.json``` file is created which lists all files and their respective data.
+```json
+{"Metadata": {
+    "requester": "Name",
+    "converter": "Name"
+  },
+  "Files": [
+    {
+      "Filename": "output\\filename.pdf",
+      "OriginalPronom": "fmt/14",
+      "OriginalChecksum": "6c6458545d3a41967a5ef2f12b1b03ad6a6409641670f823635cfb766181f636",
+      "OriginalSize": 513631,
+      "TargetPronom": "fmt/477",
+      "NewPronom": "fmt/477",
+      "NewChecksum": "b462a8261d26ece8707fac7f6921cc0ddfb352165cb608a38fed92ed044a6a05",
+      "NewSize": 519283,
+      "Converter": [
+	"iText7"
+	],
+      "IsConverted": true
+    }]}
+```
 
 ### Adding a new converter
 All source code for external converters is based on the same parent ```Converter``` class, located in ```\ConversionTools\Converter.cs```.
