@@ -11,6 +11,7 @@ This application provides a framework for different conversion libraries/softwar
 # Table of Contents
 - [Background](#background)
 - [Install](#install)
+  - [Dependencies](#dependencies)
   - [Installation for Windows](#installation-for-windows)
   - [Installation for Linux](#installation-for-linux)
 - [Usage](#usage)
@@ -34,9 +35,28 @@ Much like programmers and software developers, archivists believe in an open sou
 [^1]: Kultur- og likestillingsdepartementet. *Lov om arkiv [arkivlova].* URL: https://lovdata.no/dokument/NL/lov/1992-12-04-126?q=arkivloven (visited on 17th Jan. 2024).
 
 ## Install
-How to install from source code (code block)
+To download the application source code simply:
+ ```sh
+  git clone --recursive https://github.com/larsmhaugland/file-converter.git
+```
+
+
+>NOTE: Cloning **with** the Git submodules is required for the application to work.
+>If you did not clone the repository recursively or do not see the git submodules in your local repo we would suggest:
+> ```sh
+>   git submodule init
+>   git submodule update
+>```
 
 ### Dependencies
+#### External libraries/software used
+**Libraries**
+- [iText7](https://github.com/itext/itext-dotnet)
+- [BouncyCastle](https://www.bouncycastle.org/)
+
+**Software**
+- [GhostScript](https://www.ghostscript.com/index.html)
+- [LibreOffice](https://www.libreoffice.org/)
 
 ### Installation for Windows
 ### Installation for Linux
@@ -49,9 +69,63 @@ Common usage GUI
 
 ### CLI
 Cover options and common usage
+```
+$ cd C:\PathToFolder\bin\Debug\net8.0
+$ .\file-converter-prog2900.exe 
+```
+
+**Options**
+```
+$ .\example -i "C:\Users\user\Downloads
+$ .\example -input "C:\Users\user\Downloads
+
+$ .\example -o "C:\Users\user\Downloads
+$ .\example -output "C:\Users\user\Downloads
+```
+
 
 ### Settings
-How to set manually
+Settings can be manually set in the ```settings.xml``` file.
+
+#### Setting run time arguments
+```xml  
+    <Requester></Requester>                    <!-- Name of person requesting the conversion -->
+    <Converter></Converter>                    <!-- Name of person doing the conversion -->
+	<ChecksumHashing></ChecksumHashing>          <!-- SHA256 (standard) or MD5 -->
+	<InputFolder></InputFolder>                  <!-- Specify input folder, default is "input" -->
+	<OutputFolder></OutputFolder>                <!-- Specify output folder, default is "output" -->
+	<MaxThreads></MaxThreads>	                   <!-- Write a number, deafult is cores*2 -->
+	<Timeout></Timeout>			                     <!-- Timeout in minutes, default is 30min -->
+```
+
+The first part of the XML file concerns arguments needed to run the program. The second part allows you to set up two things:
+1. Global settings stating that file format ```x```should be converted to file format ```y```.
+2. Folder settings stating that file format ```x```should be converted to file format ```y``` in the specific folder ```folder```.
+
+#### Global settings
+```xml
+<FileClass>
+	<ClassName>pdf</ClassName>
+	<Default>fmt/477</Default>        <!-- The target PRONOM code the class should be converted to -->
+	<FileTypes>
+		<Filename>pdf</Filename>
+    <Pronoms>                             <!-- List of all PRONOMs that should be converted to the target PRONOM -->
+			fmt/95,fmt/354,fmt/476,fmt/477 ,fmt/478 ,fmt/479 ,fmt/480
+		</Pronoms>
+		<Default></Default>
+	</FileTypes>
+</FileClass>
+```
+
+#### Folder settings
+```xml
+	<FolderOverride>
+		<FolderPath>apekatter</FolderPath>      <!-- Path after input folder example: /documents -->
+		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398</Pronoms>
+		<ConvertTo>fmt/14</ConvertTo>
+		<MergeImages></MergeImages>             <!-- Yes, No -->
+	</FolderOverride>
+```
 
 ### Currently supported file formats
 The following table shows supported file formats one can convert *from.*
@@ -90,6 +164,7 @@ The following table shows supported file formats one can convert *to.*
 ### Adding a new converter
 
 ## Acknowledgments
+Acknowledge all externals. Acknowledge supervisor + archive.
 
 ## Contributing
 
