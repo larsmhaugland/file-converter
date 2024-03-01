@@ -59,13 +59,16 @@ dotnet build
 ### Dependencies
 #### External libraries/software used
 **Libraries**
-- [iText7](https://github.com/itext/itext-dotnet)
-- [BouncyCastle](https://www.bouncycastle.org/)
+- [iText7](https://github.com/itext/itext-dotnet) under the GNU Affero General Public License v3.0.
+- [BouncyCastle.NetCore](https://github.com/chrishaly/bc-csharp) under the MIT License.
+- [iText7 Bouncycastle Adapter](https://www.nuget.org/packages/itext7.bouncy-castle-adapter/8.0.2) under the GNU Affero General Public License v3.0.
+- [CommandLineParser](https://www.nuget.org/packages/CommandLineParser/) under the MIT License.
+- [SharpCompress](https://github.com/adamhathcock/sharpcompress) under the MIT License.
 
 **Software**
-- [GhostScript](https://www.ghostscript.com/index.html)
-- [LibreOffice](https://www.libreoffice.org/)
-- [Siegfried](https://www.itforarchivists.com/siegfried/)
+- [GhostScript](https://www.ghostscript.com/index.html) under the GNU Affero General Public License v3.0.
+- [LibreOffice](https://www.libreoffice.org/) under the Mozilla Public License 2.0.
+- [Siegfried](https://www.itforarchivists.com/siegfried/) under the Apache License 2.0.
 
 ### Installation for Windows
 ### Installation for Linux
