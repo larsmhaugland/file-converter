@@ -49,9 +49,10 @@ public class Logger
 
 	private Logger()
 	{
-		string path = "./logs/";
+        string currentDirectory = Directory.GetCurrentDirectory();
+        string path = System.IO.Path.Combine(currentDirectory, "logs");
 
-		if (!Directory.Exists(path))
+        if (!Directory.Exists(path))
 		{
 			Directory.CreateDirectory(path);
 		}

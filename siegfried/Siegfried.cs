@@ -1,4 +1,4 @@
-﻿using Ghostscript.NET;
+﻿	using Ghostscript.NET;
 using iText.IO.Source;
 using iText.Kernel.Pdf.Function;
 using iText.Kernel.Utils.Objectpathitems;
@@ -198,11 +198,11 @@ public class Siegfried
 		{
 			options = $"-home siegfried -json -sig pronom64k.sig ";
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+        string fileName = OperatingSystem.IsLinux() ? "sf" : @"siegfried/sf.exe";
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = fileName, // or any other command you want to run
 			Arguments = options + wrappedPath,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,
@@ -288,11 +288,11 @@ public class Siegfried
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: could not create output file " + e.Message, true);
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+		string fileName = OperatingSystem.IsLinux() ? "sf" : @"siegfried/sf.exe";
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = fileName, // or any other command you want to run
 			Arguments = options + wrappedPaths,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,
@@ -528,7 +528,7 @@ public class Siegfried
 		{
 			string relativePath = file.Replace(source, "");
 			string outputPath = destination + relativePath;
-			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf(Path.DirectorySeparatorChar));
 			//TODO: THIS BEHAVIOUR SHOULD BE DOCUMENTED
 			//If file already exists in target destination, skip it
 			if (File.Exists(outputPath))
