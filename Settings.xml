@@ -45,6 +45,13 @@
 			</Pronoms>
 			<Default></Default>
 		</FileTypes>
+		<FileTypes>
+			<Filename>pdf/x</Filename>
+			<Pronoms>
+				fmt/157
+			</Pronoms>
+			<Default></Default>
+		</FileTypes>
 	</FileClass>
 
 	<!--POST SCRIPT CLASS -->

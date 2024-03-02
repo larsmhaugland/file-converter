@@ -126,9 +126,11 @@ public class FileManager
             if (targetPronom != null) { 
 				converters.ForEach(c =>
 				{
-					if (c.SupportsConversion(currentPronom, targetPronom))
+					//Check if the conversion is directly supported by the converter or if it is supported by the ConversionManager through different converters
+					if (c.SupportsConversion(currentPronom, targetPronom) || ConversionManager.Instance.SupportsConversion(currentPronom,targetPronom))
 					{
 						supported = true;
+						return;
 					}
 				});
 			}
@@ -141,7 +143,7 @@ public class FileManager
 			{
                 targetPronom = targetPronom + notSupportedString;
             }
-
+			//Add new entry in dictionary or add to count if entry already exists
 			KeyValuePair<string, string> key = new KeyValuePair<string, string>(currentPronom, targetPronom);
 			if (fileCount.ContainsKey(key))
 			{

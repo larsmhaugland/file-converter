@@ -5,6 +5,8 @@ using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
 using System.Runtime.CompilerServices;
+using System.Xml.Schema;
+using System.Drawing;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -323,7 +325,7 @@ public class iText7 : Converter
             {
                 lock (padlock)
                 {
-                    using (FileStream iccFilestream = new FileStream("ConversionTools/sRGB2014.icc", FileMode.Open))
+                    using (FileStream iccFilestream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
                     {
                         PdfOutputIntent outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFilestream);
 
@@ -336,10 +338,14 @@ public class iText7 : Converter
 
                             for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
                             {
+                                PdfPage sourcePage = pdfDocument.GetPage(pageNum);
+
+
                                 PdfPage page = pdfADocument.AddNewPage();
-                                PdfFormXObject pageCopy = pdfDocument.GetPage(pageNum).CopyAsFormXObject(pdfADocument);
+                                PdfFormXObject pageCopy = sourcePage.CopyAsFormXObject(pdfADocument);
                                 PdfCanvas canvas = new PdfCanvas(page);
-                                canvas.AddXObject(pageCopy); // Add the XObject at the origin
+
+                                canvas.AddXObject(pageCopy);
                             }
 
                             // Close the PDF documents

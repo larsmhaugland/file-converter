@@ -65,6 +65,8 @@ public class Siegfried
 	public string ?Version = null;
 	public string ?ScanDate = null;
 	public string OutputFolder = "siegfried/JSONoutput";
+	private string ExecutablePath = "src/siegfried/sf.exe";
+	private string HomeFolder = "src/siegfried";
     private static readonly object lockObject = new object();
 	private List<string> CompressedFolders;
 	public ConcurrentBag<FileInfo> Files = new ConcurrentBag<FileInfo>();
@@ -92,14 +94,14 @@ public class Siegfried
 		//TODO: Should check Version and ScanDate here
 		CompressedFolders = new List<string>();
         //Look for Siegfried files
-        var found = Path.Exists("siegfried/sf.exe");
+        var found = Path.Exists(ExecutablePath);
 		logger.SetUpRunTimeLogMessage("SF Siegfried executable " + (found ? "" : "not") + "found", !found);
 		if (!found)
 		{
 			Console.WriteLine("Cannot find Siegfried executable");
 			throw new FileNotFoundException("Cannot find Siegfried executable");
 		}
-		found = Path.Exists("siegfried/pronom64k.sig");
+		found = Path.Exists(HomeFolder + "/pronom64k.sig");
 		logger.SetUpRunTimeLogMessage("SF Pronom signature file " + (found ? "" : "not") + "found", !found);
 		if (!found)
 		{
@@ -193,16 +195,16 @@ public class Siegfried
 		string options;
 		if (hash)
 		{
-			options = $"-home siegfried -json -hash " + HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
+			options = $"-home {HomeFolder} -json -hash " + HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
 		} else
 		{
-			options = $"-home siegfried -json -sig pronom64k.sig ";
+			options = $"-home {HomeFolder} -json -sig pronom64k.sig ";
 		}
 
 		// Define the process start info
 		ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = $"{ExecutablePath}", // or any other command you want to run
 			Arguments = options + wrappedPath,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,
@@ -265,7 +267,7 @@ public class Siegfried
 			tempPaths[i] = "\"" + paths[i] + "\"";
 		}
 		string wrappedPaths = String.Join(" ",tempPaths);
-		string options = $"-home siegfried -multi 64 -json -coe -hash " +  HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
+		string options = $"-home {HomeFolder} -multi 64 -json -coe -hash " +  HashEnumToString(GlobalVariables.checksumHash) + " -sig pronom64k.sig ";
 
 		string outputFile = Path.Combine(OutputFolder, Guid.NewGuid().ToString(), ".json");
 		string? parentDir = Directory.GetParent(outputFile)?.FullName;
@@ -292,7 +294,7 @@ public class Siegfried
 		// Define the process start info
 		ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = $"{ExecutablePath}", // or any other command you want to run
 			Arguments = options + wrappedPaths,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,
@@ -557,6 +559,7 @@ public class Siegfried
                 string relativePath = file.Replace(source, "");
                 string outputPath = destination + relativePath;
                 string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+
                 if (!Directory.Exists(outputFolder))
 				{
                     Directory.CreateDirectory(outputFolder);
