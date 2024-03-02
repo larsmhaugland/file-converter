@@ -59,10 +59,9 @@ jobs:
           query-filters:
             - exclude:
                 id: 
-                  - cs/telemetry/unsupported-external-api
                   - cs/weak-encryption
-                  - cs/telemetry/supported-external-api-sources
                   - cs/insecure-randomness
+                  - cs/user-controlled-bypass
             - exclude:
                 tags: /telemetry/ 
         # If you wish to specify custom queries, you can do so here or in a config file.
