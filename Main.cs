@@ -43,7 +43,10 @@ class Program
 		//Only maximize and center the console window if the OS is Windows
 		
 		MaximizeAndCenterConsoleWindow();
-		Directory.SetCurrentDirectory("../../../");
+		if (!OperatingSystem.IsLinux())
+		{
+            Directory.SetCurrentDirectory("../../../");
+        }
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");

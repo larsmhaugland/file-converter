@@ -198,11 +198,11 @@ public class Siegfried
 		{
 			options = $"-home siegfried -json -sig pronom64k.sig ";
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+        string fileName = OperatingSystem.IsLinux() ? "sf" : @"siegfried/sf.exe";
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = fileName, // or any other command you want to run
 			Arguments = options + wrappedPath,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,
@@ -288,11 +288,11 @@ public class Siegfried
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: could not create output file " + e.Message, true);
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+		string fileName = OperatingSystem.IsLinux() ? "sf" : @"siegfried/sf.exe";
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
-			FileName = @"siegfried/sf.exe", // or any other command you want to run
+			FileName = fileName, // or any other command you want to run
 			Arguments = options + wrappedPaths,
 			RedirectStandardInput = false,
 			RedirectStandardOutput = true,

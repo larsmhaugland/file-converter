@@ -340,7 +340,7 @@ public class LibreOfficeConverter : Converter
     /// <returns></returns>
     string GetSofficePath(bool sofficePath)
     {
-        return sofficePath ? "soffice" : Environment.OSVersion.Platform == PlatformID.Unix ? "/usr/lib/libreoffice/program/soffice" : "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+        return sofficePath ? "soffice" : Environment.OSVersion.Platform == PlatformID.Unix ? "/lib/libreoffice/program/soffice" : "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
     }
 
     /// <summary>
