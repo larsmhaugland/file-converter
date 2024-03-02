@@ -38,7 +38,7 @@ jobs:
       contents: read
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         language: [ 'csharp' ]
         # CodeQL supports [ 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift' ]
@@ -65,6 +65,7 @@ jobs:
                   - cs/telemetry/unsupported-external-api
                   - cs/weak-encryption
                   - cs/telemetry/supported-external-api-sources
+                  - cs/insecure-randomness
             - exclude:
                 tags: /telemetry/ 
         # If you wish to specify custom queries, you can do so here or in a config file.
