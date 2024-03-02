@@ -1,4 +1,4 @@
-﻿using Ghostscript.NET;
+﻿	using Ghostscript.NET;
 using iText.IO.Source;
 using iText.Kernel.Pdf.Function;
 using iText.Kernel.Utils.Objectpathitems;
@@ -528,7 +528,7 @@ public class Siegfried
 		{
 			string relativePath = file.Replace(source, "");
 			string outputPath = destination + relativePath;
-			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf(Path.DirectorySeparatorChar));
 			//TODO: THIS BEHAVIOUR SHOULD BE DOCUMENTED
 			//If file already exists in target destination, skip it
 			if (File.Exists(outputPath))
