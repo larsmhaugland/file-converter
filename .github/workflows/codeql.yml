@@ -56,6 +56,8 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         config: |
+          queries:
+            - uses: security-and-quality
           query-filters:
             - exclude:
                 id: 
