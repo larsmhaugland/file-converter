@@ -1,0 +1,138 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\mainwindow.axaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\createelements.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\createelements.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\changeconvertersettings.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\changeconvertersettings.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\pronomhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\pronomhelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|c:\\users\\sundt\\documents\\skole\\git\\file-converter\\gui\\changeconvertersettings\\changeconvertersettings\\app.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{63786FD5-721A-423B-B76B-9F2F687EC511}|ChangeConverterSettings\\ChangeConverterSettings.csproj|solutionrelative:changeconvertersettings\\app.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{4a9b7e51-aa16-11d0-a8c5-00a0c921a4d2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ChangeConverterSettings.csproj",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\ChangeConverterSettings.csproj",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\ChangeConverterSettings.csproj",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\ChangeConverterSettings.csproj",
+              "RelativeToolTip": "ChangeConverterSettings\\ChangeConverterSettings.csproj",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABMAAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-03-02T14:53:29.176Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "CreateElements.cs",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\CreateElements.cs",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\CreateElements.cs",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\CreateElements.cs",
+              "RelativeToolTip": "ChangeConverterSettings\\CreateElements.cs",
+              "ViewState": "AQIAAEwAAAAAAAAAAAAiwFgAAAAIAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-02-26T12:40:57.315Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "PronomHelper.cs",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\PronomHelper.cs",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\PronomHelper.cs",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\PronomHelper.cs",
+              "RelativeToolTip": "ChangeConverterSettings\\PronomHelper.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-02-26T11:21:27.758Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Settings.cs",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\Settings.cs",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\Settings.cs",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\Settings.cs",
+              "RelativeToolTip": "ChangeConverterSettings\\Settings.cs",
+              "ViewState": "AQIAAK0AAAAAAAAAAAAqwOAAAABNAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-02-21T10:02:43.574Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.axaml.cs",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\MainWindow.axaml.cs",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\MainWindow.axaml.cs",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\MainWindow.axaml.cs",
+              "RelativeToolTip": "ChangeConverterSettings\\MainWindow.axaml.cs",
+              "ViewState": "AQIAAHUAAAAAAAAAAAAowIcAAABIAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-02-21T09:06:50.022Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MainWindow.axaml",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\MainWindow.axaml",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\MainWindow.axaml",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\MainWindow.axaml",
+              "RelativeToolTip": "ChangeConverterSettings\\MainWindow.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-02-21T09:15:48.461Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "App.axaml",
+              "DocumentMoniker": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\App.axaml",
+              "RelativeDocumentMoniker": "ChangeConverterSettings\\App.axaml",
+              "ToolTip": "C:\\Users\\sundt\\Documents\\skole\\git\\file-converter\\GUI\\ChangeConverterSettings\\ChangeConverterSettings\\App.axaml",
+              "RelativeToolTip": "ChangeConverterSettings\\App.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2024-02-21T09:19:37.685Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

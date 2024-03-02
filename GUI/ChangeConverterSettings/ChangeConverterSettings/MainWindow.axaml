@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="ChangeConverterSettings.MainWindow"
+        Title="ChangeConverterSettings">
+	
+	<ScrollViewer HorizontalScrollBarVisibility="Visible">
+		
+		<StackPanel Margin="20" Name="MainStackPanel">
+			<StackPanel>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+						<!-- Left side content -->
+						<ColumnDefinition Width="Auto"/>
+						<!-- Spacer -->
+						<ColumnDefinition Width="Auto"/>
+						<!-- Save button -->
+					</Grid.ColumnDefinitions>
+
+					<!-- Left side content -->
+					<StackPanel Grid.Column="0">
+						<TextBlock Margin="0,10,0,0" DockPanel.Dock="Left">Requester</TextBlock>
+					</StackPanel>
+
+					<!-- Spacer -->
+					<StackPanel Grid.Column="1"/>
+
+					<!-- Right-aligned Save button -->
+					<Button Name="Save" Grid.Column="2" Margin="0,0,10,0" Click="SaveButton">Save</Button>
+				</Grid>
+				
+				<TextBox  Margin="0,10,0,0" Name="Requester" HorizontalAlignment="Left"></TextBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">Converter</TextBlock>
+				<TextBox  Margin="0,10,0,0" Name="Converter" HorizontalAlignment="Left"></TextBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">InputFolder</TextBlock>
+				<TextBox  Margin="0,10,0,0" Name="Input" HorizontalAlignment="Left"></TextBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">OutputFolder</TextBlock>
+				<TextBox  Margin="0,10,0,0" Name="Output" HorizontalAlignment="Left"></TextBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">MaxThreads</TextBlock>
+				<TextBox  Margin="0,10,0,0" Name="MaxThreads" HorizontalAlignment="Left"></TextBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">Checksum</TextBlock>
+				<ComboBox Margin="0,10,0,0" Name="Checksum" HorizontalAlignment="Left"></ComboBox>
+				<TextBlock  Margin="0,10,0,0" HorizontalAlignment="Left">Timeout (in minutes)</TextBlock>
+				<TextBox  Margin="0,10,0,0" Name="Timeout" HorizontalAlignment="Left"></TextBox>
+			</StackPanel>
+			<StackPanel Orientation="Horizontal">
+				<TextBlock Margin="0,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Name="FormatColumn">Formats</TextBlock>
+				<TextBlock Margin="20,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Name="pronomColumn">Pronom </TextBlock>
+				<TextBlock Margin="20,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Name="outputColumn">Output Pronom </TextBlock>
+				<TextBlock Margin="20,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Name="outputNameColumn">Output Name </TextBlock>
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</Window>
