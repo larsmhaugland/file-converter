@@ -23,7 +23,10 @@ public class GhostscriptConverter : Converter
 		Version = "1.23.1";
 		SupportedConversions = getListOfSupportedConvesions();
         SupportedOperatingSystems = getSupportedOS();
+      
 	}
+
+    public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
 
     List<string> ImagePronoms = [
     //PNG
@@ -176,7 +179,6 @@ public class GhostscriptConverter : Converter
     void convertToImage(string filePath, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
-		string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
 		try
 		{
 			using (var rasterizer = new GhostscriptRasterizer())
@@ -261,7 +263,6 @@ public class GhostscriptConverter : Converter
 		Logger log = Logger.Instance;
 		string outputFolder = Path.GetDirectoryName(filePath);
 		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
-		string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
 
 		try

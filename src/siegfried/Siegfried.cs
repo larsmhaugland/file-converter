@@ -1,4 +1,4 @@
-﻿using Ghostscript.NET;
+﻿	using Ghostscript.NET;
 using iText.IO.Source;
 using iText.Kernel.Pdf.Function;
 using iText.Kernel.Utils.Objectpathitems;
@@ -65,7 +65,7 @@ public class Siegfried
 	public string ?Version = null;
 	public string ?ScanDate = null;
 	public string OutputFolder = "siegfried/JSONoutput";
-	private string ExecutablePath = "src/siegfried/sf.exe";
+	private string ExecutablePath = OperatingSystem.IsLinux() ? "sf" : "src/siegfried/sf.exe";
 	private string HomeFolder = "src/siegfried";
     private static readonly object lockObject = new object();
 	private List<string> CompressedFolders;
@@ -200,9 +200,9 @@ public class Siegfried
 		{
 			options = $"-home {HomeFolder} -json -sig pronom64k.sig ";
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+        string fileName = OperatingSystem.IsLinux() ? "sf" : @"siegfried/sf.exe";
+        // Define the process start info
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
 			FileName = $"{ExecutablePath}", // or any other command you want to run
 			Arguments = options + wrappedPath,
@@ -290,9 +290,8 @@ public class Siegfried
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("SF IdentifyList: could not create output file " + e.Message, true);
 		}
-
-		// Define the process start info
-		ProcessStartInfo psi = new ProcessStartInfo
+		
+        ProcessStartInfo psi = new ProcessStartInfo
 		{
 			FileName = $"{ExecutablePath}", // or any other command you want to run
 			Arguments = options + wrappedPaths,
@@ -530,7 +529,7 @@ public class Siegfried
 		{
 			string relativePath = file.Replace(source, "");
 			string outputPath = destination + relativePath;
-			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf('\\'));
+			string outputFolder = outputPath.Substring(0, outputPath.LastIndexOf(Path.DirectorySeparatorChar));
 			//TODO: THIS BEHAVIOUR SHOULD BE DOCUMENTED
 			//If file already exists in target destination, skip it
 			if (File.Exists(outputPath))

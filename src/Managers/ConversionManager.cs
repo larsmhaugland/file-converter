@@ -138,11 +138,12 @@ public class ConversionManager
         LibreOfficeConverter converter = new LibreOfficeConverter();
         List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions.Keys);
 		string pdfA = "fmt/477";
+		string pdfPronom = OperatingSystem.IsLinux() ? "fmt/20" : "fmt/276";
 		foreach(FileInfo file in Files)
 		{
 			if (Settings.GetTargetPronom(file) == pdfA && supportedConversionsLibreOffice.Contains(file.OriginalPronom))
 			{
-                ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), ["fmt/276", pdfA]);
+                ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), [pdfPronom, pdfA]);
             }
 		}
     }
