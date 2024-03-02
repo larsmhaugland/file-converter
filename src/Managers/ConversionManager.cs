@@ -296,7 +296,7 @@ public class ConversionManager
 				foreach (Converter converter in Converters)
 				{
 					//Check if the converter supports the format of the file
-					if (!converter.SupportsConversion(file.CurrentPronom, file.Route.First()))
+					if (file.Route.Count < 1 || !converter.SupportsConversion(file.CurrentPronom, file.Route.First()))
 					{
 						continue;
 					}
