@@ -4,7 +4,6 @@ using iText.Pdfa;
 using iText.Html2pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Pdf.Canvas;
-using System.Runtime.CompilerServices;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -383,24 +382,24 @@ public class iText7 : Converter
 
         try
         {
-            PdfVersion? pdfVersion = null;
+            PdfVersion? pdfVersion = PronomToPdfVersion[pronom]; ;
             PdfAConformanceLevel? conformanceLevel = null;
 
-            if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
+            if(PronomToPdfAConformanceLevel.ContainsKey(pronom))
             {
-                pdfVersion = PdfVersion.PDF_2_0;
                 conformanceLevel = PronomToPdfAConformanceLevel[pronom];
-                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pronom, pdfVersion, conformanceLevel);
             }
-            else if (PronomToPdfVersion.ContainsKey(pronom))
-            {
-                pdfVersion = PronomToPdfVersion[pronom];
-                MergeFilesToPDF(files, Path.GetFileNameWithoutExtension(files[0]) + ".pdf", pronom, pdfVersion);
-            }
+
+            //Set output file name to YYYY-MM-DD_kombinert.pdf
+            DateTime currentDateTime = DateTime.Now;
+            string formattedDateTime = currentDateTime.ToString("yyyy-MM-dd HHmmss");
+            string outputFileName = Path.GetDirectoryName(files[0]) + formattedDateTime + ".pdf";
+
+            MergeFilesToPDF(files, outputFileName, pronom, pdfVersion, conformanceLevel);
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error combining files with iText7. Error message: " + e.Message, true);
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files with iText7. Error message: " + e.Message, true, pronom, files[0]);
         }
     }
 
@@ -411,20 +410,16 @@ public class iText7 : Converter
     /// <param name="outputFileName"></param>
     /// <param name="outputFolder"></param>
     /// <param name="pdfVersion"></param>
-    void MergeFilesToPDF(string[] files, string outputFileName, string pronom, PdfVersion pdfVersion, PdfAConformanceLevel? pdfa = null)
+    void MergeFilesToPDF(string[] files, string outputFileName, string pronom, PdfVersion? pdfVersion, PdfAConformanceLevel? pdfa)
      {
         try
         {
-            
-            string? outputFolder = Path.GetDirectoryName(files[0]);
-            string output = Path.Combine(outputFolder, outputFileName);
-
-            using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
+            using (var pdfWriter = new PdfWriter(outputFileName, new WriterProperties().SetPdfVersion(pdfVersion)))
             using (var pdfDocument = new PdfDocument(pdfWriter))
             using (var document = new iText.Layout.Document(pdfDocument))
             {
-                pdfDocument.SetTagged();
-                PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+                pdfDocument.SetTagged();                                
+                PdfDocumentInfo info = pdfDocument.GetDocumentInfo();   // Set the document's metadata
                 foreach (string file in files)
                 {
                     iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file));
@@ -438,12 +433,12 @@ public class iText7 : Converter
             }
             if(pdfa != null)
             {
-                convertFromPDFToPDFA(output, pdfa, pronom);
+                convertFromPDFToPDFA(outputFileName, pdfa, pronom);
             }
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true);
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true, pronom, files[0]);
         }
      }
 }
