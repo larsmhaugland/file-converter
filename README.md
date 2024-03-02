@@ -1,8 +1,8 @@
 # file-converter
 >NOTE: This README is currently being updated, information found here might not reflect the current application.
 
-INSERT WORKFLOW BADGE HERE AT SOME POINT
 ![Static Badge](https://img.shields.io/badge/.net-8.0-blue)
+![dotnet-badge](https://github.com/larsmhaugland/file-converter/actions/workflows/dotnet.yml/badge.svg?event=push)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 A module-based .NET application that converts files and generates documentation for archiving.
