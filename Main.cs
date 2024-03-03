@@ -53,7 +53,7 @@ class Program
         settings.SetUpFolderOverride("./Settings.xml");
         Logger logger = Logger.Instance;
 
-		FileManager fileManager = FileManager.Instance;
+		/*FileManager fileManager = FileManager.Instance;
         Siegfried sf = Siegfried.Instance;
 		
         //TODO: Check for malicous input files
@@ -137,7 +137,7 @@ class Program
 			}
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();
-		}
+		}*/
 	}
     static void MaximizeAndCenterConsoleWindow()
     {
