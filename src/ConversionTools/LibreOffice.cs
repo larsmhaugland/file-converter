@@ -512,8 +512,9 @@ public class LibreOfficeConverter : Converter
 
     List<string> PDFPronoms =
     [
-        "fmt/276",
-        "fmt/477", // PDF 2-A
+        "fmt/276", // 1.7
+        "fmt/20",  // 1.6
+        "fmt/477", // PDF 2-B
     ];
     List<string> DOCPronoms =
     [
