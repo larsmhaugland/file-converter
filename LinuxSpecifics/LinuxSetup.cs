@@ -12,6 +12,7 @@ class LinuxSetup
 {
     //Specific Linux distro
     public static string LinuxDistro = GetLinuxDistro();
+    public static string PathRunningProgram = "/bin/bash";
 
     //Map for external converters to check if they are downloaded.
     static Dictionary<List<string>, string> converterArguments = new Dictionary<List<string>, string>()
@@ -30,26 +31,37 @@ class LinuxSetup
     }
 
     /// <summary>
-    /// Checks if Siegfried is installed, if not, asks the user if they want to install it
+    /// Runs a process with the given filename and arguments
     /// </summary>
-    private static void checkInstallSiegfried() 
+    /// <param name="filename"></param>
+    /// <param name="arguments"></param>
+    /// <param name="configure"></param>
+    private static string RunProcess( Action<ProcessStartInfo> configure) 
     {
-        //Check if Siegfried is installed
         ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = "-c \" " + "sf -version" + " \""; 
         startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
-        startInfo.UseShellExecute = false;
         startInfo.RedirectStandardError = true;
-        startInfo.RedirectStandardOutput = true;
+        configure(startInfo);
 
         Process process = new Process();
         process.StartInfo = startInfo;
         process.Start();
         process.WaitForExit();
-        string output = process.StandardOutput.ReadToEnd();
+
+        return process.StandardOutput.ReadToEnd();
+    }
+
+    /// <summary>
+    /// Checks if Siegfried is installed, if not, asks the user if they want to install it
+    /// </summary>
+    private static void checkInstallSiegfried() 
+    {
+        string output = RunProcess(startInfo =>
+        { startInfo.FileName = PathRunningProgram;
+           startInfo.Arguments = "-c \" " + "sf -version" + " \"";});
+
         if (!output.Contains("siegfried"))
         {
             Console.WriteLine("Siegfried is not installed. In order to install Siegfried your user must have sudo privileges.");
@@ -74,23 +86,20 @@ class LinuxSetup
     {
         if (LinuxDistro == "debian")
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = "/bin/bash";
-            startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
-            Process process = new Process();
-            process.StartInfo = startInfo;
-            process.Start();
-            process.WaitForExit();
+            RunProcess(startInfo =>
+             {
+                 startInfo.FileName = PathRunningProgram;
+                 startInfo.Arguments = "-c \" " + "sf -version" + " \"";
+                 startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
+             });
         }
-        else if (LinuxDistro == "arch") 
-        { 
-            ProcessStartInfo startInfoArch = new ProcessStartInfo();
-            startInfoArch.FileName = "/bin/bash";
-            startInfoArch.Arguments = $"-c \"git clone https://aur.archlinux.org/siegfried.git siegfried-install && cd siegfried-install && makepkg -si\"";
-            Process processArch = new Process();
-            processArch.StartInfo = startInfoArch;
-            processArch.Start();
-            processArch.WaitForExit();
+        else if (LinuxDistro == "arch")
+        {
+            RunProcess(startInfo =>
+            {
+               startInfo.FileName = PathRunningProgram;
+                startInfo.Arguments = $"-c \"go install github.com/richardlehane/siegfried/cmd/sf@latest\r\n\r\nsf -update\""; 
+            });
         }
     }
 
