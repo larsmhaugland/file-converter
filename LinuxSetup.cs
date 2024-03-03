@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using iText.Commons.Utils;
 
 class LinuxSetup
 {
@@ -69,7 +70,17 @@ class LinuxSetup
                 BuildGhostScript();
 
                 //Check if GhostScript is installed
-                process.StartInfo = startInfo;
+                ProcessStartInfo startInfoRecheck = new ProcessStartInfo();
+
+                process.StartInfo = startInfoRecheck;
+                startInfoRecheck.FileName = "/bin/bash";
+                startInfoRecheck.Arguments = "-c \" " + "gs --version" + " \"";
+                startInfoRecheck.RedirectStandardOutput = true;
+                startInfoRecheck.UseShellExecute = false;
+                startInfoRecheck.CreateNoWindow = true;
+                startInfoRecheck.UseShellExecute = false;
+                startInfoRecheck.RedirectStandardError = true;
+                startInfoRecheck.RedirectStandardOutput = true;
                 process.Start();
                 process.WaitForExit();
                 output = process.StandardOutput.ReadToEnd();
