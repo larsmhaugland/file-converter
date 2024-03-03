@@ -60,7 +60,8 @@ dotnet build
 ### Dependencies
 |OS| Dependencies | Needed for? |
 |---|---|---|
-|Linux| [autoconf](https://www.gnu.org/software/autoconf/) <br> [automake](https://www.gnu.org/software/automake/automake.html) | Needed to run GhostScript. |
+|Linux| [autoconf](https://www.gnu.org/software/autoconf/) <br> [automake](https://www.gnu.org/software/automake/automake.html) <br> [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run GhostScript. <br><br> Needed to run program. |
+| Windows | [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run program. |
 
 #### External libraries/software used
 **Libraries**
