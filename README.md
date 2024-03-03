@@ -23,6 +23,7 @@ This application provides a framework for different conversion libraries/softwar
   - [Documentation and logging](#documentation-and-logging)
   - [Adding a new converter](#adding-a-new-converter)
   - [Adding a new conversion path (Multistep conversion)](#adding-a-new-conversion-path-multistep-conversion)
+- [Use cases](#use-cases)
 - [Acknowledgments](#acknowledgments)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
@@ -57,6 +58,10 @@ dotnet build
 >```
 
 ### Dependencies
+|OS| Dependencies | Needed for? |
+|---|---|---|
+|Linux| [autoconf](https://www.gnu.org/software/autoconf/) <br> [automake](https://www.gnu.org/software/automake/automake.html) | Needed to run GhostScript. |
+
 #### External libraries/software used
 **Libraries**
 - [iText7](https://github.com/itext/itext-dotnet) under the GNU Affero General Public License v3.0.
@@ -281,6 +286,26 @@ foreach (string pronom in ListOfPronoms)
 	}}
 ```
 ```pronom``` is the pronom you want to convert from, while ```otherpronom``` is the pronom you want to convert to. ```ConversionMap``` works as a route so any ```helppronom``` is a stepping stone in that route from ```pronom``` to ```otherpronom```. You can add as many stepping stones as you want but they have to be added in the correct order from left to right.
+
+## Use cases
+Here are the use cases, please reflect and write something down for each use case about how understandable the README/source code was and how manageable it was to do the task.
+
+Use case tasks:
++ Add a new conversion path route that converts a document from Word to PDF to PDF-A.
++ Change the settings, using the ```settings.xml``` so that Word documents get converted to PDF-A.
++ Change the settings, using the GUI, so that Word documents get converted to PDF-A.
++ Run the program in CLI with the proper options to specify the input and output directory.
++ Try to combine a set of images into one PDF.
+
+Questions regarding use cases:
++ Were there any tasks you weren't able to complete? Was it because of a lack of understanding or due to a bug in the program?
++ Were there any tasks that you feel could be simplified?
+
+Questions regarding README:
++ Was it clear how to download, install and build the program?
++ Did you encounter any instructions in the README that weren't correct?
++ Were there any sections you found vague/unhelpful?
++ Are there some sections you would have liked that weren't here?
 
 ## Acknowledgments
 Acknowledge all externals. Acknowledge supervisor + archive.
