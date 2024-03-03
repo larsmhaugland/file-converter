@@ -17,29 +17,6 @@ class LinuxSetup
     }
 
     /// <summary>
-    /// Builds GhostScript from source.
-    /// </summary>
-    private static void BuildGhostScript() {
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        Process process = new Process();
-        string ghostScriptPath = "ghostpdl";
-        string ghostScriptBuildCommand = "./autogen.sh && ./configure --prefix=$HOME/local && make && make install";
-
-        //open terminal
-        startInfo = new ProcessStartInfo();
-        startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = ghostScriptBuildCommand;
-        startInfo.RedirectStandardOutput = true;
-        startInfo.UseShellExecute = false;
-        startInfo.CreateNoWindow = true;
-
-        process.StartInfo = startInfo;
-        process.Start();
-        process.WaitForExit();
-        process.Close();
-    }
-
-    /// <summary>
     /// Checks if GhostScript is installed, if not, asks the user if they want to install it
     /// </summary>
     private static void checkInstallGhostScript()
@@ -47,7 +24,7 @@ class LinuxSetup
         //Check if GhostScript is installed
         ProcessStartInfo startInfo = new ProcessStartInfo();
         startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = "-c \" " + "gs --version" + " \"";
+        startInfo.Arguments = "-c \" " + "gs -version" + " \"";
         startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
@@ -63,46 +40,10 @@ class LinuxSetup
         Console.WriteLine(output);
         if (!output.Contains("GPL Ghostscript"))
         {
-            Console.WriteLine("GhostScript is not installed, would you like to install it? (y/n)");
-            Console.WriteLine("Note: autoconf and automake is needed for the installation, see https://ghostscript.readthedocs.io/en/latest/Make.html#macos-or-linux-openbsd for how to install it using brew.");
-            Console.WriteLine("Or download it directly from GNU: https://www.gnu.org/software/autoconf/");
-            string? r = Console.ReadLine();
-            r = r?.ToUpper() ?? " ";
-            if (r == "Y")
-            {
-                Console.WriteLine("Note: The installation will take a while, please be patient.");
-                Console.WriteLine("Installing GhostScript...");
-                //Call function to build GhostScript
-                BuildGhostScript();
-
-                //Check if GhostScript is installed
-                ProcessStartInfo startInfoRecheck = new ProcessStartInfo();
-                Process processRecheck = new Process();
-
-                processRecheck.StartInfo = startInfoRecheck;
-                startInfoRecheck.FileName = "/bin/bash";
-                startInfoRecheck.Arguments = "-c \" " + "gs --version" + " \"";
-                startInfoRecheck.RedirectStandardOutput = true;
-                startInfoRecheck.UseShellExecute = false;
-                startInfoRecheck.CreateNoWindow = true;
-                startInfoRecheck.UseShellExecute = false;
-                startInfoRecheck.RedirectStandardError = true;
-                startInfoRecheck.RedirectStandardOutput = true;
-                processRecheck.Start();
-                processRecheck.WaitForExit();
-                output = processRecheck.StandardOutput.ReadToEnd();
-                if (!output.Contains("GPL Ghostscript"))
-                {
-                    Console.WriteLine("GhostScript installation failed, please install it manually.");
-                    Console.WriteLine("For more information, see https://ghostscript.readthedocs.io/en/latest/index.html");
-                }
-                else
-                {
-                    Console.WriteLine("GhostScript installed successfully.");
-                }
-                processRecheck.Close();
-            }
+            Console.WriteLine("GhostScript is not installed.");
+            Console.WriteLine("If you are on Ubuntu/Debian run: sudo apt install ghostscript");
+            Console.WriteLine("For other Linux distros see https://www.ghostscript.com/ for installation instructions.");
+        
         }
-        process.Close();
     }
 }
