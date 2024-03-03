@@ -6,14 +6,23 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 using iText.Commons.Utils;
+using iText.Kernel.Pdf;
 
 class LinuxSetup
 {
-   public static void Setup()
+    static Dictionary<List<string>, string> converterArguments = new Dictionary<List<string>, string>()
+    {
+        {new List<string> { "\"-c \\\" \" + \"gs -version\" + \" \\\"\"", "GPL Ghostscript",  "ghostscript.txt"}, "GhostScript"},
+        {new List<string>{"\"-c \\\" \" + \"libreoffice --version\" + \" \\\"\"", "LibreOffice", "libreoffice.txt"}, "LibreOffice" }
+    };
+    public static void Setup()
     {
         Console.WriteLine("Running on Linux");
-        checkInstallGhostScript();
         checkInstallSiegfried();
+        foreach (var converter in converterArguments)
+        {
+            checkInstallConverter(converter.Key[0], converter.Key[1], converter.Key[2]);
+        }
     }
 
     /// <summary>
@@ -54,15 +63,10 @@ class LinuxSetup
         }
     }
 
-    /// <summary>
-    /// Checks if GhostScript is installed, if not, asks the user if they want to install it
-    /// </summary>
-    private static void checkInstallGhostScript()
-    {
-        //Check if GhostScript is installed
+    private static void checkInstallConverter(string arguments, string expectedOutput, string consoleMessage) {
         ProcessStartInfo startInfo = new ProcessStartInfo();
         startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = "-c \" " + "gs -version" + " \"";
+        startInfo.Arguments = arguments;
         startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
@@ -75,12 +79,11 @@ class LinuxSetup
         process.Start();
         process.WaitForExit();
         string output = process.StandardOutput.ReadToEnd();
-        if (!output.Contains("GPL Ghostscript"))
+        if (!output.Contains(expectedOutput))
         {
-            Console.WriteLine("GhostScript is not installed.");
-            Console.WriteLine("If you are on Ubuntu/Debian run: sudo apt install ghostscript");
-            Console.WriteLine("For other Linux distros see https://www.ghostscript.com/ for installation instructions.");
-        
+            string message = File.ReadAllText(consoleMessage);
+            Console.WriteLine(message);
+            //TODO: Remove converter from converters and continue program
         }
     }
 }
