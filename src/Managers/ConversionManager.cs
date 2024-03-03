@@ -1,17 +1,4 @@
 using System.Collections.Concurrent;
-using Org.BouncyCastle.Asn1;
-using System.IO;
-using System.Threading;
-using iText.Layout.Splitting;
-using System.Threading.Tasks.Sources;
-using Org.BouncyCastle.Asn1.Crmf;
-using System.Diagnostics;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Transactions;
-using SharpCompress;
-using System.Linq.Expressions;
 
 class FileToConvert
 {
@@ -136,7 +123,7 @@ public class ConversionManager
 	private void initMap()
 	{
         LibreOfficeConverter converter = new LibreOfficeConverter();
-        List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions.Keys);
+        List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions?.Keys);
 		string pdfA = "fmt/477";
 		string pdfPronom = OperatingSystem.IsLinux() ? "fmt/20" : "fmt/276";
 		foreach(FileInfo file in Files)
