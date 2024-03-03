@@ -95,6 +95,7 @@ class LinuxSetup
         }
         else if (LinuxDistro == "arch")
         {
+            Console.WriteLine("Installing Siegfried on Arch based distro");
             RunProcess(startInfo =>
             {
                startInfo.FileName = PathRunningProgram;
