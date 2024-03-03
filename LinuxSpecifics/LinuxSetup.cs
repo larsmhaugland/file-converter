@@ -49,6 +49,7 @@ class LinuxSetup
         process.StartInfo = startInfo;
         process.Start();
         process.WaitForExit();
+        process.Close();
 
         return process.StandardOutput.ReadToEnd();
     }
