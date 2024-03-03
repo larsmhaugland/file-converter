@@ -21,6 +21,7 @@ class LinuxSetup
     /// </summary>
     private static void BuildGhostScript() {
         ProcessStartInfo startInfo = new ProcessStartInfo();
+        Process process = new Process();
         string ghostScriptPath = "ghostpdl";
         string ghostScriptBuildCommand = "./autogen.sh && ./configure --prefix=$HOME/local && make && make install";
 
@@ -31,6 +32,11 @@ class LinuxSetup
         startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
+
+        process.StartInfo = startInfo;
+        process.Start();
+        process.WaitForExit();
+        process.Close();
     }
 
     /// <summary>
@@ -71,8 +77,9 @@ class LinuxSetup
 
                 //Check if GhostScript is installed
                 ProcessStartInfo startInfoRecheck = new ProcessStartInfo();
+                Process processRecheck = new Process();
 
-                process.StartInfo = startInfoRecheck;
+                processRecheck.StartInfo = startInfoRecheck;
                 startInfoRecheck.FileName = "/bin/bash";
                 startInfoRecheck.Arguments = "-c \" " + "gs --version" + " \"";
                 startInfoRecheck.RedirectStandardOutput = true;
@@ -81,9 +88,9 @@ class LinuxSetup
                 startInfoRecheck.UseShellExecute = false;
                 startInfoRecheck.RedirectStandardError = true;
                 startInfoRecheck.RedirectStandardOutput = true;
-                process.Start();
-                process.WaitForExit();
-                output = process.StandardOutput.ReadToEnd();
+                processRecheck.Start();
+                processRecheck.WaitForExit();
+                output = processRecheck.StandardOutput.ReadToEnd();
                 if (!output.Contains("GPL Ghostscript"))
                 {
                     Console.WriteLine("GhostScript installation failed, please install it manually.");
@@ -93,7 +100,9 @@ class LinuxSetup
                 {
                     Console.WriteLine("GhostScript installed successfully.");
                 }
+                processRecheck.Close();
             }
         }
+        process.Close();
     }
 }
