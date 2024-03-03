@@ -12,8 +12,8 @@ class LinuxSetup
 {
     static Dictionary<List<string>, string> converterArguments = new Dictionary<List<string>, string>()
     {
-        {new List<string> { "\"-c \\\" \" + \"gs -version\" + \" \\\"\"", "GPL Ghostscript",  "ghostscript.txt"}, "GhostScript"},
-        {new List<string>{"\"-c \\\" \" + \"libreoffice --version\" + \" \\\"\"", "LibreOffice", "libreoffice.txt"}, "LibreOffice" }
+        {new List<string> { "\"-c \\\" \" + \"gs -version\" + \" \\\"\"", "GPL Ghostscript",  "LinuxSpecifics\\ghostscript.txt"}, "GhostScript"},
+        {new List<string>{"\"-c \\\" \" + \"libreoffice --version\" + \" \\\"\"", "LibreOffice", "LinuxSpecifics\\libreoffice.txt"}, "LibreOffice" }
     };
     public static void Setup()
     {
@@ -46,7 +46,7 @@ class LinuxSetup
         process.Start();
         process.WaitForExit();
         string output = process.StandardOutput.ReadToEnd();
-        if (!output.Contains("Siegfried"))
+        if (!output.Contains("siegfried"))
         {
             Console.WriteLine("Siegfried is not installed. Do you want to install it? (Y/n)");
             string? r = Console.ReadLine();
