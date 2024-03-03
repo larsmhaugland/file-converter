@@ -43,6 +43,11 @@ class Program
 		//Only maximize and center the console window if the OS is Windows
 		
 		MaximizeAndCenterConsoleWindow();
+		if(!OperatingSystem.IsLinux())
+		{
+            Directory.SetCurrentDirectory("../../../");
+        }
+        else
 		if (OperatingSystem.IsLinux())
 		{
 			LinuxSetup.Setup();
