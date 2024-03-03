@@ -67,7 +67,7 @@ class LinuxSetup
     private static void checkInstallConverter(string arguments, string expectedOutput, string consoleMessage) {
         ProcessStartInfo startInfo = new ProcessStartInfo();
         startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = arguments;
+        startInfo.Arguments = $"{arguments} | cat {consoleMessage}";
         startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
@@ -82,8 +82,7 @@ class LinuxSetup
         string output = process.StandardOutput.ReadToEnd();
         if (!output.Contains(expectedOutput))
         {
-            string message = File.ReadAllText(consoleMessage);
-            Console.WriteLine(message);
+            Console.WriteLine(output);
             //TODO: Remove converter from converters and continue program
         }
     }
