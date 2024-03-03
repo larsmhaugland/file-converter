@@ -43,7 +43,7 @@ class Program
 		//Only maximize and center the console window if the OS is Windows
 		
 		MaximizeAndCenterConsoleWindow();
-		if (!OperatingSystem.IsLinux())
+		if (OperatingSystem.IsLinux())
 		{
 			LinuxSetup.Setup();
         }
