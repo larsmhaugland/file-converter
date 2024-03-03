@@ -45,7 +45,7 @@ class Program
 		MaximizeAndCenterConsoleWindow();
 		if (!OperatingSystem.IsLinux())
 		{
-            Directory.SetCurrentDirectory("../../../");
+			LinuxSetup.Setup();
         }
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
