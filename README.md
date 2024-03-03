@@ -62,7 +62,7 @@ dotnet build
 
 |OS| Dependencies | Needed for? |
 |---|---|---|
-|Linux| [autoconf](https://www.gnu.org/software/autoconf/) <br> [automake](https://www.gnu.org/software/automake/automake.html) <br> [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run GhostScript. <br><br> Needed to run program. |
+|Linux| [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) <br> LibreOffice | Needed to run program. <br> Needed to be able to run LibreOffice |
 | Windows | [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run program. |
 
 #### External libraries/software used
@@ -80,6 +80,16 @@ dotnet build
 
 ### Installation for Windows
 ### Installation for Linux
+
+**Downloading dependencies for Linux distributions**
+| Distro | Dependency | Download |
+|---|---|---|
+| Ubuntu/Debian | curl  <br> LibreOffice | ```sudo apt install curl``` <br>```sudo apt install libreoffice```|
+| Fedora/Red Hat | brew [^2] | ```sudo yum groupinstall 'Development Tools'``` <br> ```sudo yum install procps-ng curl file git```|
+
+> NOTE: Fedora/Red hat has not been tested yet! We're working on it
+
+[^2]:*Homebrew on Linux* URL: https://docs.brew.sh/Homebrew-on-Linux (visited on 3rd Mar. 2024)
 
 ## Usage
 Common usage (code block)
