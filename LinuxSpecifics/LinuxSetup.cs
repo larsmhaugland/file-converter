@@ -50,7 +50,8 @@ class LinuxSetup
         {
             Console.WriteLine("Siegfried is not installed. Do you want to install it? (Y/n)");
             string? r = Console.ReadLine();
-            if(r == "Y")
+            r = r?.ToUpper() ?? " ";
+            if (r == "Y")
             {
                 ProcessStartInfo startInfo2 = new ProcessStartInfo();
                 startInfo2.FileName = "/bin/bash";
