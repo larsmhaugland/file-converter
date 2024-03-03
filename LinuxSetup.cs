@@ -45,7 +45,7 @@ class LinuxSetup
             {
                 ProcessStartInfo startInfo2 = new ProcessStartInfo();
                 startInfo2.FileName = "/bin/bash";
-                startInfo2.Arguments = "-c \" curl -sL \"http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857\" | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg\r\necho \"deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main\" | sudo tee -a /etc/apt/sources.list.d/siegfried.list\r\nsudo apt-get update && sudo apt-get install siegfried";
+                startInfo2.Arguments = "-c \" " +  "su" + "curl -sL \"http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857\" | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg\r\necho \"deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main\" | sudo tee -a /etc/apt/sources.list.d/siegfried.list\r\nsudo apt-get update && sudo apt-get install siegfried" +"\"";
                 
                 Process process2 = new Process();
                 process2.StartInfo = startInfo2;
