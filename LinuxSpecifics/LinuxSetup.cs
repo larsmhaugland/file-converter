@@ -86,7 +86,7 @@ class LinuxSetup
         { 
             ProcessStartInfo startInfoArch = new ProcessStartInfo();
             startInfoArch.FileName = "/bin/bash";
-            startInfoArch.Arguments = $"-c \"git clone https://aur.archlinux.org/siegfried.git && cd siegfried && makepkg -si\"";
+            startInfoArch.Arguments = $"-c \"git clone https://aur.archlinux.org/siegfried.git siegfried-install && cd siegfried-install && makepkg -si\"";
             Process processArch = new Process();
             processArch.StartInfo = startInfoArch;
             processArch.Start();
