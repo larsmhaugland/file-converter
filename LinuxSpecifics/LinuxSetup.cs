@@ -48,7 +48,10 @@ class LinuxSetup
         string output = process.StandardOutput.ReadToEnd();
         if (!output.Contains("siegfried"))
         {
-            Console.WriteLine("Siegfried is not installed. Do you want to install it? (Y/n)");
+            Console.WriteLine("Siegfried is not installed. In order to install Siegfried your user must have sudo privileges.");
+            Console.WriteLine("For more info on Siegfried see: https://www.itforarchivists.com/siegfried/");
+            Console.WriteLine("Prompt for sudo password will appear after accepting the installation process.");
+            Console.WriteLine("Do you want to install it? (Y/n)");
             string? r = Console.ReadLine();
             r = r?.ToUpper() ?? " ";
             if (r == "Y")
@@ -60,6 +63,11 @@ class LinuxSetup
                 process2.StartInfo = startInfo2;
                 process2.Start();
                 process2.WaitForExit();
+            }
+            else 
+            {
+                Console.WriteLine("Siegfried is not installed. Without Siegfried the program cannot run properly. Exiting program.");
+                Environment.Exit(0);
             }
         }
     }
