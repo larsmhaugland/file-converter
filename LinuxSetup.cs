@@ -11,6 +11,7 @@ class LinuxSetup
    public static void Setup()
     {
         Directory.SetCurrentDirectory("../../../");
+        Console.WriteLine("Running on Linux");
         checkInstallGhostScript();
     }
 
@@ -52,6 +53,7 @@ class LinuxSetup
         process.Start();
         process.WaitForExit();
         string output = process.StandardOutput.ReadToEnd();
+        Console.WriteLine(output);
         if (!output.Contains("GPL Ghostscript"))
         {
             Console.WriteLine("GhostScript is not installed, would you like to install it? (y/n)");
