@@ -10,6 +10,10 @@ using iText.Kernel.Pdf;
 
 class LinuxSetup
 {
+    //Specific Linux distro
+    public static string LinuxDistro = GetLinuxDistro();
+
+    //Map for external converters to check if they are downloaded.
     static Dictionary<List<string>, string> converterArguments = new Dictionary<List<string>, string>()
     {
         {new List<string> { "\"-c \\\" \" + \"gs -version\" + \" \\\"\"", "GPL Ghostscript",  "LinuxSpecifics\\ghostscript.txt"}, "GhostScript"},
@@ -56,19 +60,37 @@ class LinuxSetup
             r = r?.ToUpper() ?? " ";
             if (r == "Y")
             {
-                ProcessStartInfo startInfo2 = new ProcessStartInfo();
-                startInfo2.FileName = "/bin/bash";
-                startInfo2.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
-                Process process2 = new Process();
-                process2.StartInfo = startInfo2;
-                process2.Start();
-                process2.WaitForExit();
+                InstallSiegfried();
             }
             else 
             {
                 Console.WriteLine("Siegfried is not installed. Without Siegfried the program cannot run properly. Exiting program.");
                 Environment.Exit(0);
             }
+        }
+    }
+
+    private static void InstallSiegfried()
+    {
+        if (LinuxDistro == "debian")
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "/bin/bash";
+            startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
+            Process process = new Process();
+            process.StartInfo = startInfo;
+            process.Start();
+            process.WaitForExit();
+        }
+        else if (LinuxDistro == "arch") 
+        { 
+            ProcessStartInfo startInfoArch = new ProcessStartInfo();
+            startInfoArch.FileName = "/bin/bash";
+            startInfoArch.Arguments = $"git clone https://aur.archlinux.org/siegfried.git && cd siegfried && makepkg -si";
+            Process processArch = new Process();
+            processArch.StartInfo = startInfoArch;
+            processArch.Start();
+            processArch.WaitForExit();
         }
     }
 
@@ -93,5 +115,38 @@ class LinuxSetup
             Console.WriteLine(output);
             //TODO: Remove converter from converters and continue program
         }
+    }
+
+   private static string GetLinuxDistro() {
+        string distro = "";
+        //Check which distro the user is running
+        ProcessStartInfo startInfo = new ProcessStartInfo();
+        startInfo.FileName = "/bin/bash";
+        startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
+        startInfo.RedirectStandardOutput = true;
+        startInfo.UseShellExecute = false;
+        startInfo.CreateNoWindow = true;
+        startInfo.UseShellExecute = false;
+        startInfo.RedirectStandardError = true;
+        startInfo.RedirectStandardOutput = true;
+        Process process = new Process();
+        process.StartInfo = startInfo;
+        process.Start();
+        process.WaitForExit();
+        string output = process.StandardOutput.ReadToEnd();
+           if (output.Contains("ubuntu") || output.Contains("debian"))
+        {
+            distro = "debian";
+        }
+        else if (output.Contains("fedora"))
+        {
+            distro = "fedora";
+        }
+        else if (output.Contains("arch"))
+        {
+            distro = "arch";
+        } 
+
+        return distro;
     }
 }
