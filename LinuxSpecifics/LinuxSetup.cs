@@ -145,14 +145,17 @@ class LinuxSetup
         string output = process.StandardOutput.ReadToEnd();
            if (output.Contains("ubuntu") || output.Contains("debian"))
         {
+            Console.WriteLine("Running on Debian based distro");
             distro = "debian";
         }
         else if (output.Contains("fedora"))
         {
+            Console.WriteLine("Running on Fedora based distro");
             distro = "fedora";
         }
         else if (output.Contains("arch"))
         {
+            Console.WriteLine("Running on Arch based distro");
             distro = "arch";
         } 
 
