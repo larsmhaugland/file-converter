@@ -170,7 +170,7 @@ class LinuxSetup
         string output = RunProcess(startInfo =>
         {
             startInfo.FileName = PathRunningProgram;
-            startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
+            startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \""; ;
         });
 
         switch (output)
