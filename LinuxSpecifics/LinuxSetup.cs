@@ -99,8 +99,9 @@ class LinuxSetup
             RunProcess(startInfo =>
             {
                startInfo.FileName = PathRunningProgram;
-                startInfo.Arguments = $"-c \"go install github.com/richardlehane/siegfried/cmd/sf@latest && sf -update\""; 
+                startInfo.Arguments = $"-c \"git clone https://github.com/richardlehane/siegfried.git siegfried-install | cd siegfried-install | go build github.com/richardlehane/siegfried/cmd/sf | sf -update \""; 
             });
+            Console.WriteLine("Installed Siegfried on Arch based distro");
         }
     }
 
