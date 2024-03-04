@@ -118,9 +118,9 @@ class Settings
 						string? extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
 						string? pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
 						string? innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
-						if (!String.IsNullOrEmpty(innerDefault))
+						if (String.IsNullOrEmpty(innerDefault))
 						{
-							defaultType = innerDefault;
+                            innerDefault = defaultType;
 						}
 
 						// Remove whitespace and split pronoms string by commas into a list of strings
@@ -133,7 +133,7 @@ class Settings
 						SettingsData settings = new SettingsData
 						{
 							PronomsList = pronomsList,
-							DefaultType = defaultType
+							DefaultType = innerDefault
 						};
 						if (settings.PronomsList.Count > 0 && !String.IsNullOrEmpty(defaultType))
 						{
