@@ -96,6 +96,7 @@ class LinuxSetup
     private static void InstallSiegfried()
     {
         string checkDependencies;
+        string output;
 
             switch(LinuxDistro)
             {
@@ -108,12 +109,14 @@ class LinuxSetup
 
                 if (checkDependencies.Contains(""))
                 {
-                   RunProcess(startInfo =>
+                   output = RunProcess(startInfo =>
                     {
                         startInfo.FileName = PathRunningProgram;
                         startInfo.Arguments = "-c \" " + "sf -version" + " \"";
                         startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
-                });}
+                    });
+                    Console.WriteLine(output);
+                }
                 else
                 {
                     Console.WriteLine("Siegfried needs curl to install properly. Please install curl and try again.");
@@ -130,11 +133,13 @@ class LinuxSetup
                 });
                 if (checkDependencies.Contains("brew config"))
                 {
-                    RunProcess(startInfo =>
+                   output = RunProcess(startInfo =>
                     {
                         startInfo.FileName = PathRunningProgram;
                         startInfo.Arguments = $"-c \"brew install richardlehane/digipres/siegfried  \"";
-                   });}
+                   });
+                    Console.WriteLine(output);
+                }
                 else
                 {
                     Console.WriteLine("Siegfried needs homebrew to install properly. Please install homebrew and try again.");
