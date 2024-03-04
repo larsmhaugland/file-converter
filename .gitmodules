@@ -1,6 +1,3 @@
 [submodule "GhostscriptBinaryFiles"]
 	path = GhostscriptBinaryFiles
 	url = https://github.com/seigmenn/GhostscriptBinaryFiles.git
-[submodule "ghostpdl"]
-	path = ghostpdl
-	url = https://github.com/ArtifexSoftware/ghostpdl.git
