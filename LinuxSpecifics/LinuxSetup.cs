@@ -39,7 +39,7 @@ class LinuxSetup
     private static string RunProcess( Action<ProcessStartInfo> configure) 
     {
         ProcessStartInfo startInfo = new ProcessStartInfo();
-       // startInfo.RedirectStandardOutput = true;
+        startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
         startInfo.RedirectStandardError = true;
@@ -69,7 +69,6 @@ class LinuxSetup
         string output = RunProcess(startInfo =>
         { startInfo.FileName = PathRunningProgram;
            startInfo.Arguments = "-c \" " + "sf -version" + " \"";
-            startInfo.RedirectStandardOutput = true;
         });
 
         if (!output.Contains("siegfried"))
@@ -114,7 +113,6 @@ class LinuxSetup
                    output = RunProcess(startInfo =>
                     {
                         startInfo.FileName = PathRunningProgram;
-                        startInfo.Arguments = "-c \" " + "sf -version" + " \"";
                         startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
                     });
                     Console.WriteLine(output);
@@ -139,7 +137,6 @@ class LinuxSetup
                     {
                         startInfo.FileName = PathRunningProgram;
                         startInfo.Arguments = $"-c \"brew install richardlehane/digipres/siegfried  \"";
-                        startInfo.RedirectStandardOutput = false;
                     });
                 }
                 else
@@ -163,7 +160,6 @@ class LinuxSetup
         {
             startInfo.FileName = PathRunningProgram;
             startInfo.Arguments = $"{arguments} | cat {consoleMessage}";
-            startInfo.RedirectStandardOutput = true;
         });
         if (!output.Contains(expectedOutput))
         {
@@ -179,7 +175,6 @@ class LinuxSetup
         {
             startInfo.FileName = "/bin/bash";
             startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
-            startInfo.RedirectStandardOutput = true;
         });
 
         switch (output)
