@@ -169,7 +169,7 @@ class LinuxSetup
         //Check which distro the user is running
         string output = RunProcess(startInfo =>
         {
-            startInfo.FileName = PathRunningProgram;
+            startInfo.FileName = "/bin/bash";
             startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \""; ;
         });
 
