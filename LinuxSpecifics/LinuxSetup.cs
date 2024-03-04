@@ -68,7 +68,9 @@ class LinuxSetup
     {
         string output = RunProcess(startInfo =>
         { startInfo.FileName = PathRunningProgram;
-           startInfo.Arguments = "-c \" " + "sf -version" + " \"";});
+           startInfo.Arguments = "-c \" " + "sf -version" + " \"";
+            startInfo.RedirectStandardOutput = true;
+        });
 
         if (!output.Contains("siegfried"))
         {
@@ -161,6 +163,7 @@ class LinuxSetup
         {
             startInfo.FileName = PathRunningProgram;
             startInfo.Arguments = $"{arguments} | cat {consoleMessage}";
+            startInfo.RedirectStandardOutput = true;
         });
         if (!output.Contains(expectedOutput))
         {
@@ -175,7 +178,8 @@ class LinuxSetup
         string output = RunProcess(startInfo =>
         {
             startInfo.FileName = "/bin/bash";
-            startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \""; ;
+            startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
+            startInfo.RedirectStandardOutput = true;
         });
 
         switch (output)
