@@ -118,9 +118,9 @@ class LinuxSetup
                 checkDependencies = RunProcess(startInfo =>
                 {
                     startInfo.FileName = PathRunningProgram;
-                    startInfo.Arguments = "-c \" " + "brew -version" + " \"";
+                    startInfo.Arguments = "-c \" " + "brew help" + " \"";
                 });
-                if (checkDependencies.Contains("Homebrew"))
+                if (checkDependencies.Contains("brew config"))
                 {
                     RunProcess(startInfo =>
                     {
