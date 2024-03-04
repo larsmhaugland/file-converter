@@ -49,7 +49,6 @@ class LinuxSetup
         process.StartInfo = startInfo;
         process.Start();
         process.WaitForExit();
-        process.Close();
 
         return process.StandardOutput.ReadToEnd();
     }
@@ -100,7 +99,7 @@ class LinuxSetup
             RunProcess(startInfo =>
             {
                startInfo.FileName = PathRunningProgram;
-                startInfo.Arguments = $"-c \"go install github.com/richardlehane/siegfried/cmd/sf@latest\r\n\r\nsf -update\""; 
+                startInfo.Arguments = $"-c \"go install github.com/richardlehane/siegfried/cmd/sf@latest && sf -update\""; 
             });
         }
     }
