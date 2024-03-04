@@ -1,12 +1,4 @@
-﻿using iText.Kernel.Pdf;
-using SharpCompress.Common;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 /// <summary>
 /// Libreoffice supports the following conversions for both Linux and Windows:
@@ -18,17 +10,27 @@ using System.Threading.Tasks;
 /// - RTF to PDF
 /// - OpenDocument (ODT, ODS, ODP) to PDF
 /// 
+/// - Format it converts to:
+/// PDF - fmt/276 (Windows), fmt/20 (Linux)  
+/// ODT - fmt/1756
+/// 
+/// 
 /// </summary>
 public class LibreOfficeConverter : Converter
 {
     Logger log = Logger.Instance;
     private static readonly object locker = new object();
+    OperatingSystem currentOS;
+    /// <summary>
+    /// Constructor setting important properties for the class.
+    /// </summary>
     public LibreOfficeConverter()
     {
         Name = "Libreoffice";
         Version = getLibreOfficeVersion();
         SupportedConversions = getListOfSupportedConvesions();
         SupportedOperatingSystems = getSupportedOS();
+        currentOS = Environment.OSVersion;
     }
 
     private static string getLibreOfficeVersion()
@@ -62,6 +64,10 @@ public class LibreOfficeConverter : Converter
         return version;
     }
 
+    /// <summary>
+    /// Gets the supported operating system for the converter
+    /// </summary>
+    /// <returns>Returns a list of string switht eh suported operating systems</returns>
     public override List<string> getSupportedOS()
     {
         var supportedOS = new List<string>();
@@ -82,27 +88,31 @@ public class LibreOfficeConverter : Converter
         string inputFolder = GlobalVariables.parsedOptions.Input;
         string outputFolder = GlobalVariables.parsedOptions.Output;
 
-        string outputDir = Directory.GetParent(file.FilePath.Replace(inputFolder, outputFolder)).ToString();
-        string inputDirectory = Directory.GetParent(file.FilePath).ToString();
+        string outputDir = Directory.GetParent(file.FilePath.Replace(inputFolder, outputFolder))?.ToString() ?? "";
+        string inputDirectory = Directory.GetParent(file.FilePath)?.ToString() ?? "";
         string inputFilePath = Path.Combine(inputDirectory, Path.GetFileName(file.FilePath));
-        string executableName = "soffice.exe";
+        string executableName = currentOS.Platform == PlatformID.Unix ? "soffice" : "soffice.exe";
 
         bool sofficePathWindows = checkSofficePathWindows(executableName);
-        bool sofficePathLinux = checkSofficePathLinux("soffice");
+        bool sofficePathLinux = checkSofficePathLinux(executableName);
+
+        string targetFormat = GetConversionExtension(pronom);
 
         // Depending on operating system run Libreoffice with different executable path
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (executableName == "soffice.exe")
         {
+            // Libreoffice will not allow several threads running and half of the documents will not
+            // be converted without the lock
             lock (locker)
             {
-                RunOfficeToPdfConversion(inputFilePath, outputDir, pronom, sofficePathWindows);
+                RunOfficeToPdfConversion(inputFilePath, outputDir, pronom, sofficePathWindows, targetFormat);
             }
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (executableName == "soffice")
         {
             lock (locker)
             {
-                RunOfficeToPdfConversion(inputFilePath, outputDir, pronom, sofficePathLinux);
+                RunOfficeToPdfConversion(inputFilePath, outputDir, pronom, sofficePathLinux, targetFormat);
             }
         }
         else
@@ -151,7 +161,7 @@ public class LibreOfficeConverter : Converter
             supportedConversions[XLSMPronom].AddRange(ODSPronoms);
             supportedConversions[XLSMPronom].AddRange(PDFPronoms);
         }
-        // XLTX to XLSX. ODS and PDf
+        // XLTX to XLSX, ODS and PDf
         foreach (string XLTXPronom in XLTXPronoms)
         {
             if (!supportedConversions.ContainsKey(XLTXPronom))
@@ -290,26 +300,28 @@ public class LibreOfficeConverter : Converter
             supportedConversions[rtfPronom].AddRange(DOCXPronoms);
             supportedConversions[rtfPronom].AddRange(ODTPronoms);
         }
+        // CSV to PDF
         foreach (string csvPronom in CSVPronoms)
         {
             if (!supportedConversions.ContainsKey(csvPronom))
             {
                 supportedConversions[csvPronom] = new List<string>();
-                supportedConversions[csvPronom].AddRange(PDFPronoms);
             }
+            supportedConversions[csvPronom].AddRange(PDFPronoms);
         }
 
         return supportedConversions;
     }
 
     /// <summary>
-    /// Converts and office file 
+    /// Converts and office file to PDF
     /// </summary>
     /// <param name="sourceDoc"></param>
     /// <param name="destinationPdf"></param>
     /// <param name="pronom"></param>
     /// <param name="sofficePath"></param>
-    void RunOfficeToPdfConversion(string sourceDoc, string destinationPdf, string pronom, bool sofficePath)
+    void RunOfficeToPdfConversion(string sourceDoc, string destinationPdf, string pronom, 
+                                      bool sofficePath, string targetFormat)
     {
         try
         {
@@ -320,7 +332,7 @@ public class LibreOfficeConverter : Converter
                 process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
 
                 string sofficeCommand = GetSofficePath(sofficePath);
-                string arguments = GetLibreOfficeCommand(destinationPdf, sourceDoc, sofficeCommand);
+                string arguments = GetLibreOfficeCommand(destinationPdf, sourceDoc, sofficeCommand, targetFormat);
                 process.StartInfo.Arguments = arguments;
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
@@ -344,7 +356,7 @@ public class LibreOfficeConverter : Converter
                 }
 
                 // Get the new filename and check if the document was converted correctly
-                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
+                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
                 bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
                 if (!converted)
                 {
@@ -363,6 +375,61 @@ public class LibreOfficeConverter : Converter
             throw;
         }
     }
+
+    /// <summary>
+    /// Checks if the folder with the soffice.exe executable exists in the PATH.
+    /// </summary>
+    /// <param name="executableName">Name of the executable to have its folder in the PATH</param>
+    /// <returns>Bool indicating if the directory containing the executable was found </returns>
+    static bool checkSofficePathWindows(string executableName)
+    {
+
+        string pathVariable = Environment.GetEnvironmentVariable("PATH") ?? ""; // Get the environment variables as a string
+        string[] paths = pathVariable.Split(Path.PathSeparator);          // Split them into individual entries
+
+        foreach (string path in paths)                                    // Go through and check if found  
+        {
+            string fullPath = Path.Combine(path, executableName);
+            if (File.Exists(fullPath))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    /// <summary>
+    /// Same function as for windows, but with small changes to facilitate for linux users
+    /// </summary>
+    /// <param name="executableName">Name of the executable to have its folder in the PATH</param>
+    /// <returns></returns>
+    static bool checkSofficePathLinux(string executableName)
+    {
+        string pathVariable = Environment.GetEnvironmentVariable("PATH") ?? "";
+        char pathSeparator = Path.PathSeparator;
+
+        // Use : as the separator on Linux
+        if (Environment.OSVersion.Platform == PlatformID.Unix)
+        {
+            pathSeparator = ':';
+        }
+
+        string[] paths = pathVariable.Split(pathSeparator);
+
+        foreach (string path in paths)
+        {
+            string fullPath = Path.Combine(path, executableName);
+
+            // Linux is case-sensitive, so check for case-insensitive existence
+            if (Directory.Exists(fullPath))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /// <summary>
     /// Get the correct place where the process should be run depending on operating system
@@ -391,70 +458,67 @@ public class LibreOfficeConverter : Converter
     /// <param name="sourceDoc"> Path to the original document</param>
     /// <param name="sofficeCommand"> Either path to the executable or just 'soffice'</param>
     /// <returns></returns>
-    static string GetLibreOfficeCommand(string destinationPDF, string sourceDoc, string sofficeCommand)
+    static string GetLibreOfficeCommand(string destinationPDF, string sourceDoc, string sofficeCommand, string targetFormat)
     {
-
-        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to pdf --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPDF}"" ""{sourceDoc}""";
+        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to {targetFormat} --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to {targetFormat} --outdir ""{destinationPDF}"" ""{sourceDoc}""";
     }
 
-    /// <summary>
-    /// Checks if the folder with the soffice.exe executable exists in the PATH.
-    /// </summary>
-    /// <param name="executableName">Name of the executable to have its folder in the PATH</param>
-    /// <returns>Bool indicating if the directory containing the executable was found </returns>
-    static bool checkSofficePathWindows(string executableName)
+    static string GetConversionExtension(string targetPronom)
     {
-
-        string pathVariable = Environment.GetEnvironmentVariable("PATH"); // Get the environment variables as a string
-        string[] paths = pathVariable.Split(Path.PathSeparator);          // Split them into individual entries
-
-        foreach (string path in paths)                                    // Go through and check if found  
+        string extensionNameForConversion;
+        switch (targetPronom)
         {
-            string fullPath = Path.Combine(path, executableName);
-            if (File.Exists(fullPath))
-            {
-                return true;
-            }
+            case "fmt/276":
+                extensionNameForConversion = "pdf";
+                break;
+            case "fmt/214":
+            case "fmt/1828":
+                extensionNameForConversion = "xlsx";
+                break;
+            case "fmt/1755":
+            case "fmt/137":
+            case "fmt/294":
+            case "fmt/295":
+                extensionNameForConversion = "ods";
+                break;
+            case "x-fmt/3":
+            case "fmt/1756":
+            case "fmt/136":
+            case "fmt/290":
+            case "fmt/291":
+                extensionNameForConversion = "odt";
+                break;
+            case "fmt/473":
+            case "fmt/1827":
+            case "fmt/412":
+                extensionNameForConversion = "docx";
+                break;
+            case "fmt/215":
+            case "fmt/1829":
+            case "fmt/494":
+                extensionNameForConversion = "pptx";
+                break;
+            case "fmt/293":
+            case "fmt/292":
+            case "fmt/138":
+            case "fmt/1754":
+                extensionNameForConversion = "odp";
+                break;
+            default:
+                extensionNameForConversion = "pdf";
+                break;
         }
 
-        return false;
+
+        return extensionNameForConversion;
     }
-    /// <summary>
-    /// Same function as for windows, but with small changes to facilitate for linux users
-    /// </summary>
-    /// <param name="executableName">Name of the executable to have its folder in the PATH</param>
-    /// <returns></returns>
-    static bool checkSofficePathLinux(string executableName)
-    {
-        string pathVariable = Environment.GetEnvironmentVariable("PATH");
-        char pathSeparator = Path.PathSeparator;
 
-        // Use : as the separator on Linux
-        if (Environment.OSVersion.Platform == PlatformID.Unix)
-        {
-            pathSeparator = ':';
-        }
-
-        string[] paths = pathVariable.Split(pathSeparator);
-
-        foreach (string path in paths)
-        {
-            string fullPath = Path.Combine(path, executableName);
-
-            // Linux is case-sensitive, so check for case-insensitive existence
-            if (Directory.Exists(fullPath))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     List<string> PDFPronoms =
     [
-        "fmt/276",
-        "fmt/477", // PDF 2-A
+        "fmt/276", // 1.7
+        "fmt/20",  // 1.6
+        "fmt/477", // PDF 2-B
     ];
     List<string> DOCPronoms =
     [
@@ -574,6 +638,7 @@ public class LibreOfficeConverter : Converter
         "fmt/1756",
         "fmt/136",
         "fmt/290",
+
         "fmt/291",
     ];
     List<string> ODSPronoms =

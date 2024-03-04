@@ -5,6 +5,20 @@
 ![dotnet-badge](https://github.com/larsmhaugland/file-converter/actions/workflows/dotnet.yml/badge.svg?event=push)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
+Unhandled exception. System.TypeInitializationException: The type initializer for 'LinuxSetup' threw an exception.
+ ---> System.InvalidOperationException: Cannot start process because a file name has not been provided.
+   at System.Diagnostics.Process.Start()
+   at LinuxSetup.RunProcess(Action`1 configure) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 50
+   at LinuxSetup.GetLinuxDistro() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 162
+   at LinuxSetup..cctor() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 14
+   --- End of inner exception stack trace ---
+   at LinuxSetup.<>c.<checkInstallSiegfried>b__5_0(ProcessStartInfo startInfo) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 62
+   at LinuxSetup.RunProcess(Action`1 configure) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 46
+   at LinuxSetup.checkInstallSiegfried() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 61
+   at LinuxSetup.Setup() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 26
+   at Program.Main(String[] args) in /home/aurora/file-converter/Main.cs:line 53
+
+
 A module-based .NET application that converts files and generates documentation for archiving.
 
 This application provides a framework for different conversion libraries/software to work together. It aims to promote a comprehensive open-source solution for file conversion, as opposed to the many paid options, which allows for multi-step conversion between different external libraries. 
@@ -23,6 +37,7 @@ This application provides a framework for different conversion libraries/softwar
   - [Documentation and logging](#documentation-and-logging)
   - [Adding a new converter](#adding-a-new-converter)
   - [Adding a new conversion path (Multistep conversion)](#adding-a-new-conversion-path-multistep-conversion)
+- [Use cases](#use-cases)
 - [Acknowledgments](#acknowledgments)
 - [Contributing](#contributing)
 - [Licensing](#licensing)
@@ -57,6 +72,13 @@ dotnet build
 >```
 
 ### Dependencies
+> NOTE: For dependencies for specific Linux distributions please see [Installation for Linux](#installation-for-linux)
+
+|OS| Dependencies | Needed for? |
+|---|---|---|
+|Linux| [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) <br> LibreOffice | Needed to run program. <br> Needed to be able to run LibreOffice |
+| Windows | [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run program. |
+
 #### External libraries/software used
 **Libraries**
 - [iText7](https://github.com/itext/itext-dotnet) under the GNU Affero General Public License v3.0.
@@ -72,6 +94,16 @@ dotnet build
 
 ### Installation for Windows
 ### Installation for Linux
+
+**Downloading dependencies for Linux distributions**
+| Distro | Dependency | Download |
+|---|---|---|
+| Ubuntu/Debian | curl  <br> LibreOffice | ```sudo apt install curl``` <br>```sudo apt install libreoffice```|
+| Fedora/Red Hat | brew [^2] | ```sudo yum groupinstall 'Development Tools'``` <br> ```sudo yum install procps-ng curl file git```|
+
+> NOTE: Fedora/Red hat has not been tested yet! We're working on it
+
+[^2]:*Homebrew on Linux* URL: https://docs.brew.sh/Homebrew-on-Linux (visited on 3rd Mar. 2024)
 
 ## Usage
 Common usage (code block)
@@ -281,6 +313,26 @@ foreach (string pronom in ListOfPronoms)
 	}}
 ```
 ```pronom``` is the pronom you want to convert from, while ```otherpronom``` is the pronom you want to convert to. ```ConversionMap``` works as a route so any ```helppronom``` is a stepping stone in that route from ```pronom``` to ```otherpronom```. You can add as many stepping stones as you want but they have to be added in the correct order from left to right.
+
+## Use cases
+Here are the use cases, please reflect and write something down for each use case about how understandable the README/source code was and how manageable it was to do the task.
+
+Use case tasks:
++ Add a new conversion path route that converts a document from Word to PDF to PDF-A.
++ Change the settings, using the ```settings.xml``` so that Word documents get converted to PDF-A.
++ Change the settings, using the GUI, so that Word documents get converted to PDF-A.
++ Run the program in CLI with the proper options to specify the input and output directory.
++ Try to combine a set of images into one PDF.
+
+Questions regarding use cases:
++ Were there any tasks you weren't able to complete? Was it because of a lack of understanding or due to a bug in the program?
++ Were there any tasks that you feel could be simplified?
+
+Questions regarding README:
++ Was it clear how to download, install and build the program?
++ Did you encounter any instructions in the README that weren't correct?
++ Were there any sections you found vague/unhelpful?
++ Are there some sections you would have liked that weren't here?
 
 ## Acknowledgments
 Acknowledge all externals. Acknowledge supervisor + archive.
