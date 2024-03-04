@@ -130,8 +130,8 @@ public class ConversionManager
 		{
 			if (Settings.GetTargetPronom(file) == pdfA && supportedConversionsLibreOffice.Contains(file.OriginalPronom))
 			{
-                ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), [pdfPronom, pdfA]);
-            }
+				ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), [pdfPronom, pdfA]);
+			}
 		}
     }
 

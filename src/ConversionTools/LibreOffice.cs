@@ -10,6 +10,11 @@
 /// - RTF to PDF
 /// - OpenDocument (ODT, ODS, ODP) to PDF
 /// 
+/// - Format it converts to:
+/// PDF - fmt/276 (Windows), fmt/20 (Linux)  
+/// ODT - fmt/1756
+/// 
+/// 
 /// </summary>
 public class LibreOfficeConverter : Converter
 {
@@ -352,7 +357,7 @@ public class LibreOfficeConverter : Converter
                 }
 
                 // Get the new filename and check if the document was converted correctly
-                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + ".pdf");
+                string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
                 bool converted = CheckConversionStatus(sourceDoc, newFileName, pronom);
                 if (!converted)
                 {
@@ -456,7 +461,7 @@ public class LibreOfficeConverter : Converter
     /// <returns></returns>
     static string GetLibreOfficeCommand(string destinationPDF, string sourceDoc, string sofficeCommand, string targetFormat)
     {
-        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to {targetFormat} --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to pdf --outdir ""{destinationPDF}"" ""{sourceDoc}""";
+        return Environment.OSVersion.Platform == PlatformID.Unix ? $@"-c ""soffice --headless --convert-to {targetFormat} --outdir '{destinationPDF}' '{sourceDoc}'""" : $@"/C {sofficeCommand} --headless --convert-to {targetFormat} --outdir ""{destinationPDF}"" ""{sourceDoc}""";
     }
 
     static string GetConversionExtension(string targetPronom)
@@ -634,6 +639,7 @@ public class LibreOfficeConverter : Converter
         "fmt/1756",
         "fmt/136",
         "fmt/290",
+
         "fmt/291",
     ];
     List<string> ODSPronoms =

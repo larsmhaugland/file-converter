@@ -6,6 +6,10 @@
   <MaxThreads>8</MaxThreads>
   <ChecksumHashing>SHA256</ChecksumHashing>
   <Timeout>7</Timeout>
+	<!-- When converting to XLSX only fmt/214 is supported 
+         When converting to ODS only fmt/1755 is supported
+		 When converting to PDF only fmt/477 is supported for Windows and fmt/20 for Linux
+	-->
   <FileClass>
     <ClassName>EXCEL</ClassName>
     <Default>fmt/477</Default>
@@ -17,7 +21,7 @@
     <FileTypes>
       <Filename>xls</Filename>
       <Pronoms>fmt/55, fmt/56, fmt/57, fmt/61, fmt/62, fmt/59</Pronoms>
-      <Default />
+      <Default>fmt/1755</Default>
     </FileTypes>
     <FileTypes>
       <Filename>xlsm</Filename>
@@ -27,7 +31,7 @@
     <FileTypes>
       <Filename>xlsx</Filename>
       <Pronoms>fmt/214, fmt/1828</Pronoms>
-      <Default />
+      <Default>fmt/1755</Default>
     </FileTypes>
   </FileClass>
   <FileClass>
@@ -58,23 +62,28 @@
       <Default>fmt/14</Default>
     </FileTypes>
   </FileClass>
-  <FileClass>
+  <!--   When converting to XLSX only fmt/214 is supported 
+	     When converting to DOCX only fmt/412 is supported
+		 When converting to PPTX only fmt/215 is supported
+		 When converting to PDF only fmt/477 is supported for Windows and fmt/20 for Linux
+	-->
+	<FileClass>
     <ClassName>Open Document</ClassName>
     <Default>fmt/477</Default>
     <FileTypes>
       <Filename>ODP</Filename>
       <Pronoms>fmt/1754, fmt/138, fmt/292, fmt/293</Pronoms>
-      <Default />
+      <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>ODS</Filename>
       <Pronoms>fmt/1755, fmt/137, fmt/294, fmt/295</Pronoms>
-      <Default />
+	  <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>ODT</Filename>
       <Pronoms>x-fmt/3, fmt/1756, fmt/136, fmt/290, fmt/291</Pronoms>
-      <Default />
+	  <Default></Default>
     </FileTypes>
   </FileClass>
   <FileClass>
@@ -95,13 +104,17 @@
       <Default />
     </FileTypes>
   </FileClass>
-  <FileClass>
+	<!--   When converting to PPTX only fmt/215 is supported 
+	       When converting to ODP only fmt/1754 is supported
+		   When converting to PDF only fmt/477 is supported for Windows and fmt/20 for Linux
+	    -->
+	<FileClass>
     <ClassName>PowerPoint</ClassName>
     <Default>fmt/477</Default>
     <FileTypes>
       <Filename>ppt</Filename>
       <Pronoms>fmt/1537, fmt/1866, fmt/181, fmt/1867, fmt/179, fmt/1747, fmt/1748, x-fmt/88, fmt/125, fmt/126, </Pronoms>
-      <Default />
+      <Default>fmt/1754</Default>
     </FileTypes>
     <FileTypes>
       <Filename>pptm</Filename>
@@ -123,23 +136,27 @@
       <Default />
     </FileTypes>
   </FileClass>
-  <FileClass>
-    <ClassName>Word</ClassName>
+	<!-- When converting to ODT only fmt/1756 is supported 
+	     When converting to DOCX only fmt/412 is supported
+		 When converting to PDF only fmt/477 is supported for Windows and fmt/20 for Linux
+	-->
+	<FileClass>
+    <ClassName>Word</ClassName> 
     <Default>fmt/477</Default>
     <FileTypes>
       <Filename>doc</Filename>
       <Pronoms>x-fmt/329, fmt/609, fmt/39, x-fmt/274, x-fmt/275, x-fmt/276, fmt/1688, fmt/37, fmt/38, fmt/1282, fmt/1283, x-fmt/131, x-fmt/42, x-fmt/43, fmt/40, x-fmt/44, x-fmt/393, x-fmt/394, fmt/892</Pronoms>
-      <Default />
+      <Default>fmt/412</Default>
     </FileTypes>
     <FileTypes>
       <Filename>docm</Filename>
       <Pronoms>fmt/523</Pronoms>
-      <Default />
+	  <Default> </Default>
     </FileTypes>
     <FileTypes>
       <Filename>docx</Filename>
       <Pronoms>fmt/473, fmt/1827, fmt/412</Pronoms>
-      <Default />
+	  <Default>fmt/1756</Default>
     </FileTypes>
     <FileTypes>
       <Filename>dot</Filename>
