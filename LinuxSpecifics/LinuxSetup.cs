@@ -167,15 +167,15 @@ class LinuxSetup
 
         switch (output)
         {
-            case var o when o.Contains("ubuntu") || o.Contains("debian"):
+            case var o when o.Contains("Ubuntu") || o.Contains("Debian"):
                 Console.WriteLine("Running on Debian based distro");
                 distro = "debian";
                 break;
-            case var o when o.Contains("fedora"):
+            case var o when o.Contains("Fedora"):
                 Console.WriteLine("Running on Fedora based distro");
                 distro = "fedora";
                 break;
-            case var o when o.Contains("arch"):
+            case var o when o.Contains("Arch"):
                 Console.WriteLine("Running on Arch based distro");
                 distro = "arch";
                 break;
