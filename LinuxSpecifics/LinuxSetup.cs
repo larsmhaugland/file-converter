@@ -82,45 +82,73 @@ class LinuxSetup
         }
     }
 
+    /// <summary>
+    /// Install siegfried based on the linux distro
+    /// </summary>
     private static void InstallSiegfried()
     {
-        if (LinuxDistro == "debian")
-        {
-            RunProcess(startInfo =>
-             {
-                 startInfo.FileName = PathRunningProgram;
-                 startInfo.Arguments = "-c \" " + "sf -version" + " \"";
-                 startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
-             });
-        }
-        else if (LinuxDistro == "arch")
-        {
-            Console.WriteLine("Installing Siegfried on Arch based distro");
-            RunProcess(startInfo =>
+        string checkDependencies;
+
+            switch(LinuxDistro)
             {
-               startInfo.FileName = PathRunningProgram;
-                startInfo.Arguments = $"-c \"git clone https://github.com/richardlehane/siegfried.git siegfried-install | cd siegfried-install | go build github.com/richardlehane/siegfried/cmd/sf | sf -update \""; 
-            });
-            Console.WriteLine("Installed Siegfried on Arch based distro");
-        }
+            case "debian":
+                  checkDependencies = RunProcess(startInfo =>
+                  {
+                      startInfo.FileName = PathRunningProgram;
+                      startInfo.Arguments = "-c \" " + "curl" + " \"";
+                  });
+
+                if (checkDependencies.Contains(""))
+                {
+                   RunProcess(startInfo =>
+                    {
+                        startInfo.FileName = PathRunningProgram;
+                        startInfo.Arguments = "-c \" " + "sf -version" + " \"";
+                        startInfo.Arguments = $"-c \"curl -sL 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x20F802FE798E6857' | gpg --dearmor | sudo tee /usr/share/keyrings/siegfried-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/siegfried-archive-keyring.gpg] https://www.itforarchivists.com/ buster main' | sudo tee -a /etc/apt/sources.list.d/siegfried.list && sudo apt-get update && sudo apt-get install siegfried\"";
+                });}
+                else
+                {
+                    Console.WriteLine("Siegfried needs curl to install properly. Please install curl and try again.");
+                    Environment.Exit(0);
+                }
+               break;
+            case "fedora":
+                break;
+            case "arch":
+                checkDependencies = RunProcess(startInfo =>
+                {
+                    startInfo.FileName = PathRunningProgram;
+                    startInfo.Arguments = "-c \" " + "brew -version" + " \"";
+                });
+                if (checkDependencies.Contains("Homebrew"))
+                {
+                    RunProcess(startInfo =>
+                    {
+                        startInfo.FileName = PathRunningProgram;
+                        startInfo.Arguments = $"-c \"brew install richardlehane/digipres/siegfried  \"";
+                   });}
+                else
+                {
+                    Console.WriteLine("Siegfried needs homebrew to install properly. Please install homebrew and try again.");
+                    Environment.Exit(0);
+                }
+                break;
+            }
     }
+    
 
+    /// <summary>
+    /// Checks whether the given converter is installed
+    /// </summary>
+    /// <param name="arguments"> CLI arguments to be run</param>
+    /// <param name="expectedOutput"> Expected output from CLI arguments </param>
+    /// <param name="consoleMessage"> Message to write if converter is not installed </param>
     private static void checkInstallConverter(string arguments, string expectedOutput, string consoleMessage) {
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = $"{arguments} | cat {consoleMessage}";
-        startInfo.RedirectStandardOutput = true;
-        startInfo.UseShellExecute = false;
-        startInfo.CreateNoWindow = true;
-        startInfo.UseShellExecute = false;
-        startInfo.RedirectStandardError = true;
-        startInfo.RedirectStandardOutput = true;
-
-        Process process = new Process();
-        process.StartInfo = startInfo;
-        process.Start();
-        process.WaitForExit();
-        string output = process.StandardOutput.ReadToEnd();
+       string output = RunProcess(startInfo =>
+        {
+            startInfo.FileName = PathRunningProgram;
+            startInfo.Arguments = $"{arguments} | cat {consoleMessage}";
+        });
         if (!output.Contains(expectedOutput))
         {
             Console.WriteLine(output);
@@ -131,35 +159,31 @@ class LinuxSetup
    private static string GetLinuxDistro() {
         string distro = "";
         //Check which distro the user is running
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.FileName = "/bin/bash";
-        startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
-        startInfo.RedirectStandardOutput = true;
-        startInfo.UseShellExecute = false;
-        startInfo.CreateNoWindow = true;
-        startInfo.UseShellExecute = false;
-        startInfo.RedirectStandardError = true;
-        startInfo.RedirectStandardOutput = true;
-        Process process = new Process();
-        process.StartInfo = startInfo;
-        process.Start();
-        process.WaitForExit();
-        string output = process.StandardOutput.ReadToEnd();
-           if (output.Contains("ubuntu") || output.Contains("debian"))
+        string output = RunProcess(startInfo =>
         {
-            Console.WriteLine("Running on Debian based distro");
-            distro = "debian";
+            startInfo.FileName = PathRunningProgram;
+            startInfo.Arguments = "-c \" " + "cat /etc/*-release" + " \"";
+        });
+
+        switch (output)
+        {
+            case var o when o.Contains("ubuntu") || o.Contains("debian"):
+                Console.WriteLine("Running on Debian based distro");
+                distro = "debian";
+                break;
+            case var o when o.Contains("fedora"):
+                Console.WriteLine("Running on Fedora based distro");
+                distro = "fedora";
+                break;
+            case var o when o.Contains("arch"):
+                Console.WriteLine("Running on Arch based distro");
+                distro = "arch";
+                break;
+            default:
+                Console.WriteLine("Distro not supported. Exiting program.");
+                Environment.Exit(0);
+                break;
         }
-        else if (output.Contains("fedora"))
-        {
-            Console.WriteLine("Running on Fedora based distro");
-            distro = "fedora";
-        }
-        else if (output.Contains("arch"))
-        {
-            Console.WriteLine("Running on Arch based distro");
-            distro = "arch";
-        } 
 
         return distro;
     }
