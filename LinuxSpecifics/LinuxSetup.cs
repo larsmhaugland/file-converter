@@ -39,7 +39,7 @@ class LinuxSetup
     private static string RunProcess( Action<ProcessStartInfo> configure) 
     {
         ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.RedirectStandardOutput = true;
+       // startInfo.RedirectStandardOutput = true;
         startInfo.UseShellExecute = false;
         startInfo.CreateNoWindow = true;
         startInfo.RedirectStandardError = true;
@@ -133,12 +133,12 @@ class LinuxSetup
                 });
                 if (checkDependencies.Contains("brew config"))
                 {
-                   output = RunProcess(startInfo =>
+                   RunProcess(startInfo =>
                     {
                         startInfo.FileName = PathRunningProgram;
                         startInfo.Arguments = $"-c \"brew install richardlehane/digipres/siegfried  \"";
-                   });
-                    Console.WriteLine(output);
+                        startInfo.RedirectStandardOutput = false;
+                    });
                 }
                 else
                 {
