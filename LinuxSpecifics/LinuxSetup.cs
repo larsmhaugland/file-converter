@@ -45,12 +45,20 @@ class LinuxSetup
         startInfo.RedirectStandardError = true;
         configure(startInfo);
 
-        Process process = new Process();
-        process.StartInfo = startInfo;
-        process.Start();
-        process.WaitForExit();
+        try
+        {
+            Process process = new Process();
+            process.StartInfo = startInfo;
+            process.Start();
+            process.WaitForExit();
 
-        return process.StandardOutput.ReadToEnd();
+            return process.StandardOutput.ReadToEnd();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            return "";
+        }
     }
 
     /// <summary>
