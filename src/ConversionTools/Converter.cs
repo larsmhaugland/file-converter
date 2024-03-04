@@ -37,11 +37,20 @@ public class Converter
     }
 
 	/// <summary>
+	/// Wrapper for the ConvertFile method that also handles the timeout
+	/// </summary>
+	/// <param name="fileinfo"></param>
+	public void ConvertFile(FileToConvert fileinfo)
+	{
+		ConvertFile(fileinfo, fileinfo.Route.First());
+	}
+
+	/// <summary>
 	/// Convert a file to a new format
 	/// </summary>
 	/// <param name="fileinfo">The file to be converted</param>
 	/// <param name="pronom">The file format to convert to</param>
-	public virtual void ConvertFile(string fileinfo, string pronom)
+	public virtual void ConvertFile(FileToConvert fileinfo, string pronom)
 	{ }
 	
 	/// <summary>

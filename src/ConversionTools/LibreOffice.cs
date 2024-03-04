@@ -76,15 +76,15 @@ public class LibreOfficeConverter : Converter
     /// </summary>
     /// <param name="filePath">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-    public override void ConvertFile(string filePath, string pronom)
+    public override void ConvertFile(FileToConvert file, string pronom)
     {
         // Get correct folders and properties required for conversion
         string inputFolder = GlobalVariables.parsedOptions.Input;
         string outputFolder = GlobalVariables.parsedOptions.Output;
 
-        string outputDir = Directory.GetParent(filePath.Replace(inputFolder, outputFolder)).ToString();
-        string inputDirectory = Directory.GetParent(filePath).ToString();
-        string inputFilePath = Path.Combine(inputDirectory, Path.GetFileName(filePath));
+        string outputDir = Directory.GetParent(file.FilePath.Replace(inputFolder, outputFolder)).ToString();
+        string inputDirectory = Directory.GetParent(file.FilePath).ToString();
+        string inputFilePath = Path.Combine(inputDirectory, Path.GetFileName(file.FilePath));
         string executableName = "soffice.exe";
 
         bool sofficePathWindows = checkSofficePathWindows(executableName);
@@ -107,7 +107,7 @@ public class LibreOfficeConverter : Converter
         }
         else
         {
-            log.SetUpRunTimeLogMessage("Operating system not supported for office conversion", true, filePath);
+            log.SetUpRunTimeLogMessage("Operating system not supported for office conversion", true, file.FilePath);
         }
     }
 

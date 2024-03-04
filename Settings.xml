@@ -3,9 +3,11 @@
   <Converter>Larsern</Converter>
   <InputFolder>input</InputFolder>
   <OutputFolder>output</OutputFolder>
-  <MaxThreads>8</MaxThreads>
+  <MaxThreads>
+  </MaxThreads>
   <ChecksumHashing>SHA256</ChecksumHashing>
-  <Timeout>7</Timeout>
+  <Timeout>
+  </Timeout>
   <FileClass>
     <ClassName>EXCEL</ClassName>
     <Default>fmt/477</Default>
@@ -41,7 +43,7 @@
   </FileClass>
   <FileClass>
     <ClassName>images</ClassName>
-    <Default>fmt/15</Default>
+    <Default>fmt/477</Default>
     <FileTypes>
       <Filename>gif</Filename>
       <Pronoms>fmt/3, fmt/4</Pronoms>
@@ -50,12 +52,12 @@
     <FileTypes>
       <Filename>jpg</Filename>
       <Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
-      <Default>fmt/14</Default>
+      <Default />
     </FileTypes>
     <FileTypes>
       <Filename>png</Filename>
       <Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
-      <Default>fmt/14</Default>
+      <Default />
     </FileTypes>
   </FileClass>
   <FileClass>

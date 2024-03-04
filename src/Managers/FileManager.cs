@@ -114,7 +114,7 @@ public class FileManager
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
 
-		string notSupportedString = " NS"; //Needs to have a space in front to extract the pronom code from the string
+		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files)
 		{
@@ -164,7 +164,7 @@ public class FileManager
 			var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
             if (entry.Key.Value.Contains(notSupportedString))
 			{
-				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]);
+				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]) + notSupportedString;
 			}
             if (currentFormat.Length > currentMax)
 			{
@@ -175,6 +175,8 @@ public class FileManager
 				targetMax = targetFormat.Length;
 			}
 		}
+		currentMax = currentMax < "Full name".Length ? "Full name".Length : currentMax;
+		targetMax  = targetMax  < "Full name".Length ? "Full name".Length : targetMax;
 
 		//Sort the fileCount dictionary by the number of files
 		fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
@@ -197,7 +199,8 @@ public class FileManager
             if (targetPronom.Contains(notSupportedString))
 			{
 				var split = targetPronom.Split(" ")[0];
-                targetFormat = PronomHelper.PronomToFullName(split);
+                targetFormat = PronomHelper.PronomToFullName(split) + notSupportedString;
+				targetPronom = split;
 				Console.ForegroundColor = ConsoleColor.Red;
             } else if (targetPronom == "Not set")
 			{

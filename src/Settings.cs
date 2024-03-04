@@ -37,6 +37,9 @@ class Settings
 	public void ReadSettings(string pathToSettings)
 	{
 		Logger logger = Logger.Instance;
+		//Reset the global variables
+		GlobalVariables.Reset();
+
 		try
 		{
 			// Load the XML document from a file

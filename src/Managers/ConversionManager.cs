@@ -13,7 +13,7 @@ using System.Transactions;
 using SharpCompress;
 using System.Linq.Expressions;
 
-class FileToConvert
+public class FileToConvert
 {
 	public string FilePath { get; set; }            //From FileInfo
 	public string CurrentPronom { get; set; }       //From FileInfo
@@ -37,19 +37,14 @@ class FileToConvert
 
 		Route = new List<string>();
 	}
-}
-
-class ThreadInfo
-{
-	public DateTime StartTime { get; set; }
-	public CancellationTokenSource CancellationTokenSrc { get; set; }
-	public bool IsDone { get; set; } = false;
-	public ThreadInfo()
+	public FileToConvert(string path)
 	{
-        StartTime = DateTime.Now;
-		CancellationTokenSrc = new CancellationTokenSource();
-		CancellationTokenSrc.Token.Register(() => IsDone = true);
-    }
+		FilePath = path;
+		CurrentPronom = "";
+		TargetPronom = "";
+		Route = new List<string>();
+		IsModified = false;
+	}
 }
 
 public class ConversionManager
@@ -285,7 +280,7 @@ public class ConversionManager
 		//Repeat until all files have been converted/checked or there was no change during last run
 		while (WorkingSet.Count > 0)
 		{
-			ConcurrentDictionary<string, ThreadInfo> threads = new ConcurrentDictionary<string, ThreadInfo>();
+			ConcurrentDictionary<string, CountdownEvent> countdownEvents = new ConcurrentDictionary<string, CountdownEvent>();
 			//Reset the working set map for the next run
 			WorkingSetMap.Clear();
 			var totalQueued = 0;
@@ -302,21 +297,23 @@ public class ConversionManager
 					}
 					totalQueued++;
 					//Send file to converter and check if the conversion was successful
-					if (SendToConverter(file, converter, threads))
-					{
-						//File was successfully converted
-						file.IsModified = true;
-						//Break the loop since the file was converted
-						return;
-					}
-				}
+					SendToConverter(file, converter, countdownEvents);
+					return;
+
+                }
 			});
 
 			//Wait for all threads to finish
-			AwaitConversion(threads, totalQueued);
+			AwaitConversion(countdownEvents, totalQueued);
 			prevWorkingSet = WorkingSet;
-			//Remove files that are finished on and update the rest
-			UpdateWorkingSet(WorkingSet);
+			try
+			{
+				//Remove files that are finished on and update the rest
+				UpdateWorkingSet(WorkingSet);
+			} catch (Exception e)
+			{
+                Logger.Instance.SetUpRunTimeLogMessage("CM ConvertFiles: " + e.Message, true);
+            }
 		}
 
 		Console.WriteLine("Checking conversion status...");
@@ -381,10 +378,12 @@ public class ConversionManager
 	/// <param name="ws">Workingset to be updated</param>
 	void UpdateWorkingSet(ConcurrentDictionary<string, FileToConvert> ws)
 	{
+		
 		//Update the keys and filepaths in WorkingSet
 		UpdateWorkingSetFileNames(ws);
-
-		List<string> itemsToRemove = new List<string>();
+		
+        List<string> itemsToRemove = new List<string>();
+       
 		Parallel.ForEach(ws.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, item =>
 		{
 			//If the file is not modified, remove it from the WorkingSet
@@ -413,7 +412,10 @@ public class ConversionManager
 		//Try to remove all items that were marked in the loop above
 		foreach (var item in itemsToRemove)
 		{
-			ws.TryRemove(item, out _); // Try to remove the item from ConcurrentBag
+			if (item != null)
+			{
+				ws.TryRemove(item, out _); // Try to remove the item from ConcurrentBag
+			}
 		}
 	}
 
@@ -429,14 +431,16 @@ public class ConversionManager
 		{
 			string relativeFilePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), entry.Key);
 			//Save old data
-			var oldFile = ws[relativeFilePath];
-
+			FileToConvert? oldFile;
+			ws.TryGetValue(relativeFilePath, out oldFile);
+			if (oldFile == null) continue;
 			//Remove old entry
-			ws.Remove(oldFile.FilePath, out _);
+			ws.TryRemove(oldFile.FilePath, out _);
+			string newPath = entry.Value ?? "";
 			//Update file path
-			oldFile.FilePath = entry.Value;
+			oldFile.FilePath = newPath;
 			//Add new entry with updated key
-			var added = ws.TryAdd(entry.Value, oldFile);
+			var added = ws.TryAdd(newPath, oldFile);
 			if (!added)
 			{
 				Console.WriteLine("[DEBUG] Could not add new entry to WorkingSet");
@@ -451,17 +455,15 @@ public class ConversionManager
 	/// <param name="c">Converter that will do the conversion</param>
 	/// <param name="threads">Where the ThreadInfo will be added</param>
 	/// <returns>True if the conversion succeeded, False if not</returns>
-	bool SendToConverter(FileToConvert f, Converter c, ConcurrentDictionary<string, ThreadInfo> threads)
+	void SendToConverter(FileToConvert f, Converter c, ConcurrentDictionary<string, CountdownEvent> countdownEvents)
 	{
 		bool success = false;
 		//Save return value of QueueUserWorkItem
 		bool queued = ThreadPool.QueueUserWorkItem(state =>
 		{
-			
-            ThreadInfo t = new ThreadInfo();
-
+			var countdownEvent = new CountdownEvent(1);
             //Try to add a new CountdownEvent to the dictionary with the file path as key
-			bool added = threads.TryAdd(f.FilePath, t);
+			bool added = countdownEvents.TryAdd(f.FilePath, countdownEvent);
 			if (!added)
 			{
 				Logger.Instance.SetUpRunTimeLogMessage("CM SendToConverter: Could not add countdown event: " + f.FilePath, true);
@@ -469,7 +471,7 @@ public class ConversionManager
             try
             {
 				//Send file to converter
-				c.ConvertFile(f.FilePath, f.Route.First());
+				c.ConvertFile(f);
                 //Add the name of the converter to the file if the previous entry is not the same converter for documentation
                 if (c.Name != null &&
 					(FileInfoMap[f.FilePath].ConversionTools.Count == 0 || FileInfoMap[f.FilePath].ConversionTools.Last() != c.Name))
@@ -489,12 +491,10 @@ public class ConversionManager
 			}
 			finally
 			{
-				//Signal the ThreadInfo to indicate that the conversion is done (either succeeded or failed)
-				t.IsDone = true;
+				//Signal the CountdownEvent to indicate that the conversion is done (either succeeded or failed)
+				countdownEvent.Signal();
 			}
 		});
-		//Return true if the thread was successfully queued and the conversion was successful
-		return queued && success;
 	}
 
     public bool ExecuteWithTimeout(Action action, TimeSpan timeout)
@@ -518,14 +518,14 @@ public class ConversionManager
     /// </summary>
     /// <param name="threads">The dictionary of ThreadInfos that should be waited for</param>
     /// <param name="total">The total number of thread jobs queued</param>
-    void AwaitConversion(ConcurrentDictionary<string, ThreadInfo> threads, int total)
+    void AwaitConversion(ConcurrentDictionary<string, CountdownEvent> countdownEvents, int total)
 	{
 		using (ProgressBar pb = new ProgressBar(total))
 		{
 			int numFinished = 0;
 			while (numFinished < total)
 			{
-				numFinished = threads.Values.Count(t => t.IsDone);
+				numFinished = countdownEvents.Values.Count(c => c.IsSet);
 
 				pb.Report((float)(numFinished) / (float)total, numFinished);
 				Thread.Sleep(200);

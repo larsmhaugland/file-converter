@@ -139,9 +139,9 @@ public class GhostscriptConverter : Converter
     /// </summary>
     /// <param name="filePath">The file to be converted</param>
     /// <param name="pronom">The file format to convert to</param>
-	public override void ConvertFile(string fileinfo, string pronom)
+	public override void ConvertFile(FileToConvert fileinfo, string pronom)
     {
-        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo);
+        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FilePath);
 		string extension;
 		string sDevice;
 
@@ -164,7 +164,7 @@ public class GhostscriptConverter : Converter
 			}
 		}catch(Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo);
+			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo.FilePath);
 		}
 		
     }
@@ -176,7 +176,7 @@ public class GhostscriptConverter : Converter
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
     /// <param name="extension">Extension type for after the conversion</param>
-    void convertToImage(string filePath, string outputFileName, string sDevice, string extension, string pronom)
+    void convertToImage(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
 		try
@@ -184,7 +184,7 @@ public class GhostscriptConverter : Converter
 			using (var rasterizer = new GhostscriptRasterizer())
 			{
 				GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
-				using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+				using (var stream = new FileStream(file.FilePath, FileMode.Open, FileAccess.Read))
 				{
 					rasterizer.Open(stream, versionInfo, false);
 
@@ -206,11 +206,11 @@ public class GhostscriptConverter : Converter
                         bool converted = false;
                         do
                         {
-                            converted = CheckConversionStatus(filePath, outputFileName, pronom);
+                            converted = CheckConversionStatus(file.FilePath, outputFileName, pronom);
                             count++;
                             if (!converted)
                             {
-                                convertToImage(filePath, outputFileName, sDevice, extension, pronom);
+                                convertToImage(file, outputFileName, sDevice, extension, pronom);
                             }
                         } while (!converted && count < 4);
                         if (!converted)
@@ -219,7 +219,7 @@ public class GhostscriptConverter : Converter
                         }
 
 						//Create folder for images with original name
-						string folder = Path.GetFileNameWithoutExtension(filePath);
+						string folder = Path.GetFileNameWithoutExtension(file.FilePath);
 						string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
 						Directory.CreateDirectory(folderPath);
 						
@@ -237,7 +237,7 @@ public class GhostscriptConverter : Converter
 		}
 		catch (Exception e)
 		{
-			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
+			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
 		}
 	}
 
@@ -258,48 +258,43 @@ public class GhostscriptConverter : Converter
 		}
 	}
 
-	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
+	void convertToPDF(FileToConvert file, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
 		Logger log = Logger.Instance;
-		string outputFolder = Path.GetDirectoryName(filePath);
+		string outputFolder = Path.GetDirectoryName(file.FilePath);
 		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
-		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
-
-		try
+		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + file.FilePath;
+        int count = 0;
+        bool converted;
+        try
 		{
-			ProcessStartInfo startInfo = new ProcessStartInfo();
-			startInfo.FileName = gsExecutable;
-			startInfo.Arguments = arguments;
-			startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			startInfo.RedirectStandardOutput = true;
-			startInfo.UseShellExecute = false;
-			startInfo.CreateNoWindow = true;
-			using (Process? exeProcess = Process.Start(startInfo))
-			{
-				exeProcess?.WaitForExit();
-			}
-
-            int count = 1;
-            bool converted = false;
             do
             {
-                converted = CheckConversionStatus(filePath,outputFilePath, pronom);
-                count++;
-                if (!converted)
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+		        startInfo.FileName = gsExecutable;
+		        startInfo.Arguments = arguments;
+		        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+		        startInfo.RedirectStandardOutput = true;
+		        startInfo.UseShellExecute = false;
+		        startInfo.CreateNoWindow = true;
+                using (Process? exeProcess = Process.Start(startInfo))
                 {
-                    convertToPDF(filePath, outputFileName, sDevice, extension, pdfVersion, pronom);
+                    exeProcess?.WaitForExit();
                 }
-            } while (!converted && count < 4);
+                converted = CheckConversionStatus(file.FilePath,outputFilePath, pronom);
+                count++;
+                
+            } while (!converted && count < GlobalVariables.MAX_RETRIES);
             if (!converted)
             {
                 throw new Exception("File was not converted");
             }
-
-		}
+        }
 		catch (Exception e)
 		{
-			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
+			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
 		}
+
 	}
 
 }

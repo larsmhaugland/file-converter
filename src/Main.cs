@@ -12,6 +12,16 @@ public static class GlobalVariables
     public static HashAlgorithms checksumHash;
 	public static int maxThreads = Environment.ProcessorCount*2;
 	public static int timeout = 30;
+	public const int MAX_RETRIES = 3; //Maximum number of retries for a failed conversion
+
+	public static void Reset()
+	{
+		FileSettings.Clear();
+		FolderOverride.Clear();
+		checksumHash = new HashAlgorithms();
+		maxThreads = Environment.ProcessorCount * 2;
+		timeout = 30;
+	}
 }
 public class Options
 {
@@ -38,8 +48,6 @@ class Program
 			}
 		});
 
-		if (GlobalVariables.parsedOptions == null)
-			return;
 		//Only maximize and center the console window if the OS is Windows
 		
 		MaximizeAndCenterConsoleWindow();
