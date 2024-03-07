@@ -13,12 +13,13 @@ public static class GlobalVariables
 	public static HashAlgorithms checksumHash;
 	public static int maxThreads = Environment.ProcessorCount*2;
 	public static int timeout = 30;
-	public const int MAX_RETRIES = 3; //Maximum number of retries for a failed conversion
+    public static double maxFileSize = 1000000000;      //1GB
+    public const int MAX_RETRIES = 3; //Maximum number of retries for a failed conversion
 	public const ConsoleColor INFO_COL = ConsoleColor.Cyan;
 	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
 	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
-	public const double MAX_FILE_SIZE = 1000000000;		//1GB
+	
 
 	public static void Reset()
 	{
@@ -56,7 +57,7 @@ class Program
 
 		//Only maximize and center the console window if the OS is Windows
 		Console.Title = "FileConverter";
-		MaximizeAndCenterConsoleWindow();
+		//MaximizeAndCenterConsoleWindow();
 		if (!OperatingSystem.IsLinux())
 		{
 			Directory.SetCurrentDirectory("../../../");
@@ -74,7 +75,7 @@ class Program
 		try
 		{
 			//Check if user wants to use files from previous run
-			sf.AskReadFiles();
+			//sf.AskReadFiles();
 			//Check if files were added from previous run
 			if (!sf.Files.IsEmpty)
 			{

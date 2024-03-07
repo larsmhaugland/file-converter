@@ -58,6 +58,7 @@ class Settings
             XmlNode? outputNode = root?.SelectSingleNode("OutputFolder");
             XmlNode? maxThreadsNode = root?.SelectSingleNode("MaxThreads");
 			XmlNode? timeoutNode = root?.SelectSingleNode("Timeout");
+			XmlNode? maxFileSizeNode = root?.SelectSingleNode("MaxFileSize");
 
 			string? requester = requesterNode?.InnerText.Trim();
             string? converter = converterNode?.InnerText.Trim();
@@ -79,16 +80,25 @@ class Settings
 			{
                 GlobalVariables.parsedOptions.Output = output;
             }
+
             string? inputMaxThreads = maxThreadsNode?.InnerText;
             if (!String.IsNullOrEmpty(inputMaxThreads) && int.TryParse(inputMaxThreads, out int maxThreads))
             {
                 GlobalVariables.maxThreads = maxThreads;
             }
+
 			string? inputTimeout = timeoutNode?.InnerText;
 			if (!String.IsNullOrEmpty(inputTimeout) && int.TryParse(inputTimeout, out int timeout))
 			{
 				GlobalVariables.timeout = timeout;
 			}
+
+			string? inputMaxFileSize = maxFileSizeNode?.InnerText;
+			if (!String.IsNullOrEmpty(inputMaxFileSize) && double.TryParse(inputMaxFileSize, out double maxFileSize))
+			{
+				GlobalVariables.maxFileSize = maxFileSize;
+			}
+
             string? checksumHashing = root?.SelectSingleNode("ChecksumHashing")?.InnerText;
 			if (checksumHashing != null)
 			{
@@ -251,7 +261,8 @@ class Settings
             if (Directory.Exists(targetFolderPath))
             {
                 // Add current folder to subfolders list
-                subfolders.Add(relativePath);
+                // TODO: This is not needed, as the folder is already added in the main function
+                //subfolders.Add(relativePath); 
 
                 // Add immediate subfolders
                 foreach (string subfolder in Directory.GetDirectories(targetFolderPath))

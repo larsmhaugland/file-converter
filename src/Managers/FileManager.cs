@@ -242,7 +242,26 @@ public class FileManager
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
+
+		List<string> mergedirs = new List<string>();
+		foreach (var entry in GlobalVariables.FolderOverride)
+		{
+			if (entry.Value.Merge)
+			{
+				mergedirs.Add(entry.Key);
+			}
+		}
+		if (mergedirs.Count > 0)
+		{
+			Console.WriteLine("Some folders will be merged:");
+			foreach (var dir in mergedirs)
+			{
+                Console.WriteLine("\t{0}",dir);
+            }
+		}
+
         Console.ForegroundColor = oldColor;
+
     }
 
 	public List<FileInfo> GetFiles()

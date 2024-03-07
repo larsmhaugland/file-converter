@@ -72,6 +72,24 @@ public class FileInfo
 		OriginalChecksum = siegfriedFile.hash;
 	}
 
+	public FileInfo(FileToConvert f)
+	{
+		var result = Siegfried.Instance.IdentifyFile(f.FilePath, true);
+		if (result != null)
+		{
+			OriginalChecksum = NewChecksum = result.hash;
+			OriginalSize = NewSize = result.filesize;
+			FileName = Path.GetFileName(f.FilePath);
+			if (result.matches.Length > 0)
+			{
+                OriginalPronom = NewChecksum = result.matches[0].id;
+                OriginalFormatName = NewFormatName = result.matches[0].format;
+                OriginalMime = OriginalMime = result.matches[0].mime;
+            }
+		}
+        FilePath = f.FilePath;
+    }
+
 	/// <summary>
 	/// Update the properties of the FileInfo object based on a FileInfo object
 	/// </summary>

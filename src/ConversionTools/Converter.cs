@@ -76,10 +76,16 @@ public class Converter
 	/// <param name="fileInfo">The specific file to be deleted</param>
 	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo)
 	{
-		if (File.Exists(fileInfo))
+		try
 		{
-			File.Delete(fileInfo);
-		}
+			if (File.Exists(fileInfo))
+			{
+				File.Delete(fileInfo);
+			}
+		} catch (Exception e)
+		{
+            Logger.Instance.SetUpRunTimeLogMessage("deleteOriginalFileFromOutputDirectory: " + e.Message, true);
+        }
 	}
 	public virtual void replaceFileInList(string newPath, FileToConvert f)
 	{
@@ -88,6 +94,11 @@ public class Converter
 		if (file != null)
 		{
 			file.FilePath = newPath;
+			file.FileName = Path.GetFileName(newPath);
+
+		} else
+		{
+			Logger.Instance.SetUpRunTimeLogMessage("replaceFileInList: File not found in FileManager", true,filename: f.FilePath);
 		}
 		
 	}

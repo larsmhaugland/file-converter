@@ -14,16 +14,7 @@ public class FileToConvert
 	{
 		FilePath = file.FilePath;
 		CurrentPronom = file.OriginalPronom;
-
-		if (GlobalVariables.FileSettings.ContainsKey((CurrentPronom)))
-		{
-			TargetPronom = GlobalVariables.FileSettings[CurrentPronom];
-		}
-		else
-		{
-			TargetPronom = CurrentPronom;
-		}
-
+		TargetPronom = Settings.GetTargetPronom(file) ?? CurrentPronom;
 		Route = new List<string>();
 		Id = file.Id;
 	}
@@ -224,7 +215,7 @@ public class ConversionManager
 	{
 		var files = FileManager.Instance.Files.Values.ToList();
 		//Run siegfried on all files
-		var f = Siegfried.Instance.IdentifyFilesIndividually(files)?.Result;
+		var f = Siegfried.Instance.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Output)?.Result;
 
 		//If siegfried fails, log error message and return
 		if (f == null)
@@ -242,6 +233,9 @@ public class ConversionManager
 			{
 				file.UpdateSelf(fDict[file.FilePath]);
 				file.IsConverted = Settings.GetTargetPronom(file) == file.NewPronom;
+			} else
+			{
+				Console.BackgroundColor = Console.BackgroundColor;
 			}
 		});
 	}
@@ -521,7 +515,10 @@ public class ConversionManager
 				var converter = new iText7();
 				var outputPronom = GlobalVariables.FolderOverride[entry.Key].DefaultType;
 				converter.CombineFiles(entry.Value, outputPronom);
-
+				foreach (FileInfo file in entry.Value)
+				{
+                    file.ConversionTools.Add(converter.Name!);
+                }
 			});
 		}
 		catch (Exception e)

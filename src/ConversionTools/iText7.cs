@@ -407,8 +407,9 @@ public class iText7 : Converter
             //Set base output file name to YYYY-MM-DD
             DateTime currentDateTime = DateTime.Now;
             string formattedDateTime = currentDateTime.ToString("yyyy-MM-dd");
-            string baseName = Path.GetDirectoryName(files.First().FilePath) ?? "combined";
-
+            string baseName = Path.GetDirectoryName(files.First().FilePath).Split('\\').Last() ?? "combined";
+            string outputDirectory = Path.GetDirectoryName(files.First().FilePath) ?? GlobalVariables.parsedOptions.Output;
+            string filename = Path.Combine(outputDirectory, baseName + "_" + formattedDateTime);
 
             List<Task> tasks = new List<Task>();
             List<FileInfo> group = new List<FileInfo>();
@@ -418,14 +419,19 @@ public class iText7 : Converter
             {
                 group.Add(file);
                 groupSize += file.OriginalSize;
-                if (groupSize > GlobalVariables.MAX_FILE_SIZE)
+                if (groupSize > GlobalVariables.maxFileSize)
                 {
-                    string outputFileName = $@"{baseName}_{formattedDateTime}_{groupCount}.pdf";
+                    string outputFileName = $@"{filename}_{groupCount}.pdf";
                     tasks.Add(Task.Run(() => MergeFilesToPDF(group, outputFileName, pronom)));
                     group.Clear();
                     groupSize = 0;
                     groupCount++;
                 }
+            }
+            if(group.Count > 0)
+            {
+                string outputFileName = $@"{filename}_{groupCount}.pdf";
+                tasks.Add(Task.Run(() => MergeFilesToPDF(group, outputFileName, pronom)));
             }
             //Wait for all files 
             tasks.ForEach(t => t.Wait());
@@ -474,19 +480,26 @@ public class iText7 : Converter
             
             foreach (var file in files)
             {
-                deleteOriginalFileFromOutputDirectory(file.FilePath);
+                string filename = Path.Combine(file.FilePath);
+                deleteOriginalFileFromOutputDirectory(filename);
                 file.IsMerged = true;
             }
-            FileToConvert f = new FileToConvert(outputFileName, new Guid());
+
+            FileToConvert ftc = new FileToConvert(outputFileName, new Guid());
+
             if (conformanceLevel != null)
             {
-                convertFromPDFToPDFA(f, conformanceLevel, pronom);
+                convertFromPDFToPDFA(ftc, conformanceLevel, pronom);
             }
 
             var result = Siegfried.Instance.IdentifyFile(outputFileName, false);
             if (result != null)
             {
-                FileManager.Instance.Files.TryAdd(f.Id, new FileInfo(result));
+                FileInfo fi = new FileInfo(result);
+                fi.IsMerged = true;
+                fi.ShouldMerge = true;
+                fi.AddConversionTool(Name);
+                FileManager.Instance.Files.TryAdd(fi.Id, fi);
             }
             else
             {
