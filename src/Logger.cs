@@ -1,12 +1,5 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System;
-using System.IO;
-using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Text.Json.Serialization;
-using System.Security.Cryptography.X509Certificates;
-using System.Reflection;
-using iText.Kernel.Geom;
+﻿using System.Text.Json;
+
 
 public class Logger
 {
@@ -33,22 +26,35 @@ public class Logger
 		converter = "converter"
 	};
 	*/
+
 	public class JsonData
 	{
 		public string? Filename { get; set; }
 		public string? OriginalPronom { get; set; }
 		public string? OriginalChecksum { get; set; }
 		public long OriginalSize { get; set; }
+
 		public string? TargetPronom { get; set; }
 		public string? NewPronom { get; set; }
 		public string? NewChecksum { get; set; }
 		public long NewSize { get; set; }
 		public List<string>? Converter { get; set; }
 		public bool IsConverted { get; set; }
-		public bool ShouldMerge { get; set; }
-		public bool IsMerged { get; set; }
 	}
-	List<JsonData> data = [];
+
+    public class JsonDataMerge
+    {
+        public string? Filename { get; set; }
+        public string? Pronom { get; set; }
+        public string? Checksum { get; set; }
+        public long Size { get; set; }
+
+        public List<string>? Tool { get; set; }
+        public bool ShouldMerge { get; set; }
+        public bool IsMerged { get; set; }
+    }
+	List<JsonData> jsondata = new List<JsonData>();
+	Dictionary<string,List<JsonDataMerge>> jsondatamerge = new Dictionary<string, List<JsonDataMerge>>();
 
 	private Logger()
 	{
@@ -140,25 +146,32 @@ public class Logger
 		}
 		foreach (FileInfo file in files)
 		{
-			JsonData jsonData;
+			
 			if (file.ShouldMerge)
 			{
-                jsonData = new JsonData
+                var jsonData = new JsonDataMerge
                 {
                     Filename = file.FilePath,
-                    OriginalPronom = file.OriginalPronom,
-                    OriginalChecksum = file.OriginalChecksum,
-                    OriginalSize = file.OriginalSize,
-                    TargetPronom = Settings.GetTargetPronom(file),
-                    NewPronom = file.NewPronom,
-                    NewChecksum = file.NewChecksum,
-                    NewSize = file.NewSize,
-                    Converter = file.ConversionTools,
-                    IsConverted = file.IsConverted
+                    Pronom = file.OriginalPronom,
+                    Checksum = file.OriginalChecksum,
+                    Size = file.OriginalSize,
+					Tool = file.ConversionTools,
+					ShouldMerge = file.ShouldMerge,
+					IsMerged = file.IsMerged
                 };
+                var parentDir = Path.GetDirectoryName(file.FilePath) ?? "";
+
+				if (jsondatamerge.ContainsKey(parentDir))
+				{
+					jsondatamerge[parentDir].Add(jsonData);
+                } else
+				{
+                    jsondatamerge.Add(parentDir, new List<JsonDataMerge>());
+					jsondatamerge[parentDir].Add(jsonData);
+                }
             } else
 			{
-                jsonData = new JsonData
+                var jsonData = new JsonData
                 {
                     Filename = file.FilePath,
                     OriginalPronom = file.OriginalPronom,
@@ -171,9 +184,8 @@ public class Logger
                     Converter = file.ConversionTools,
                     IsConverted = file.IsConverted
                 };
+                jsondata.Add(jsonData);
             }
-			
-			data.Add(jsonData);
 		}
 
 
@@ -184,12 +196,17 @@ public class Logger
 			JsonRoot.requester,
 			JsonRoot.converter
 		};
+		var FilesWrapper = new
+		{
+            ConvertedFiles = jsondata,
+            MergedFiles = jsondatamerge
+        };
 
 		// Create an anonymous object with a "Files" property
 		var jsonDataWrapper = new
 		{
 			Metadata = metadata,
-			Files = data
+			Files = FilesWrapper
 		};
 
 		// Serialize the wrapper object
