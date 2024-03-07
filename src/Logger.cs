@@ -14,6 +14,7 @@ public class Logger
 	private static readonly object lockObject = new object();
 	string logPath;         // Path to log file
 	string docPath;         // Path to documentation file
+	public bool errorHappened { get; set; }             // True if an error message has been written
 	// Configure JSON serializer options for pretty-printing
 	JsonSerializerOptions options = new JsonSerializerOptions
 	{
@@ -44,6 +45,8 @@ public class Logger
 		public long NewSize { get; set; }
 		public List<string>? Converter { get; set; }
 		public bool IsConverted { get; set; }
+		public bool ShouldMerge { get; set; }
+		public bool IsMerged { get; set; }
 	}
 	List<JsonData> data = [];
 
@@ -117,7 +120,7 @@ public class Logger
 	public void SetUpRunTimeLogMessage(string message, bool error, string pronom = "N/A", string mime = "N/A", string filename = "N/A")
 	{
 		string errorM = "Message: ";
-		if (error) { errorM = "Error: "; }
+		if (error) { errorM = "Error: "; errorHappened = true; }
 		string formattedMessage =  errorM + " | " + pronom + " | " + mime + " | " + filename + " | " + message+"\n";
 		WriteLog(formattedMessage, logPath);
 	}
@@ -137,21 +140,40 @@ public class Logger
 		}
 		foreach (FileInfo file in files)
 		{
-
-			JsonData jsondata = new JsonData
+			JsonData jsonData;
+			if (file.ShouldMerge)
 			{
-				Filename = file.FilePath,
-				OriginalPronom = file.OriginalPronom,
-				OriginalChecksum = file.OriginalChecksum,
-				OriginalSize = file.OriginalSize,
-				TargetPronom = Settings.GetTargetPronom(file),
-				NewPronom = file.NewPronom,
-				NewChecksum = file.NewChecksum,
-				NewSize = file.NewSize,
-				Converter = file.ConversionTools,
-				IsConverted = file.IsConverted
-			};
-			data.Add(jsondata);
+                jsonData = new JsonData
+                {
+                    Filename = file.FilePath,
+                    OriginalPronom = file.OriginalPronom,
+                    OriginalChecksum = file.OriginalChecksum,
+                    OriginalSize = file.OriginalSize,
+                    TargetPronom = Settings.GetTargetPronom(file),
+                    NewPronom = file.NewPronom,
+                    NewChecksum = file.NewChecksum,
+                    NewSize = file.NewSize,
+                    Converter = file.ConversionTools,
+                    IsConverted = file.IsConverted
+                };
+            } else
+			{
+                jsonData = new JsonData
+                {
+                    Filename = file.FilePath,
+                    OriginalPronom = file.OriginalPronom,
+                    OriginalChecksum = file.OriginalChecksum,
+                    OriginalSize = file.OriginalSize,
+                    TargetPronom = Settings.GetTargetPronom(file),
+                    NewPronom = file.NewPronom,
+                    NewChecksum = file.NewChecksum,
+                    NewSize = file.NewSize,
+                    Converter = file.ConversionTools,
+                    IsConverted = file.IsConverted
+                };
+            }
+			
+			data.Add(jsonData);
 		}
 
 

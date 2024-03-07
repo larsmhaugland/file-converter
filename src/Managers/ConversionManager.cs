@@ -7,6 +7,8 @@ public class FileToConvert
 	public string TargetPronom { get; set; }        //From Dictionary
 	public List<string> Route { get; set; }         //From Dictionary
 	public bool IsModified { get; set; } = false;   //True if file has been worked on
+	public CancellationToken ct { get; set; }        //CancellationToken for the conversion
+	public Guid Id { get; set; }   //Unique identifier for the file
 
     public FileToConvert(FileInfo file)
 	{
@@ -23,22 +25,23 @@ public class FileToConvert
 		}
 
 		Route = new List<string>();
+		Id = file.Id;
 	}
-	public FileToConvert(string path)
+	public FileToConvert(string path, Guid id)
 	{
 		FilePath = path;
 		CurrentPronom = "";
 		TargetPronom = "";
 		Route = new List<string>();
 		IsModified = false;
+		Id = id;
 	}
 }
 
 public class ConversionManager
 {
-	List<FileInfo> Files;
 	ConcurrentDictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new ConcurrentDictionary<KeyValuePair<string, string>, List<string>>();
-	ConcurrentDictionary<string, FileInfo> FileInfoMap = new ConcurrentDictionary<string, FileInfo>();
+	ConcurrentDictionary<Guid, FileInfo> FileInfoMap = new ConcurrentDictionary<Guid, FileInfo>();
 	public Dictionary<string, string> WorkingSetMap = new Dictionary<string, string>();
 	private static ConversionManager? instance;
 	private static readonly object lockObject = new object();
@@ -121,7 +124,7 @@ public class ConversionManager
         List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions?.Keys);
 		string pdfA = "fmt/477";
 		string pdfPronom = OperatingSystem.IsLinux() ? "fmt/20" : "fmt/276";
-		foreach(FileInfo file in Files)
+		foreach(FileInfo file in FileManager.Instance.Files.Values)
 		{
 			if (Settings.GetTargetPronom(file) == pdfA && supportedConversionsLibreOffice.Contains(file.OriginalPronom))
 			{
@@ -132,9 +135,9 @@ public class ConversionManager
 
 	private void initFileMap()
 	{
-		foreach (FileInfo file in Files)
+		foreach (FileInfo file in FileManager.Instance.Files.Values)
 		{
-			FileInfoMap.TryAdd(file.FilePath, file);
+			FileInfoMap.TryAdd(file.Id, file);
 		}
 	}
 
@@ -182,15 +185,11 @@ public class ConversionManager
     /// </summary>
     public ConversionManager()
 	{
-        //Get files from FileManager
-        Files = FileManager.Instance.GetFiles();
         //Initialize conversion map
         initMap();
 
 		//Initialize converters
 		Converters = AddConverters.Instance.GetConverters();
-        //Get files from FileManager
-        Files = FileManager.Instance.GetFiles();
 		//Initialize FileMap
 		initFileMap();
 		FilterConversionMap();
@@ -223,8 +222,10 @@ public class ConversionManager
 	/// </summary>
 	void CheckConversion()
 	{
+		var files = FileManager.Instance.Files.Values.ToList();
 		//Run siegfried on all files
-		var f = Siegfried.Instance.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Output)?.Result;
+		var f = Siegfried.Instance.IdentifyFilesIndividually(files)?.Result;
+
 		//If siegfried fails, log error message and return
 		if (f == null)
 		{
@@ -232,16 +233,15 @@ public class ConversionManager
 			Logger.Instance.SetUpRunTimeLogMessage("CM CheckConversion: Could not identify files", true);
 			return;
 		}
+		var fDict = f.ToDictionary(x => x.FilePath, x => x);
+
 		//Update FileInfoMap with new data
-		Parallel.ForEach(f, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+		Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
 		{
-			if (FileInfoMap.ContainsKey(file.FilePath))
+			if (fDict.ContainsKey(file.FilePath))
 			{
-				var currentFile = FileInfoMap[file.FilePath];
-				//Update the file with new data
-				currentFile.UpdateSelf(file);
-				//Check if the file has the correct pronom based on settings
-				currentFile.IsConverted = Settings.GetTargetPronom(currentFile) == currentFile.NewPronom;
+				file.UpdateSelf(fDict[file.FilePath]);
+				file.IsConverted = Settings.GetTargetPronom(file) == file.NewPronom;
 			}
 		});
 	}
@@ -253,14 +253,13 @@ public class ConversionManager
 	{
 		int maxThreads = GlobalVariables.maxThreads;
 		Dictionary<string, List<FileInfo>> mergingFiles = new Dictionary<string, List<FileInfo>>();
-		ConcurrentDictionary<string, FileToConvert> WorkingSet = new ConcurrentDictionary<string, FileToConvert>();
+		ConcurrentDictionary<Guid, FileToConvert> WorkingSet = new ConcurrentDictionary<Guid, FileToConvert>();
 
 		//Initialize working set
 		SetupWorkingSet(WorkingSet, mergingFiles);  //Initialize working set
-													//TODO: CombineFiles should not block the rest of the program
-		SendToCombineFiles(mergingFiles);           //Combine files 
 
-		ConcurrentDictionary<string, FileToConvert> prevWorkingSet = new ConcurrentDictionary<string, FileToConvert>();
+		Task combineTask = Task.Run(() => SendToCombineFiles(mergingFiles));           //Combine files 
+
 		//Set max threads for the thread pool based on global variables
 		ThreadPool.SetMaxThreads(maxThreads, maxThreads);
 
@@ -292,7 +291,6 @@ public class ConversionManager
 
 			//Wait for all threads to finish
 			AwaitConversion(countdownEvents, totalQueued);
-			prevWorkingSet = WorkingSet;
 			try
 			{
 				//Remove files that are finished on and update the rest
@@ -301,6 +299,12 @@ public class ConversionManager
 			{
                 Logger.Instance.SetUpRunTimeLogMessage("CM ConvertFiles: " + e.Message, true);
             }
+		}
+		//Wait for the combine task to finish
+		if (!combineTask.IsCompleted)
+		{
+			Console.WriteLine("Waiting for combine task to finish...");
+			combineTask.Wait();
 		}
 
 		Console.WriteLine("Checking conversion status...");
@@ -315,10 +319,10 @@ public class ConversionManager
 	/// </summary>
 	/// <param name="ws">Working set to add files to</param>
 	/// <param name="mf">Files that should be combined</param>
-	void SetupWorkingSet(ConcurrentDictionary<string, FileToConvert> ws, Dictionary<string, List<FileInfo>> mf)
+	void SetupWorkingSet(ConcurrentDictionary<Guid, FileToConvert> ws, Dictionary<string, List<FileInfo>> mf)
 	{
 		//TODO: Can we parallelize this?
-		foreach (FileInfo file in Files)
+		foreach (FileInfo file in FileManager.Instance.Files.Values)
 		{
 			//Create a new FileToConvert object
 			var newFile = new FileToConvert(file);
@@ -350,7 +354,7 @@ public class ConversionManager
 			if (addToWorkingSet)
 			{
 				//Try to add the file to the working set
-				bool added = ws.TryAdd(file.FilePath, newFile);
+				bool added = ws.TryAdd(file.Id, newFile);
 				if (!added)
 				{
 					Logger.Instance.SetUpRunTimeLogMessage("CM ConvertFiles: Could not add file to working set: " + file.FilePath, true);
@@ -363,20 +367,20 @@ public class ConversionManager
 	/// Updates the data in the working set and removes files that are done or failed conversion after 3 attempts
 	/// </summary>
 	/// <param name="ws">Workingset to be updated</param>
-	void UpdateWorkingSet(ConcurrentDictionary<string, FileToConvert> ws)
+	void UpdateWorkingSet(ConcurrentDictionary<Guid, FileToConvert> ws)
 	{
 		
 		//Update the keys and filepaths in WorkingSet
 		UpdateWorkingSetFileNames(ws);
 		
-        List<string> itemsToRemove = new List<string>();
+        ConcurrentBag<Guid> itemsToRemove = new ConcurrentBag<Guid>();
        
 		Parallel.ForEach(ws.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, item =>
 		{
 			//If the file is not modified, remove it from the WorkingSet
 			if (!item.IsModified)
 			{
-				itemsToRemove.Add(item.FilePath);
+				itemsToRemove.Add(item.Id);
 				return;
 			}
 			//Reset the IsModified flag
@@ -391,18 +395,14 @@ public class ConversionManager
 			// Remove if there are no more steps in route
 			if (item.Route.Count == 0)
 			{
-				itemsToRemove.Add(item.FilePath);
-				return;
+				itemsToRemove.Add(item.Id);
 			}
 		});
 
 		//Try to remove all items that were marked in the loop above
 		foreach (var item in itemsToRemove)
 		{
-			if (item != null)
-			{
-				ws.TryRemove(item, out _); // Try to remove the item from ConcurrentBag
-			}
+			ws.TryRemove(item, out _); // Try to remove the item from ConcurrentBag
 		}
 	}
 
@@ -411,8 +411,8 @@ public class ConversionManager
 	/// The WorkingSetMap is used to keep track of the file names after conversion and is updated by each converter
 	/// </summary>
 	/// <param name="ws">WorkingSet that should be updated</param>
-	void UpdateWorkingSetFileNames(ConcurrentDictionary<string, FileToConvert> ws)
-	{
+	void UpdateWorkingSetFileNames(ConcurrentDictionary<Guid, FileToConvert> ws)
+	{	/*
 		//Loop through WorkingSetMap and update the file names
 		foreach (var entry in WorkingSetMap)
 		{
@@ -433,6 +433,7 @@ public class ConversionManager
 				Console.WriteLine("[DEBUG] Could not add new entry to WorkingSet");
 			}
 		}
+		*/
 	}
 
 	/// <summary>
@@ -461,10 +462,11 @@ public class ConversionManager
 				c.ConvertFile(f);
                 //Add the name of the converter to the file if the previous entry is not the same converter for documentation
                 if (c.Name != null &&
-					(FileInfoMap[f.FilePath].ConversionTools.Count == 0 || FileInfoMap[f.FilePath].ConversionTools.Last() != c.Name))
+					(FileInfoMap[f.Id].ConversionTools.Count == 0 || FileInfoMap[f.Id].ConversionTools.Last() != c.Name))
 				{
-					FileInfoMap[f.FilePath].ConversionTools.Add(c.Name);
+					FileInfoMap[f.Id].ConversionTools.Add(c.Name);
 				}
+				
 				f.IsModified = true;
 			}
 			catch(OperationCanceledException)
@@ -483,22 +485,6 @@ public class ConversionManager
 			}
 		});
 	}
-
-    public bool ExecuteWithTimeout(Action action, TimeSpan timeout)
-    {
-        // Create a task to execute the action
-        var task = Task.Run(action);
-
-        // Wait for the task with a timeout
-        if (!task.Wait(timeout))
-        {
-            // Handle timeout (task did not complete within the specified time)
-            Logger.Instance.SetUpRunTimeLogMessage("Operation timed out", true);
-
-            return false;
-        }
-		return true;
-    }
 
     /// <summary>
     /// Waits for all CountdownEvents in a dictionary to be signaled
@@ -525,27 +511,24 @@ public class ConversionManager
 	/// Sends files to be combined
 	/// </summary>
 	/// <param name="mergingFiles">Dictionary with a List of all files that should be combined</param>
-	void SendToCombineFiles(Dictionary<string, List<FileInfo>> mergingFiles)
+	Task SendToCombineFiles(Dictionary<string, List<FileInfo>> mergingFiles)
 	{
-		//TODO: This should not block the rest of the program
+		//TODO: This should not block the main thread
 		try
 		{
-			foreach (var entry in mergingFiles)
+			Parallel.ForEach(mergingFiles, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, entry =>
 			{
 				var converter = new iText7();
 				var outputPronom = GlobalVariables.FolderOverride[entry.Key].DefaultType;
-				List<string> filepaths = new List<string>();
-				foreach (var file in entry.Value)
-				{
-					filepaths.Add(file.FilePath);
-				}
-				converter.CombineFiles(filepaths.ToArray(), outputPronom);
-			}
+				converter.CombineFiles(entry.Value, outputPronom);
+
+			});
 		}
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("CM SendToCombineFiles: " + e.Message, true);
 		}
+		return Task.CompletedTask;
 	}
 
 	/// <summary>
@@ -582,7 +565,7 @@ public class ConversionManager
 					// If the key does not exist, add it along with a new list
 					mergingFiles[parentDirName] = new List<FileInfo>();
 				}
-
+				file.ShouldMerge = true;
 				// Add the file to the list associated with the key
 				mergingFiles[parentDirName].Add(file);
 				return false;

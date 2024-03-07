@@ -28,6 +28,9 @@ public class FileInfo
 	public bool IsModified { get; set; } = false;				// True if file is modified
 	public List<string> Route { get; set; } = new List<string>();   // List of modification tools used
 	public string TargetPronom { get; set; } = "";				// The pronom the file should be converted to
+	public Guid Id { get; set; }							// Unique identifier for the file
+	public bool ShouldMerge { get; set; } = false;				// True if file should be merged
+	public bool IsMerged { get; set; } = false;				// True if file is merged
 
 	public FileInfo()
 	{

@@ -1,8 +1,8 @@
 <root>
   <Requester>Larsarn</Requester>
   <Converter>Larsern</Converter>
-  <InputFolder>input</InputFolder>
-  <OutputFolder>output</OutputFolder>
+  <InputFolder></InputFolder>
+  <OutputFolder></OutputFolder>
   <MaxThreads></MaxThreads>
   <ChecksumHashing>SHA256</ChecksumHashing>
   <Timeout></Timeout>

@@ -22,78 +22,78 @@ public class GhostscriptConverter : Converter
 		Name = "Ghostscript";
 		Version = "1.23.1";
 		SupportedConversions = getListOfSupportedConvesions();
-        SupportedOperatingSystems = getSupportedOS();
-      
+		SupportedOperatingSystems = getSupportedOS();
+	  
 	}
 
-    public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
+	public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
 
-    List<string> ImagePronoms = [
-    //PNG
-    "fmt/11",
-        "fmt/12",
-        "fmt/13",
-        "fmt/935",
+	List<string> ImagePronoms = [
+	//PNG
+	"fmt/11",
+		"fmt/12",
+		"fmt/13",
+		"fmt/935",
 
-        //JPG
-        "fmt/41",
-        "fmt/42",
-        "fmt/43",
-        "fmt/44",
-        "x-fmt/398",
-        "x-fmt/390",
-        "x-fmt/391",
-        "fmt/645",
-        "fmt/1507",
-        "fmt/112",
-        //TIFF
-        "fmt/1917",
-        "x-fmt/399",
-        "x-fmt/388",
-        "x-fmt/387",
-        "fmt/155",
-        "fmt/353",
-        "fmt/154",
-        "fmt/153",
-        "fmt/156",
-        //BMP
-        "x-fmt/270",
-        "fmt/115",
-        "fmt/118",
-        "fmt/119",
-        "fmt/114",
-        "fmt/116",
-        "fmt/117",
-    ];
-    List<string> PDFPronoms = [
-        "fmt/15",
-        "fmt/16",
-        "fmt/17",
-        "fmt/18",
-        "fmt/19",
-        "fmt/20",
-        "fmt/276",
-        "fmt/1129"
-    ];
-    List<string> PostScriptPronoms = [
-        "fmt/124",
-        "x-fmt/91",
-        "x-fmt/406",
-        "x-fmt/407",
-        "x-fmt/408",
-        "fmt/501"
-        ];
+		//JPG
+		"fmt/41",
+		"fmt/42",
+		"fmt/43",
+		"fmt/44",
+		"x-fmt/398",
+		"x-fmt/390",
+		"x-fmt/391",
+		"fmt/645",
+		"fmt/1507",
+		"fmt/112",
+		//TIFF
+		"fmt/1917",
+		"x-fmt/399",
+		"x-fmt/388",
+		"x-fmt/387",
+		"fmt/155",
+		"fmt/353",
+		"fmt/154",
+		"fmt/153",
+		"fmt/156",
+		//BMP
+		"x-fmt/270",
+		"fmt/115",
+		"fmt/118",
+		"fmt/119",
+		"fmt/114",
+		"fmt/116",
+		"fmt/117",
+	];
+	List<string> PDFPronoms = [
+		"fmt/15",
+		"fmt/16",
+		"fmt/17",
+		"fmt/18",
+		"fmt/19",
+		"fmt/20",
+		"fmt/276",
+		"fmt/1129"
+	];
+	List<string> PostScriptPronoms = [
+		"fmt/124",
+		"x-fmt/91",
+		"x-fmt/406",
+		"x-fmt/407",
+		"x-fmt/408",
+		"fmt/501"
+		];
 
-    Dictionary<string, double> pdfVersionMap = new Dictionary<string, double>()
-    {
-        {"fmt/15", 1.1},
-        {"fmt/16", 1.2},
-        {"fmt/17", 1.3},
-        {"fmt/18", 1.4},
-        {"fmt/19", 1.5},
-        {"fmt/20", 1.6},
-        {"fmt/276", 1.7},
-        {"fmt/1129", 2 }
+	Dictionary<string, double> pdfVersionMap = new Dictionary<string, double>()
+	{
+		{"fmt/15", 1.1},
+		{"fmt/16", 1.2},
+		{"fmt/17", 1.3},
+		{"fmt/18", 1.4},
+		{"fmt/19", 1.5},
+		{"fmt/20", 1.6},
+		{"fmt/276", 1.7},
+		{"fmt/1129", 2 }
 };
 
 	Dictionary<List<string>, Tuple<string, string>> keyValuePairs = new Dictionary<List<string>, Tuple<string, string>>() 
@@ -105,43 +105,43 @@ public class GhostscriptConverter : Converter
 		{new List<string> { "fmt/15", "fmt/16", "fmt/17", "fmt/18", "fmt/19", "fmt/20", "fmt/276", "fmt/1129" }, new Tuple<string, string>("pdfwrite", ".pdf")}
 	};
 
-    /// <summary>
-    /// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
-    /// </summary>
-    /// <returns>List of all conversions</returns>
-    public override Dictionary<string, List<string>> getListOfSupportedConvesions()
-    {
-        var supportedConversions = new Dictionary<string, List<string>>();
-        //PDF to Image
-        foreach (string pdfPronom in PDFPronoms)
-        {
-            supportedConversions.Add(pdfPronom, ImagePronoms);
-        }
-        //PostScript to PDF
-        foreach (string postScriptPronom in PostScriptPronoms)
-        {
-            supportedConversions.Add(postScriptPronom, PDFPronoms);
-        }
+	/// <summary>
+	/// Reference list stating supported conversions containing key value pairs with string input pronom and string output pronom
+	/// </summary>
+	/// <returns>List of all conversions</returns>
+	public override Dictionary<string, List<string>> getListOfSupportedConvesions()
+	{
+		var supportedConversions = new Dictionary<string, List<string>>();
+		//PDF to Image
+		foreach (string pdfPronom in PDFPronoms)
+		{
+			supportedConversions.Add(pdfPronom, ImagePronoms);
+		}
+		//PostScript to PDF
+		foreach (string postScriptPronom in PostScriptPronoms)
+		{
+			supportedConversions.Add(postScriptPronom, PDFPronoms);
+		}
 
-        return supportedConversions;
-    }
+		return supportedConversions;
+	}
 
-    public override List<string> getSupportedOS()
-    {
-        var supportedOS = new List<string>();
-        supportedOS.Add(PlatformID.Win32NT.ToString());
-        //Add more supported OS here
-        return supportedOS;
-    }
+	public override List<string> getSupportedOS()
+	{
+		var supportedOS = new List<string>();
+		supportedOS.Add(PlatformID.Win32NT.ToString());
+		//Add more supported OS here
+		return supportedOS;
+	}
 
-    /// <summary>
-    /// Convert a file to a new format
-    /// </summary>
-    /// <param name="filePath">The file to be converted</param>
-    /// <param name="pronom">The file format to convert to</param>
+	/// <summary>
+	/// Convert a file to a new format
+	/// </summary>
+	/// <param name="filePath">The file to be converted</param>
+	/// <param name="pronom">The file format to convert to</param>
 	public override void ConvertFile(FileToConvert fileinfo, string pronom)
-    {
-        string outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FilePath);
+	{
+		string outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FilePath);
 		string extension;
 		string sDevice;
 
@@ -167,16 +167,16 @@ public class GhostscriptConverter : Converter
 			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo.FilePath);
 		}
 		
-    }
+	}
 
-    /// <summary>
-    /// Convert a file using GhostScript command line
-    /// </summary>
-    /// <param name="filePath">The file to be converted</param>
-    /// <param name="outputFileName">The name of the new file</param>
-    /// <param name="sDevice">What format GhostScript will convert to</param>
-    /// <param name="extension">Extension type for after the conversion</param>
-    void convertToImage(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
+	/// <summary>
+	/// Convert a file using GhostScript command line
+	/// </summary>
+	/// <param name="filePath">The file to be converted</param>
+	/// <param name="outputFileName">The name of the new file</param>
+	/// <param name="sDevice">What format GhostScript will convert to</param>
+	/// <param name="extension">Extension type for after the conversion</param>
+	void convertToImage(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
 		try
@@ -202,21 +202,21 @@ public class GhostscriptConverter : Converter
 							}
 						}
 
-                        int count = 1;
-                        bool converted = false;
-                        do
-                        {
-                            converted = CheckConversionStatus(file.FilePath, outputFileName, pronom);
-                            count++;
-                            if (!converted)
-                            {
-                                convertToImage(file, outputFileName, sDevice, extension, pronom);
-                            }
-                        } while (!converted && count < 4);
-                        if (!converted)
-                        {
-                            throw new Exception("File was not converted");
-                        }
+						int count = 1;
+						bool converted = false;
+						do
+						{
+							converted = CheckConversionStatus(outputFileName, pronom, file);
+							count++;
+							if (!converted)
+							{
+								convertToImage(file, outputFileName, sDevice, extension, pronom);
+							}
+						} while (!converted && count < 4);
+						if (!converted)
+						{
+							throw new Exception("File was not converted");
+						}
 
 						//Create folder for images with original name
 						string folder = Path.GetFileNameWithoutExtension(file.FilePath);
@@ -231,7 +231,7 @@ public class GhostscriptConverter : Converter
 							File.Move(pageOutputFilePath, pageOutputFilePathInFolder);
 						}
 		
-                    }
+					}
 				}
 			}
 		}
@@ -264,32 +264,32 @@ public class GhostscriptConverter : Converter
 		string outputFolder = Path.GetDirectoryName(file.FilePath);
 		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + file.FilePath;
-        int count = 0;
-        bool converted;
-        try
+		int count = 0;
+		bool converted;
+		try
 		{
-            do
-            {
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-		        startInfo.FileName = gsExecutable;
-		        startInfo.Arguments = arguments;
-		        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-		        startInfo.RedirectStandardOutput = true;
-		        startInfo.UseShellExecute = false;
-		        startInfo.CreateNoWindow = true;
-                using (Process? exeProcess = Process.Start(startInfo))
-                {
-                    exeProcess?.WaitForExit();
-                }
-                converted = CheckConversionStatus(file.FilePath,outputFilePath, pronom);
-                count++;
-                
-            } while (!converted && count < GlobalVariables.MAX_RETRIES);
-            if (!converted)
-            {
-                throw new Exception("File was not converted");
-            }
-        }
+			do
+			{
+				ProcessStartInfo startInfo = new ProcessStartInfo();
+				startInfo.FileName = gsExecutable;
+				startInfo.Arguments = arguments;
+				startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+				startInfo.RedirectStandardOutput = true;
+				startInfo.UseShellExecute = false;
+				startInfo.CreateNoWindow = true;
+				using (Process? exeProcess = Process.Start(startInfo))
+				{
+					exeProcess?.WaitForExit();
+				}
+				converted = CheckConversionStatus(outputFilePath, pronom,file);
+				count++;
+				
+			} while (!converted && count < GlobalVariables.MAX_RETRIES);
+			if (!converted)
+			{
+				throw new Exception("File was not converted");
+			}
+		}
 		catch (Exception e)
 		{
 			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);

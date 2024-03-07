@@ -386,7 +386,39 @@ public class Siegfried
 		return Task.FromResult(files.ToList());
 	}
 
-	List<string[]> GroupPaths(List<string> paths)
+    /// <summary>
+    /// Identifies all files in input directory and returns a List of FileInfo objects.
+    /// </summary>
+    /// <param name="input">Path to root folder for search</param>
+    /// <returns>A List of identified files</returns>
+    public Task<List<FileInfo>>? IdentifyFilesIndividually(List<FileInfo> inputFiles)
+    {
+        Logger logger = Logger.Instance;
+        var files = new ConcurrentBag<FileInfo>();
+		List<string> filePaths = new List<string>();
+		inputFiles.ForEach(f => filePaths.Add(f.FilePath));
+        ConcurrentBag<string[]> filePathGroups = new ConcurrentBag<string[]>(GroupPaths(filePaths));
+
+        Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePaths =>
+        {
+            var output = IdentifyList(filePaths);
+            if (output == null)
+            {
+                logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually: could not identify files", true);
+                return; //Skip current group
+            }
+            //TODO: Check if all files were identified
+
+            foreach (var f in output)
+            {
+                files.Add(f);
+            }
+        });
+
+        return Task.FromResult(files.ToList());
+    }
+
+    List<string[]> GroupPaths(List<string> paths)
 	{
 		int groupSize = 128; //Number of files to be identified in each group
 		int groupCount = paths.Count / groupSize;

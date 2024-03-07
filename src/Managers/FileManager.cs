@@ -1,14 +1,14 @@
-﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using System.Collections.Concurrent;
 
 public class FileManager
 {
     private static FileManager? instance;
     private static readonly object lockObject = new object();
-	public List<FileInfo> Files;	// List of files to be converted
-	private bool identifyingFiles = false; // True if files are being identified
+	public ConcurrentDictionary<Guid,FileInfo> Files;	// List of files to be converted
+	private static readonly object identifyingFiles = new object(); // True if files are being identified
     private FileManager()
     {
-        Files = new List<FileInfo>();
+        Files = new ConcurrentDictionary<Guid, FileInfo>();
     }
     public static FileManager Instance
     {
@@ -28,40 +28,44 @@ public class FileManager
         }
     }
   
-    public async void IdentifyFiles()
+    public void IdentifyFiles()
     {
-		identifyingFiles = true;
-		Siegfried sf = Siegfried.Instance;
-		Logger logger = Logger.Instance;
-		//TODO: Can maybe run both individually and compressed files at the same time
-		//Identifying all uncompressed files
-		List<FileInfo>? files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
-		if (files != null)
+		lock (identifyingFiles)
 		{
-			//Change path from input to output directory
-			foreach (FileInfo file in files)
+			Siegfried sf = Siegfried.Instance;
+			Logger logger = Logger.Instance;
+			//TODO: Can maybe run both individually and compressed files at the same time
+			//Identifying all uncompressed files
+			List<FileInfo>? files = sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!.Result; //Search for files in output folder since they are copied there from input folder
+			if (files != null)
 			{
-				//Replace first occurence of input path with output path
-				file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+				//TODO: Should be more robust
+				//Change path from input to output directory
+				foreach (FileInfo file in files)
+				{
+					//Replace first occurence of input path with output path
+					file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+					Guid id = Guid.NewGuid();
+					file.Id = id;
+					Files.TryAdd(id, file);
+				}
+
 			}
-			Files.AddRange(files);
-		}
-		else
-		{
-			logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
-		}
+			else
+			{
+				logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
+			}
 
-		//Identifying all compressed files
-		List<FileInfo>? compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
+			//Identifying all compressed files
+			List<FileInfo>? compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
 
-		if (compressedFiles != null)
-		{
-			Files.AddRange(compressedFiles);
+			foreach (var file in compressedFiles)
+			{
+				Guid id = Guid.NewGuid();
+				file.Id = id;
+				Files.TryAdd(id, file);
+			}
 		}
-        Files = Files.GroupBy(file => file.FilePath)
-                     .Select(group => group.First())
-                     .ToList();
-        identifyingFiles = false;
     }
 
     public void ImportFiles(List<FileInfo> files)
@@ -74,20 +78,22 @@ public class FileManager
             files.RemoveAll(file => !FileExistsInDirectory(GlobalVariables.parsedOptions.Input, file.ShortFilePath));
 
             //Copy files to output directory
-            Parallel.ForEach(Files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+            Parallel.ForEach(Files.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
             {
 				if (!FileExistsInDirectory(GlobalVariables.parsedOptions.Output, file.ShortFilePath))
 				{
 					var newPath = Path.Combine(GlobalVariables.parsedOptions.Output, file.ShortFilePath);
 					File.Copy(file.FilePath,newPath);
 				}
+				Guid id = Guid.NewGuid();
+				file.Id = id;
+				Files.TryAdd(id, file);
 			});
 		} catch (Exception e)
 		{
             Logger logger = Logger.Instance;
             logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
         }
-		Files.AddRange(files);
     }
 
 	public void ImportCompressedFiles(List<FileInfo> files)
@@ -102,7 +108,12 @@ public class FileManager
             Logger logger = Logger.Instance;
             logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
         }
-        Files.AddRange(files);
+        files.ForEach(file =>
+		{
+            Guid id = Guid.NewGuid();
+            file.Id = id;
+            Files.TryAdd(id, file);
+        });
     }
 
 	/// <summary>
@@ -113,15 +124,19 @@ public class FileManager
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
+		bool result = false;
 
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
-		foreach (FileInfo file in Files)
+		foreach (FileInfo file in Files.Values)
 		{
 			string currentPronom = file.NewPronom != "" ? file.NewPronom : file.OriginalPronom;
 			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
-
+			if(file.NewPronom != "")
+			{
+				result = true;
+			}
             //Check if the conversion is supported by any of the converters
             if (targetPronom != null) { 
 				converters.ForEach(c =>
@@ -181,10 +196,14 @@ public class FileManager
 		//Sort the fileCount dictionary by the number of files
 		fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
 
+
+		var firstName = result ? "Actual pronom" : "Input pronom";
+		var secondName = result ? "Target pronom" : "Output pronom";
+
 		//Print the number of files per pronom code
 		var oldColor = Console.ForegroundColor;
-		Console.ForegroundColor = ConsoleColor.Blue;
-		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", "Input pronom", "Full name", "Output pronom", "Full name", "Count");
+		Console.ForegroundColor = GlobalVariables.INFO_COL;
+		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstName, "Full name", secondName, "Full name", "Count");
 		Console.ForegroundColor = oldColor;
 
 		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
@@ -196,18 +215,19 @@ public class FileManager
             //Get full name of filetype with pronom code
             var currentFormat = PronomHelper.PronomToFullName(currentPronom);
             var targetFormat = PronomHelper.PronomToFullName(targetPronom);
+
             if (targetPronom.Contains(notSupportedString))
 			{
 				var split = targetPronom.Split(" ")[0];
                 targetFormat = PronomHelper.PronomToFullName(split) + notSupportedString;
 				targetPronom = split;
-				Console.ForegroundColor = ConsoleColor.Red;
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
             } else if (targetPronom == "Not set")
 			{
-				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.ForegroundColor = GlobalVariables.WARNING_COL;
 			} else if (targetPronom == currentPronom)
 			{
-				Console.ForegroundColor = ConsoleColor.Green;
+				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
 			}
 
             Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
@@ -218,7 +238,7 @@ public class FileManager
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
         //Print totals to user
-        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.ForegroundColor = GlobalVariables.INFO_COL;
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
@@ -227,17 +247,27 @@ public class FileManager
 
 	public List<FileInfo> GetFiles()
 	{
-		while (identifyingFiles)
+		lock (identifyingFiles)
 		{
-            Thread.Sleep(100);
-        }
-		return Files;
+			return Files.Values.ToList();
+		}
+	}
+
+	public FileInfo? GetFile(Guid id)
+	{
+		if (!Files.ContainsKey(id)) return null;
+		return Files[id];
 	}
 
 	public void DocumentFiles()
 	{
 		Logger logger = Logger.Instance;
-		logger.SetUpDocumentation(Files);
+		List<FileInfo> files = new List<FileInfo>();
+		foreach (var file in Files)
+		{
+            files.Add(file.Value);
+        }
+		logger.SetUpDocumentation(files);
 	}
 
     private static bool FileExistsInDirectory(string directoryPath, string fileName)

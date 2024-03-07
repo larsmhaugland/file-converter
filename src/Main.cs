@@ -1,18 +1,24 @@
 ﻿using CommandLine;
+using iText.Kernel.Pdf;
 using iText.Layout.Splitting;
 using System.Diagnostics;
 
 public static class GlobalVariables
 {
-    public static Options parsedOptions = new Options();
+	public static Options parsedOptions = new Options();
 	//Map with all specified conversion formats, to and from
-    public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
+	public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
 	// Map with info about what folders have overrides for specific formats
-    public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
-    public static HashAlgorithms checksumHash;
+	public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
+	public static HashAlgorithms checksumHash;
 	public static int maxThreads = Environment.ProcessorCount*2;
 	public static int timeout = 30;
 	public const int MAX_RETRIES = 3; //Maximum number of retries for a failed conversion
+	public const ConsoleColor INFO_COL = ConsoleColor.Cyan;
+	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
+	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
+	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
+	public const double MAX_FILE_SIZE = 1000000000;		//1GB
 
 	public static void Reset()
 	{
@@ -25,7 +31,7 @@ public static class GlobalVariables
 }
 public class Options
 {
-	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
+	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "testNoZip")]
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
@@ -49,23 +55,23 @@ class Program
 		});
 
 		//Only maximize and center the console window if the OS is Windows
-		
+		Console.Title = "FileConverter";
 		MaximizeAndCenterConsoleWindow();
 		if (!OperatingSystem.IsLinux())
 		{
-            Directory.SetCurrentDirectory("../../../");
-        }
+			Directory.SetCurrentDirectory("../../../");
+		}
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
-        settings.SetUpFolderOverride("./Settings.xml");
-        Logger logger = Logger.Instance;
+		settings.SetUpFolderOverride("./Settings.xml");
+		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
-        Siegfried sf = Siegfried.Instance;
+		Siegfried sf = Siegfried.Instance;
 		
-        //TODO: Check for malicous input files
-        try
+		//TODO: Check for malicous input files
+		try
 		{
 			//Check if user wants to use files from previous run
 			sf.AskReadFiles();
@@ -94,89 +100,96 @@ class Program
 			return;
 		}
 		ConversionManager cm = ConversionManager.Instance;
-		
+
 
 		if (fileManager.Files.Count > 0)
 		{			
 			string input;
 			do
 			{
-                logger.AskAboutReqAndConv();
-                fileManager.DisplayFileList();
+				logger.AskAboutReqAndConv();
+				fileManager.DisplayFileList();
 				var oldColor = Console.ForegroundColor;
-				Console.ForegroundColor = ConsoleColor.Blue;
+				Console.ForegroundColor = GlobalVariables.INFO_COL;
 				Console.WriteLine("Requester: {0}",Logger.JsonRoot.requester);
 				Console.WriteLine("Converter: {0}",Logger.JsonRoot.converter);
 				Console.WriteLine("MaxThreads: {0}", GlobalVariables.maxThreads);
 				Console.WriteLine("Timeout in minutes: {0}", GlobalVariables.timeout);
 				Console.ForegroundColor = oldColor;
-                Console.Write("Do you want to proceed with these settings (Y (Yes) / A (Abort) / R (Reload) / G (Change in GUI): ");
-                string ?r = Console.ReadLine();
+				Console.Write("Do you want to proceed with these settings (Y (Yes) / A (Abort) / R (Reload) / G (Change in GUI): ");
+				string ?r = Console.ReadLine();
 				r = r?.ToUpper() ?? " ";
 				input = r;
-                if (input == "R")
-                {
-                    Console.WriteLine("Change settings file and hit enter when finished (Remember to save file)");
-                    Console.ReadLine();
-                    settings.ReadSettings("./Settings.xml");
-                    settings.SetUpFolderOverride("./Settings.xml");
-                }
+				if (input == "R")
+				{
+					Console.WriteLine("Change settings file and hit enter when finished (Remember to save file)");
+					Console.ReadLine();
+					settings.ReadSettings("./Settings.xml");
+					settings.SetUpFolderOverride("./Settings.xml");
+				}
 				if (input == "G")
 				{
 					//TODO: Start GUI
 					Console.WriteLine("Not implemented yet...");
-                    settings.ReadSettings("./Settings.xml");
-                    settings.SetUpFolderOverride("./Settings.xml");
-                }
-            } while (input != "Y" && input != "A");
+					settings.ReadSettings("./Settings.xml");
+					settings.SetUpFolderOverride("./Settings.xml");
+				}
+			} while (input != "Y" && input != "A");
 			if (input == "A")
 			{
-                return;
-            }
-            Console.WriteLine("Converting files...");
+				return;
+			}
+			Console.WriteLine("Converting files...");
 
-            
-            try
+			try
 			{
-                cm.ConvertFiles();
+				cm.ConvertFiles();
 				//Delete siegfrieds json files
 				sf.ClearOutputFolder();
 			} catch (Exception e)
 			{
-                Console.WriteLine("Error while converting " + e.Message);
-                logger.SetUpRunTimeLogMessage("Main: Error when converting files: " + e.Message, true);
+				Console.WriteLine("Error while converting " + e.Message);
+				logger.SetUpRunTimeLogMessage("Main: Error when converting files: " + e.Message, true);
 			}
 			finally
 			{
 				Console.WriteLine("Conversion finished:");
 				fileManager.DisplayFileList();
-                Console.WriteLine("Documenting conversion...");
-                fileManager.DocumentFiles();
+				Console.WriteLine("Documenting conversion...");
+				fileManager.DocumentFiles();
 			}
 			Console.WriteLine("Compressing folders...");
 			sf.CompressFolders();
+
+			if(Logger.Instance.errorHappened)
+			{
+                Console.WriteLine("One or more errors happened during runtime, please check the log file for more information.");
+            } else
+			{
+				Console.WriteLine("No errors happened during runtime. See documentation.json file in output dir.");
+			}
 		}
 	}
-    static void MaximizeAndCenterConsoleWindow()
-    {
+	static void MaximizeAndCenterConsoleWindow()
+	{
 		//Only maximize and center the console window if the OS is Windows
 		if (Environment.OSVersion.Platform != PlatformID.Win32NT)
 		{
 			return;
 		}
-        int screenWidth = Console.LargestWindowWidth;
-        int screenHeight = Console.LargestWindowHeight;
+		int screenWidth = Console.LargestWindowWidth;
+		int screenHeight = Console.LargestWindowHeight;
 
-        int windowWidth = screenWidth ;  // You can adjust this as needed
-        int windowHeight = screenHeight; // You can adjust this as needed
+		int windowWidth = screenWidth ;  // You can adjust this as needed
+		int windowHeight = screenHeight; // You can adjust this as needed
 
-        Console.SetWindowSize(windowWidth, windowHeight);
-        Console.BufferHeight = windowHeight;
-        Console.BufferWidth = windowWidth;
+		Console.SetWindowSize(windowWidth, windowHeight);
+		Console.BufferHeight = windowHeight;
+		Console.BufferWidth = windowWidth;
 
-        int left = Math.Max((screenWidth - windowWidth) / 2, 0);
-        int top = Math.Max((screenHeight - windowHeight) / 2, 0);
+		int left = Math.Max((screenWidth - windowWidth) / 2, 0);
+		int top = Math.Max((screenHeight - windowHeight) / 2, 0);
 
-        //Console.SetWindowPosition(left, top);
-    }
+		//Console.SetWindowPosition(left, top);
+	}
 }

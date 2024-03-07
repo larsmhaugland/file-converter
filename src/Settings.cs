@@ -293,5 +293,20 @@ class Settings
         }
 		return null;
     }
+
+	/// <summary>
+	/// Checks if a file should be merged
+	/// </summary>
+	/// <param name="f">The file that should be checked</param>
+	/// <returns>True if it should be merged, otherwise False</returns>
+	public static bool ShouldMerge(FileInfo f)
+	{
+		var parentDir = Path.GetDirectoryName(Path.GetRelativePath(GlobalVariables.parsedOptions.Output, f.FilePath));
+		if (parentDir != null && GlobalVariables.FolderOverride.ContainsKey(parentDir))
+		{
+            return GlobalVariables.FolderOverride[parentDir].Merge;
+        }
+		return false;
+	}
 }
 
