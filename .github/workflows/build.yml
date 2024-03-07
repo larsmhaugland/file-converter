@@ -16,10 +16,10 @@ jobs:
           sudo apt-get install --yes openjdk-11-jre
           echo 'Installed openJDK 11'
 
-      - name: Update repository
+      - name: clone repository
         run: |
+          git clone https://sunpile01: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@github.com/larsmhaugland/file-converter
           cd file-converter
-          git pull https://sunpile01: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@https://github.com/larsmhaugland/file-converter
 
       - name: Configure and Run SonarScanner
         run: |
