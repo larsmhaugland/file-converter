@@ -1,47 +1,28 @@
-name: Build
+name: Build and Analyze Code
 
 on:
   push:
     branches:
       - main
 
-
 jobs:
   build:
-    name: Build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.11
-      - name: Cache SonarQube packages
-        uses: actions/cache@v1
-        with:
-          path: ~\sonar\cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-      - name: Cache SonarQube scanner
-        id: cache-sonar-scanner
-        uses: actions/cache@v1
-        with:
-          path: .\.sonar\scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
-      - name: Install SonarQube scanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        shell: bash
+      - name: Update System and Install OpenJDK 11
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-      - name: Build and analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-        shell: bash
+          sudo apt-get update
+          sudo apt-get install --yes openjdk-11-jre
+          echo 'Installed openJDK 11'
+
+      - name: Update repository
         run: |
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"GitHub-FileConverter" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-          dotnet build
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+	  cd file-converter-prog2900
+          git pull https://sunpile01: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@https://github.com/larsmhaugland/file-converter
+
+      - name: Configure and Run SonarScanner
+        run: |
+          dotnet sonarscanner begin /k:"Github-File-Converter" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"  
+	  dotnet build
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
