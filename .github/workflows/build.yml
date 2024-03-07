@@ -3,7 +3,7 @@ name: Build and Analyze Code
 on:
   push:
     branches:
-      - main
+      branches: [ "main" ]
 
 jobs:
   build:
