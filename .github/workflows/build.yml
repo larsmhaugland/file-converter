@@ -3,7 +3,7 @@ name: Build and Analyze Code
 on:
   push:
     branches:
-      branches: [ "main" ]
+      - main
 
 jobs:
   build:
@@ -18,11 +18,12 @@ jobs:
 
       - name: Update repository
         run: |
-	  cd file-converter-prog2900
+          cd file-converter-prog2900
           git pull https://sunpile01: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@https://github.com/larsmhaugland/file-converter
 
       - name: Configure and Run SonarScanner
         run: |
-          dotnet sonarscanner begin /k:"Github-File-Converter" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"  
-	  dotnet build
+          dotnet sonarscanner begin /k:"Github-File-Converter" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet build
           dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
