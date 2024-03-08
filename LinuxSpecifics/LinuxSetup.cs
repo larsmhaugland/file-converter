@@ -81,6 +81,8 @@ class LinuxSetup
             r = r?.ToUpper() ?? " ";
             if (r == "Y")
             {
+                Console.Write("Installing Siegfried...");
+                Console.Write("This may take a while");
                 InstallSiegfried();
             }
             else 
@@ -124,7 +126,6 @@ class LinuxSetup
                 }
                break;
             case "fedora":
-                break;
             case "arch":
                 checkDependencies = RunProcess(startInfo =>
                 {
