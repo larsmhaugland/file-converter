@@ -315,7 +315,7 @@ public class GhostscriptConverter : Converter
             bool converted = false;
             do
             {
-                converted = CheckConversionStatus(filePath, outputFileName, pronom);
+                converted = CheckConversionStatus(filePath, outputFileName+extension, pronom);
                 count++;
                 if (!converted)
                 {
@@ -370,18 +370,8 @@ public class GhostscriptConverter : Converter
 	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
 		string? outputFolder = Path.GetDirectoryName(filePath);
-        string fullPath = Path.GetFullPath(filePath);
-        string path;
-        //Remove everything from fullpath that is before outputFolder
-        int index = fullPath.IndexOf(outputFolder);
-        if (index > 0)
-        {
-            string relativePath = fullPath.Substring(index + outputFolder.Length);
-            path = Path.Combine(GlobalVariables.parsedOptions.Output, relativePath);
-        }
-        else { throw new Exception("Error when converting file with GhostScript. Could not find output folder.");}
 
-        string outputFilePath = Path.Combine(path, outputFileName + extension);
+        string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
         string command;
 
