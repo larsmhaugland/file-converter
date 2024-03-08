@@ -283,7 +283,8 @@ public class GhostscriptConverter : Converter
         try
         {
             string? outputFolder = Path.GetDirectoryName(filePath);
-            string outputName = Path.Combine(outputFolder, outputFileName);
+            string fullPath = Path.GetFullPath(filePath);
+            string outputName = Path.Combine(fullPath, outputFileName);
             string formattedOutputName = $"\"{outputName}\"";       //To handle spaces in file names
             string formattedInputName = $"\"{filePath}\"";
             string command = $"gs -sDEVICE={sDevice} -o {formattedOutputName}%d{extension} {formattedInputName}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
@@ -369,7 +370,8 @@ public class GhostscriptConverter : Converter
 	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
 		string? outputFolder = Path.GetDirectoryName(filePath);
-		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
+        string fullPath = Path.GetFullPath(filePath);
+        string outputFilePath = Path.Combine(fullPath, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
         string command;
 
