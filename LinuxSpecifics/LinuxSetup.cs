@@ -142,7 +142,7 @@ class LinuxSetup
                 }
                 else
                 {
-                    Console.WriteLine("Siegfried needs homebrew to install properly. Please install homebrew and try again.");
+                    Console.WriteLine("Siegfried needs homebrew to install properly. Please install homebrew and try again. See https://brew.sh for information about installation.");
                     Environment.Exit(0);
                 }
                 break;
