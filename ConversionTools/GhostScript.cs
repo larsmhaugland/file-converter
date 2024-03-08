@@ -371,7 +371,17 @@ public class GhostscriptConverter : Converter
 	{
 		string? outputFolder = Path.GetDirectoryName(filePath);
         string fullPath = Path.GetFullPath(filePath);
-        string outputFilePath = Path.Combine(fullPath, outputFileName + extension);
+        string path;
+        //Remove everything from fullpath that is before outputFolder
+        int index = fullPath.IndexOf(outputFolder);
+        if (index > 0)
+        {
+            string relativePath = fullPath.Substring(index + outputFolder.Length);
+            path = Path.Combine(GlobalVariables.parsedOptions.Output, relativePath);
+        }
+        else { throw new Exception("Error when converting file with GhostScript. Could not find output folder.");}
+
+        string outputFilePath = Path.Combine(path, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
         string command;
 
