@@ -280,7 +280,6 @@ public class GhostscriptConverter : Converter
     /// <param name="pronom"></param>
     void convertToImagesLinux(string filePath, string outputFileName, string sDevice, string extension, string pronom)
     {
-        Console.WriteLine("Converting to images on Linux");
         try
         {
             string? outputFolder = Path.GetDirectoryName(filePath);
@@ -288,7 +287,7 @@ public class GhostscriptConverter : Converter
             string outputName = Path.Combine(fullPath, outputFileName);
             string formattedOutputName = $"\"{outputName}\"";       //To handle spaces in file names
             string formattedInputName = $"\"{filePath}\"";
-            string command = $"gs -sDEVICE={sDevice} -o {formattedOutputName}%d{extension} {formattedInputName}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
