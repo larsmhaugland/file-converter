@@ -284,15 +284,13 @@ public class GhostscriptConverter : Converter
         {
             string? outputFolder = Path.GetDirectoryName(filePath);
             string fullPath = Path.GetFullPath(filePath);
-            string outputName = Path.Combine(fullPath, outputFileName);
-            string formattedOutputName = $"\"{outputName}\"";       //To handle spaces in file names
-            string formattedInputName = $"\"{filePath}\"";
-            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+           // string outputName = Path.Combine(fullPath, outputFileName);
+
+            string command = $"gs -sDEVICE={sDevice} -o {outputFileName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
             startInfo.Arguments = $"-c \"{command}\"";
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.RedirectStandardOutput = true;
             startInfo.UseShellExecute = false;
             startInfo.CreateNoWindow = true;
