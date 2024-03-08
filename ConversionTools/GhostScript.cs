@@ -383,7 +383,7 @@ public class GhostscriptConverter : Converter
             }
             else
             {
-                startInfo.FileName = "bin/bash";
+                startInfo.FileName = "/bin/bash";
                 command = $"gs" +arguments;
             }
 			startInfo.Arguments = command;
