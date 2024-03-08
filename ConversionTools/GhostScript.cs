@@ -384,7 +384,8 @@ public class GhostscriptConverter : Converter
             else
             {
                 startInfo.FileName = "/bin/bash";
-                command = $"gs " +arguments;
+                string linuxCommand = $"gs " +arguments;
+                command = $"-c \"{linuxCommand}\"";
             }
 			startInfo.Arguments = command;
 			startInfo.WindowStyle = ProcessWindowStyle.Hidden;
