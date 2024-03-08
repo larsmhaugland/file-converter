@@ -315,7 +315,7 @@ public class GhostscriptConverter : Converter
             bool converted = false;
             do
             {
-                converted = CheckConversionStatus(filePath, fullPath+outputFileName+extension, pronom);
+                converted = CheckConversionStatus(filePath, outputFileName+extension, pronom);
                 count++;
                 if (!converted)
                 {
