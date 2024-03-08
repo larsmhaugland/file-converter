@@ -2,6 +2,7 @@
 using Ghostscript.NET.Rasterizer;
 using System.Drawing.Imaging;
 using Ghostscript.NET;
+using System.Drawing;
 
 //TODO: Put all images in a folder with original name and delete original file
 
@@ -283,7 +284,9 @@ public class GhostscriptConverter : Converter
         {
             string? outputFolder = Path.GetDirectoryName(filePath);
             string outputName = Path.Combine(outputFolder, outputFileName);
-            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+            string formattedOutputName = $"\"{outputName}\"";       //To handle spaces in file names
+            string formattedInputName = $"\"{filePath}\"";
+            string command = $"gs -sDEVICE={sDevice} -o {formattedOutputName}%d{extension} {formattedInputName}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
@@ -306,6 +309,23 @@ public class GhostscriptConverter : Converter
                     Logger.Instance.SetUpRunTimeLogMessage($"Error when converting file with GhostScript. Exit code: {process?.ExitCode}, Error message: {error}", true, filename: filePath);
                 }
             }
+
+            int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus(filePath, outputFileName, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertToImageWindows(filePath, outputFileName, sDevice, extension, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+
         }
         catch(Exception e)
         {
@@ -337,7 +357,6 @@ public class GhostscriptConverter : Converter
 		}
 	}
 
-    //TODO: Check for Linux (unsure about executable path)
     /// <summary>
     ///     Convert to PDF using GhostScript
     /// </summary>
@@ -352,12 +371,22 @@ public class GhostscriptConverter : Converter
 		string? outputFolder = Path.GetDirectoryName(filePath);
 		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
+        string command;
 
 		try
 		{
 			ProcessStartInfo startInfo = new ProcessStartInfo();
-			startInfo.FileName = gsExecutable; //TODO: use gs instead
-			startInfo.Arguments = arguments;
+            if (OperatingSystem.IsWindows())
+            {
+                startInfo.FileName = gsExecutable;
+                command = arguments;
+            }
+            else
+            {
+                startInfo.FileName = "bin/bash";
+                command = $"gs" +arguments;
+            }
+			startInfo.Arguments = command;
 			startInfo.WindowStyle = ProcessWindowStyle.Hidden;
 			startInfo.RedirectStandardOutput = true;
 			startInfo.UseShellExecute = false;
