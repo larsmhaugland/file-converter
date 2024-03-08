@@ -306,10 +306,10 @@ public class GhostscriptConverter : Converter
 
                 process?.WaitForExit();
 
-                if (process?.ExitCode != 0 || process == null)
+                /*if (process?.ExitCode != 0 || process == null)
                 {
                     Logger.Instance.SetUpRunTimeLogMessage($"Error when converting file with GhostScript. Exit code: {process?.ExitCode}, Error message: {error}", true, filename: filePath);
-                }
+                }*/
             }
 
             int count = 1;
