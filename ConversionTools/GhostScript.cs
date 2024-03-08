@@ -279,10 +279,12 @@ public class GhostscriptConverter : Converter
     /// <param name="pronom"></param>
     void convertToImagesLinux(string filePath, string outputFileName, string sDevice, string extension, string pronom)
     {
-        string command = $"gs -sDEVICE={sDevice} -o {outputFileName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
-
         try
         {
+            string? outputFolder = Path.GetDirectoryName(filePath);
+            string outputName = Path.Combine(outputFolder, outputFileName);
+            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
             startInfo.Arguments = $"-c \"{command}\"";
@@ -347,14 +349,14 @@ public class GhostscriptConverter : Converter
     /// <param name="pronom"> The output pronom </param>
 	void convertToPDF(string filePath, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
-		string outputFolder = Path.GetDirectoryName(filePath);
+		string? outputFolder = Path.GetDirectoryName(filePath);
 		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
 		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + filePath;
 
 		try
 		{
 			ProcessStartInfo startInfo = new ProcessStartInfo();
-			startInfo.FileName = gsExecutable;
+			startInfo.FileName = gsExecutable; //TODO: use gs instead
 			startInfo.Arguments = arguments;
 			startInfo.WindowStyle = ProcessWindowStyle.Hidden;
 			startInfo.RedirectStandardOutput = true;
