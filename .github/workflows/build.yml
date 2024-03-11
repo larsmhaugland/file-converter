@@ -31,15 +31,12 @@ jobs:
           dotnet tool install -g dotnet-sonarscanner
           source ~/.bashrc
           
-      - name: clone repository
-        run: |
+      - name: Clone repository, Configure and Run SonarScanner
+        run:  |
           git clone https://sunpile01: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@github.com/larsmhaugland/file-converter
-          working-directory: file-converter
-
-      - name: Configure and Run SonarScanner
-        run: |
+          cd file-converter
           source ~/.bashrc
-          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000"  /d:sonar.login="sqp_15c23fcef67896a8bc0601016f71c2eb1b1cfc5e"
+          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000" /d:sonar.login="sqp_15c23fcef67896a8bc0601016f71c2eb1b1cfc5e"
           dotnet build
           dotnet sonarscanner end /d:sonar.login="sqp_15c23fcef67896a8bc0601016f71c2eb1b1cfc5e"
 
