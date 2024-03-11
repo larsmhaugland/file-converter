@@ -35,7 +35,7 @@ jobs:
           git clone https://sunpile01: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@github.com/larsmhaugland/file-converter
           cd file-converter
           source ~/.bashrc
-          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000" /d:sonar.login="sqp_15c23fcef67896a8bc0601016f71c2eb1b1cfc5e"
+          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000" /d:sonar.login="squ_a347e0d82ab0b41c243c3ec8d02c7d2bc3e035f0"
           dotnet build
-          dotnet sonarscanner end /d:sonar.login="sqp_15c23fcef67896a8bc0601016f71c2eb1b1cfc5e"
+          dotnet sonarscanner end /d:sonar.login="squ_a347e0d82ab0b41c243c3ec8d02c7d2bc3e035f0"
 
