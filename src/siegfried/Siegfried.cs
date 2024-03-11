@@ -93,20 +93,49 @@ public class Siegfried
 		Logger logger = Logger.Instance;
 		//TODO: Should check Version and ScanDate here
 		CompressedFolders = new List<string>();
-        //Look for Siegfried files
-        var found = Path.Exists(ExecutablePath);
-		logger.SetUpRunTimeLogMessage("SF Siegfried executable " + (found ? "" : "not") + "found", !found);
-		if (!found)
+		//Look for Siegfried files
+		if (OperatingSystem.IsWindows())
 		{
-			Console.WriteLine("Cannot find Siegfried executable");
-			throw new FileNotFoundException("Cannot find Siegfried executable");
+			var found = Path.Exists(ExecutablePath);
+			logger.SetUpRunTimeLogMessage("SF Siegfried executable " + (found ? "" : "not") + "found", !found);
+			if (!found)
+			{
+				Console.WriteLine("Cannot find Siegfried executable");
+				throw new FileNotFoundException("Cannot find Siegfried executable");
+			}
+			found = Path.Exists(HomeFolder + "/pronom64k.sig");
+			logger.SetUpRunTimeLogMessage("SF Pronom signature file " + (found ? "" : "not") + "found", !found);
+			if (!found)
+			{
+				Console.WriteLine("Cannot find Pronom signature file");
+				throw new FileNotFoundException("Cannot find Pronom signature file");
+			}
 		}
-		found = Path.Exists(HomeFolder + "/pronom64k.sig");
-		logger.SetUpRunTimeLogMessage("SF Pronom signature file " + (found ? "" : "not") + "found", !found);
-		if (!found)
+		else if (OperatingSystem.IsLinux())
 		{
-            Console.WriteLine("Cannot find Pronom signature file");
-            throw new FileNotFoundException("Cannot find Pronom signature file");
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+			startInfo.FileName = "/bin/bash";
+			startInfo.Arguments = "-c \" " + "sf -version" + " \"";
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardError = true;
+
+            try
+            {
+                Process process = new Process();
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+				string output = process.StandardOutput.ReadToEnd();
+				if (!output.Contains("siegfried")) { 
+				    throw new FileNotFoundException("Cannot find Siegfried on Linux");
+				}
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 	}
 
