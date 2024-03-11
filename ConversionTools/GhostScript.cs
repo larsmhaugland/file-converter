@@ -181,7 +181,7 @@ public class GhostscriptConverter : Converter
                     case ".jpg":
                     case ".tiff": 
                     case ".bmp":
-                        if (OperatingSystem.IsWindows())
+                        if (OperatingSystem.IsWindows() && Environment.OSVersion.Version >= new System.Version(6,1))
                         {
                             convertToImageWindows(fileinfo, outputFileName, sDevice, extension, pronom);
                         }
@@ -208,66 +208,69 @@ public class GhostscriptConverter : Converter
     /// <param name="extension">Extension type for after the conversion</param>
     void convertToImageWindows(string filePath, string outputFileName, string sDevice, string extension, string pronom)
 	{
-		try
-		{
-			using (var rasterizer = new GhostscriptRasterizer())
-			{
-				GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
-				using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-				{
-					rasterizer.Open(stream, versionInfo, false);
+        if (OperatingSystem.IsWindows() && Environment.OSVersion.Version >= new System.Version(6, 1))
+        {
+            try
+            {
+                using (var rasterizer = new GhostscriptRasterizer())
+                {
+                    GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
+                    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    {
+                        rasterizer.Open(stream, versionInfo, false);
 
-					ImageFormat? imageFormat = GetImageFormat(extension);
+                        ImageFormat? imageFormat = GetImageFormat(extension);
 
-					if (imageFormat != null)
-					{
-
-						for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
-						{
-							string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
-							using (var image = rasterizer.GetPage(300, pageNumber))
-							{
-								image.Save(pageOutputFileName, imageFormat);
-							}
-						}
-
-                        int count = 1;
-                        bool converted = false;
-                        do
+                        if (imageFormat != null)
                         {
-                            converted = CheckConversionStatus(filePath, outputFileName, pronom);
-                            count++;
+
+                            for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                            {
+                                string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
+                                using (var image = rasterizer.GetPage(300, pageNumber))
+                                {
+                                    image.Save(pageOutputFileName, imageFormat);
+                                }
+                            }
+
+                            int count = 1;
+                            bool converted = false;
+                            do
+                            {
+                                converted = CheckConversionStatus(filePath, outputFileName, pronom);
+                                count++;
+                                if (!converted)
+                                {
+                                    convertToImageWindows(filePath, outputFileName, sDevice, extension, pronom);
+                                }
+                            } while (!converted && count < 4);
                             if (!converted)
                             {
-                                convertToImageWindows(filePath, outputFileName, sDevice, extension, pronom);
+                                throw new Exception("File was not converted");
                             }
-                        } while (!converted && count < 4);
-                        if (!converted)
-                        {
-                            throw new Exception("File was not converted");
-                        }
 
-						//Create folder for images with original name
-						string folder = Path.GetFileNameWithoutExtension(filePath);
-						string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
-						Directory.CreateDirectory(folderPath);
-						
-						for(int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
-						{
-							string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
-							string pageOutputFilePath = Path.Combine(GlobalVariables.parsedOptions.Output, pageOutputFileName);
-							string pageOutputFilePathInFolder = Path.Combine(folderPath, pageOutputFileName);
-							File.Move(pageOutputFilePath, pageOutputFilePathInFolder);
-						}
-		
+                            //Create folder for images with original name
+                            string folder = Path.GetFileNameWithoutExtension(filePath);
+                            string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
+                            Directory.CreateDirectory(folderPath);
+
+                            for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+                            {
+                                string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
+                                string pageOutputFilePath = Path.Combine(GlobalVariables.parsedOptions.Output, pageOutputFileName);
+                                string pageOutputFilePathInFolder = Path.Combine(folderPath, pageOutputFileName);
+                                File.Move(pageOutputFilePath, pageOutputFilePathInFolder);
+                            }
+
+                        }
                     }
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
-		}
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
+            }
+        }
 	}
     
     /// <summary>
@@ -317,7 +320,7 @@ public class GhostscriptConverter : Converter
                 count++;
                 if (!converted)
                 {
-                    convertToImageWindows(filePath, outputFileName, sDevice, extension, pronom);
+                    convertToImagesLinux(filePath, outputFileName, sDevice, extension, pronom);
                 }
             } while (!converted && count < 4);
             if (!converted)
@@ -339,21 +342,21 @@ public class GhostscriptConverter : Converter
     /// </summary>
     /// <param name="extension"> A string containing a file format extension </param>
     /// <returns> An ImageFormat class </returns>
-	private ImageFormat ?GetImageFormat(string extension)
+	private static ImageFormat ?GetImageFormat(string extension)
 	{
-		switch (extension)
-		{
-			case ".png":
-				return ImageFormat.Png;
-			case ".jpg":
-				return ImageFormat.Jpeg;
-			case ".tiff":
-				return ImageFormat.Tiff;
-			case ".bmp":
-				return ImageFormat.Bmp;
-			default:
-				return null;
-		}
+            switch (extension)
+            {
+                case ".png":
+                    return ImageFormat.Png;
+                case ".jpg":
+                    return ImageFormat.Jpeg;
+                case ".tiff":
+                    return ImageFormat.Tiff;
+                case ".bmp":
+                    return ImageFormat.Bmp;
+                default:
+                    return null;
+            }
 	}
 
     /// <summary>

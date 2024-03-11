@@ -26,15 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ghostpdl\autogen.sh">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="ghostpdl\configure.ac">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="ghostpdl\Makefile.in">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="GhostscriptBinaryFiles\gs10.02.1\bin\gsdll64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
