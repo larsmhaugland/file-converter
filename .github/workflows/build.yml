@@ -36,6 +36,7 @@ jobs:
 
       - name: Configure and Run SonarScanner
         run: |
+          source ~/.bashrc
           dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000"  /d:sonar.login="sqp_171126dea0b63379dab20f6346f55ac6ca626416"
           dotnet build
           dotnet sonarscanner end /d:sonar.login="sqp_171126dea0b63379dab20f6346f55ac6ca626416"
