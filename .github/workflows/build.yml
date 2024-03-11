@@ -1,4 +1,4 @@
-name: Build and Analyze Code
+name: Analyze code with SonarQube
 
 on:
   push:
