@@ -18,10 +18,10 @@ jobs:
           
       - name: Install dotnet and sonarscanner
         run: |
-          sudo apt remove --autoremove aspnetcore-runtime-8.0 dotnet-sdk-8.0 dotnet-runtime-8.0 dotnet8
-          sudo rm -f /etc/apt/keyrings/microsoft.gpg
-          sudo rm -f /etc/apt/sources.list.d/microsoft.sources
-          sudo apt update
+          #sudo apt remove --autoremove aspnetcore-runtime-8.0 dotnet-sdk-8.0 dotnet-runtime-8.0 dotnet8
+          #sudo rm -f /etc/apt/keyrings/microsoft.gpg
+          #sudo rm -f /etc/apt/sources.list.d/microsoft.sources
+          #sudo apt update
           echo "Types: deb
           URIs: https://packages.microsoft.com/ubuntu/22.04/prod/
           Suites: jammy
