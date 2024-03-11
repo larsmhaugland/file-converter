@@ -34,7 +34,7 @@ jobs:
       - name: clone repository
         run: |
           git clone https://sunpile01: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@github.com/larsmhaugland/file-converter
-          cd file-converter
+          working-directory: file-converter
 
       - name: Configure and Run SonarScanner
         run: |
