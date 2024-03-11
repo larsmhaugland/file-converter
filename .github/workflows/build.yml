@@ -15,7 +15,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes openjdk-11-jre
           echo 'Installed openJDK 11'
-
+          
+      - name: Install dotnet and sonarscanner
+        run: |
+          sudo apt remove --autoremove aspnetcore-runtime-8.0 dotnet-sdk-8.0 dotnet-runtime-8.0 dotnet8
+          sudo rm /etc/apt/keyrings/microsoft.gpg
+          sudo rm /etc/apt/sources.list.d/microsoft.sources
+          sudo apt update
+          echo "Types: deb
+          URIs: https://packages.microsoft.com/ubuntu/22.04/prod/
+          Suites: jammy
+          Components: main
+          Architectures: amd64
+          Signed-By: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/microsoft.sources > /dev/null
+          sudo apt update
+          sudo apt install dotnet-sdk-8.0
+          dotnet tool uninstall -g dotnet-sonarscanner
+          dotnet tool install -g dotnet-sonarscanner
+          source ~/.bashrc
+          
       - name: clone repository
         run: |
           git clone https://sunpile01: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@github.com/larsmhaugland/file-converter
@@ -23,7 +41,7 @@ jobs:
 
       - name: Configure and Run SonarScanner
         run: |
-          dotnet sonarscanner begin /k:"Github-File-Converter" /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000"  /d:sonar.login="sqp_171126dea0b63379dab20f6346f55ac6ca626416"
           dotnet build
-          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet sonarscanner end /d:sonar.login="sqp_171126dea0b63379dab20f6346f55ac6ca626416"
 
