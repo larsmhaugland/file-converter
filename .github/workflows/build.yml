@@ -12,8 +12,7 @@ jobs:
     steps:
       - name: Update System and Install OpenJDK 11
         run: |
-          cd
-          ls
+          echo "GitHub Actions Workflow Directory: $GITHUB_WORKSPACE"
           sudo apt-get update
           sudo apt-get install --yes openjdk-11-jre
           echo 'Installed openJDK 11'
