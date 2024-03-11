@@ -1,0 +1,4 @@
+LibreOffice is not installed.
+If you are on Ubuntu/Debian run: sudo apt install libreoffice
+For other Linux distros see https://www.libreoffice.org/download/download-libreoffice/ for installation instructions.
+The program will continue to run but without the LibreOffice converter. (This may mean a loss of functionality)
