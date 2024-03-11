@@ -26,7 +26,6 @@ jobs:
           Signed-By: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/microsoft.sources > /dev/null
           sudo apt update
           sudo apt install dotnet-sdk-8.0
-          dotnet tool uninstall -g dotnet-sonarscanner
           dotnet tool install -g dotnet-sonarscanner
           source ~/.bashrc
           
