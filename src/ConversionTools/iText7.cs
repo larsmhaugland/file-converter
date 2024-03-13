@@ -300,11 +300,6 @@ public class iText7 : Converter
             {
                 throw new Exception("File was not converted");
             }
-            else
-            {
-                //deleteOriginalFileFromOutputDirectory(file.FilePath);
-            }
-
         }
 		catch (Exception e)
 		{
@@ -324,7 +319,7 @@ public class iText7 : Converter
     {
         try
         {
-            string newFileName = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_PDFA.pdf");
+            string tmpFilename = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_PDFA.pdf");
             string filename = Path.Combine(file.FilePath);
             int count = 0;
             bool converted = false;
@@ -338,7 +333,7 @@ public class iText7 : Converter
             }
             do
             {
-                using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
+                using (PdfWriter writer = new PdfWriter(tmpFilename)) // Create PdfWriter instance
                 using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
                 using (PdfReader reader = new PdfReader(filename))
                 {
@@ -364,10 +359,10 @@ public class iText7 : Converter
                         
                     }
 
-                    // Close the PDF documents
+                    // Close the PDF document
                     pdfDocument.Close();
                 }
-                converted = CheckConversionStatus(newFileName, pronom);
+                converted = CheckConversionStatus(tmpFilename, pronom);
             } while (!converted && ++count < 3);
             if (!converted)
             {
@@ -375,8 +370,8 @@ public class iText7 : Converter
             } else
             {
                 File.Delete(filename);
-                File.Move(newFileName, filename);
-                //replaceFileInList(newFileName, file);
+                File.Move(tmpFilename, filename);
+                replaceFileInList(filename, file);
             }
         }
         catch (Exception e)
@@ -412,13 +407,13 @@ public class iText7 : Converter
                 return;
             }
 
-            string newFileName = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_TEMP.pdf");
+            string tmpFilename = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_TEMP.pdf");
             string filename = Path.Combine(file.FilePath);
             int count = 0;
             bool converted = false;
             do
             {
-                using (PdfWriter writer = new PdfWriter(newFileName, new WriterProperties().SetPdfVersion(pdfVersion))) // Create PdfWriter instance
+                using (PdfWriter writer = new PdfWriter(tmpFilename, new WriterProperties().SetPdfVersion(pdfVersion))) // Create PdfWriter instance
                 using (PdfDocument pdfDocument = new PdfDocument(writer))
                 using (PdfReader reader = new PdfReader(filename))
                 {
@@ -440,7 +435,7 @@ public class iText7 : Converter
                         canvas.AddXObject(pageCopy);
                     }
                 }
-                converted = CheckConversionStatus(newFileName, pronom);
+                converted = CheckConversionStatus(tmpFilename, pronom);
             } while (!converted && ++count < 3);
             if (!converted)
             {
@@ -448,9 +443,11 @@ public class iText7 : Converter
             }
             else
             {
+                //Remove old file and replace with new
                 File.Delete(filename);
-                File.Move(newFileName, filename);
-                //replaceFileInList(newFileName, file);
+                File.Move(tmpFilename, filename);
+                //Rename reference in filemanager
+                replaceFileInList(filename, file);
             }
         }
         catch (Exception e)

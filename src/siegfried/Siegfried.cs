@@ -398,6 +398,11 @@ public class Siegfried
 
         Parallel.ForEach(inputFiles, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
         {
+			//Skip files that should be merged (they may not exist anymore and are documented in other methods)
+			if (file.ShouldMerge)
+			{
+				return;
+			}
             var result = IdentifyFile(file.FilePath, true);
 			if (result == null)
 			{

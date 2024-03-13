@@ -382,7 +382,7 @@ public class LibreOfficeConverter : Converter
                     FileInfoMap[file.Id].ConversionTools.Add(converter.Name);
                 }
             }
-            bool converted = CheckConversionStatus(newFileName, pronom, file);
+            bool converted = CheckConversionStatus(newFileName, pronom);
 			if (!converted)
 			{
                 throw new Exception("File was not converted");

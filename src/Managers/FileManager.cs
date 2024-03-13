@@ -155,7 +155,7 @@ public class FileManager
 			if(targetPronom != currentPronom && !file.ShouldMerge)
 			{
 				Console.ForegroundColor = ConsoleColor.Yellow;
-				Console.WriteLine("Target: {0} | Current: {1} | Filename: {2}", targetPronom, currentPronom, file.FilePath);
+				//Console.WriteLine("Target: {0} | Current: {1} | Filename: {2}", targetPronom, currentPronom, file.FilePath);
 			}
 			Console.ForegroundColor = col;
 			bool supported = false;

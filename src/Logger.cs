@@ -220,8 +220,18 @@ public class Logger
 	{
 		if(JsonRoot.requester == null || JsonRoot.requester == "")
 		{
-			Console.WriteLine("Who is requesting the converting?");
-			JsonRoot.requester = Console.ReadLine();
+			string requester = Environment.UserName;
+			Console.WriteLine("No data found in settings and username '{0}' was detected, do you want to set it as requester in the documentation? (Y/N)", requester);
+			var response = Console.ReadLine();
+			if (response.ToUpper() == "Y")
+			{
+                JsonRoot.requester = requester;
+            }
+            else
+			{
+                Console.WriteLine("Who is requesting the converting?");
+                JsonRoot.requester = Console.ReadLine();
+            }
 		}
 		else
 		{
@@ -229,9 +239,19 @@ public class Logger
 		}
 		if(JsonRoot.converter == null || JsonRoot.converter == "")
 		{
-			Console.WriteLine("Who is converting?");
-			JsonRoot.converter = Console.ReadLine();
-		}
+            string converter = Environment.UserName;
+            Console.WriteLine("No data found in settings and username '{0}' was detected, do you want to set it as converter in the documentation? (Y(N)", converter);
+            var response = Console.ReadLine();
+            if (response.ToUpper() == "Y")
+            {
+                JsonRoot.converter = converter;
+            }
+            else
+            {
+                Console.WriteLine("Who is requesting the converting?");
+                JsonRoot.converter = Console.ReadLine();
+            }
+        }
 		else
 		{
 			//Console.WriteLine("The converter " + JsonRoot.converter + " was found in the settings file.");
