@@ -183,7 +183,7 @@ public class GhostscriptConverter : Converter
                     case ".bmp":
                         if (OperatingSystem.IsWindows() && Environment.OSVersion.Version >= new System.Version(6,1))
                         {
-                            convertToImageWindows(fileinfo, outputFileName, sDevice, extension, pronom);
+                            convertToImagesWindows(fileinfo, outputFileName, sDevice, extension, pronom);
                         }
                         else
                         {
@@ -206,10 +206,8 @@ public class GhostscriptConverter : Converter
     /// <param name="outputFileName">The name of the new file</param>
     /// <param name="sDevice">What format GhostScript will convert to</param>
     /// <param name="extension">Extension type for after the conversion</param>
-    void convertToImageWindows(string filePath, string outputFileName, string sDevice, string extension, string pronom)
+    void convertToImagesWindows(string filePath, string outputFileName, string sDevice, string extension, string pronom)
 	{
-        if (OperatingSystem.IsWindows() && Environment.OSVersion.Version >= new System.Version(6, 1))
-        {
             try
             {
                 using (var rasterizer = new GhostscriptRasterizer())
@@ -241,7 +239,7 @@ public class GhostscriptConverter : Converter
                                 count++;
                                 if (!converted)
                                 {
-                                    convertToImageWindows(filePath, outputFileName, sDevice, extension, pronom);
+                                    convertToImagesWindows(filePath, outputFileName, sDevice, extension, pronom);
                                 }
                             } while (!converted && count < 4);
                             if (!converted)
@@ -270,7 +268,6 @@ public class GhostscriptConverter : Converter
             {
                 Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
             }
-        }
 	}
     
     /// <summary>
@@ -289,7 +286,7 @@ public class GhostscriptConverter : Converter
             string fullPath = Path.GetFullPath(filePath);
            // string outputName = Path.Combine(fullPath, outputFileName);
 
-            string command = $"gs -sDEVICE={sDevice} -o {outputFileName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+            string command = $"gs -dDEBUG -sDEVICE={sDevice} -o {outputFileName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
@@ -305,11 +302,6 @@ public class GhostscriptConverter : Converter
                 string? error = process?.StandardError.ReadToEnd();
 
                 process?.WaitForExit();
-
-                /*if (process?.ExitCode != 0 || process == null)
-                {
-                    Logger.Instance.SetUpRunTimeLogMessage($"Error when converting file with GhostScript. Exit code: {process?.ExitCode}, Error message: {error}", true, filename: filePath);
-                }*/
             }
 
             int count = 1;
