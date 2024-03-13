@@ -145,19 +145,6 @@ public class FileManager
             }
             string currentPronom = (file.NewPronom != "") ? file.NewPronom : file.OriginalPronom;
 			string? targetPronom = Settings.GetTargetPronom(file);
-			var col = Console.ForegroundColor;
-
-            if (file.NewPronom == "" && !file.ShouldMerge)
-			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("New pronom not set for file: {0}", file.FilePath);
-			}
-			if(targetPronom != currentPronom && !file.ShouldMerge)
-			{
-				Console.ForegroundColor = ConsoleColor.Yellow;
-				//Console.WriteLine("Target: {0} | Current: {1} | Filename: {2}", targetPronom, currentPronom, file.FilePath);
-			}
-			Console.ForegroundColor = col;
 			bool supported = false;
 			
             //Check if the conversion is supported by any of the converters
