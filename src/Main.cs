@@ -65,7 +65,6 @@ class Program
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
-		settings.SetUpFolderOverride("./Settings.xml");
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
@@ -101,9 +100,10 @@ class Program
 			return;
 		}
 		ConversionManager cm = ConversionManager.Instance;
+		//Set up folder override after files have been copied over
+        settings.SetUpFolderOverride("./Settings.xml");
 
-
-		if (fileManager.Files.Count > 0)
+        if (fileManager.Files.Count > 0)
 		{			
 			string input;
 			do

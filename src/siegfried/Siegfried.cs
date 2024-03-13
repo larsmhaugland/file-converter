@@ -387,7 +387,7 @@ public class Siegfried
 	}
 
     /// <summary>
-    /// Identifies all files in input directory and returns a List of FileInfo objects.
+    /// Less parallelised version of IdentifyFilesIndividually, but ensures that the given files are correctly updated and the result is tied to the same file ID.
     /// </summary>
     /// <param name="input">Path to root folder for search</param>
     /// <returns>A List of identified files</returns>
@@ -395,24 +395,18 @@ public class Siegfried
     {
         Logger logger = Logger.Instance;
         var files = new ConcurrentBag<FileInfo>();
-		List<string> filePaths = new List<string>();
-		inputFiles.ForEach(f => filePaths.Add(f.FilePath));
-        ConcurrentBag<string[]> filePathGroups = new ConcurrentBag<string[]>(GroupPaths(filePaths));
 
-        Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePaths =>
+        Parallel.ForEach(inputFiles, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
         {
-            var output = IdentifyList(filePaths);
-            if (output == null)
-            {
-                logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually: could not identify files", true);
-                return; //Skip current group
+            var result = IdentifyFile(file.FilePath, true);
+			if (result == null)
+			{
+                logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually: could not identify file", true, filename: file.FilePath);
+                return; //Skip current file
             }
-            //TODO: Check if all files were identified
-
-            foreach (var f in output)
-            {
-                files.Add(f);
-            }
+			var newFile = new FileInfo(result);
+			newFile.Id = file.Id;
+            files.Add(newFile);
         });
 
         return Task.FromResult(files.ToList());

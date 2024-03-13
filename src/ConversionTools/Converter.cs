@@ -131,4 +131,33 @@ public class Converter
         }
 		return false;
 	}
+
+	public bool CheckConversionStatus(string filePath, string pronom)
+	{
+		try
+		{
+			var result = Siegfried.Instance.IdentifyFile(filePath, false);
+			return result != null && result.matches[0].id == pronom;
+		} catch(Exception e)
+		{
+			Logger.Instance.SetUpRunTimeLogMessage("CheckConversionStatus: " + e.Message, true);
+		}
+		return false;
+	}
+
+	public string? GetPronom(string filepath)
+	{
+		try
+		{
+			var result = Siegfried.Instance.IdentifyFile(filepath, false);
+			if (result != null && result.matches.Length > 0)
+			{
+                return result.matches[0].id;
+            }
+		} catch (Exception e)
+		{
+            Logger.Instance.SetUpRunTimeLogMessage("GetPronom: " + e.Message, true);
+        }
+		return null;
+	}
 }

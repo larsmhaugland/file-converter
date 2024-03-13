@@ -9,6 +9,7 @@ using System.Xml.Schema;
 using System.Drawing;
 using System.Net.Http.Headers;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -122,7 +123,7 @@ public class iText7 : Converter
         {"fmt/480", PdfVersion.PDF_2_0 }
     };
 
-    Dictionary<String, PdfAConformanceLevel> PronomToPdfAConformanceLevel = new Dictionary<string, PdfAConformanceLevel>()
+    public Dictionary<String, PdfAConformanceLevel> PronomToPdfAConformanceLevel = new Dictionary<string, PdfAConformanceLevel>()
     {
         {"fmt/95", PdfAConformanceLevel.PDF_A_1A },
         {"fmt/354", PdfAConformanceLevel.PDF_A_1B },
@@ -183,6 +184,7 @@ public class iText7 : Converter
 			{
 				conformanceLevel = PronomToPdfAConformanceLevel[pronom];
 			}
+            //TODO: Check FTC pronom instead of extension
 			string extension = Path.GetExtension(file.FilePath).ToLower();
 			if (extension == ".html" || extension == ".htm")
 			{
@@ -300,7 +302,7 @@ public class iText7 : Converter
             }
             else
             {
-                deleteOriginalFileFromOutputDirectory(file.FilePath);
+                //deleteOriginalFileFromOutputDirectory(file.FilePath);
             }
 
         }
@@ -326,23 +328,20 @@ public class iText7 : Converter
             string filename = Path.Combine(file.FilePath);
             int count = 0;
             bool converted = false;
+            PdfOutputIntent outputIntent;
+            lock (padlock)
+            {
+                using (FileStream iccFileStream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
+                {
+                    outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFileStream);
+                }
+            }
             do
             {
-
-                PdfOutputIntent outputIntent;
-                lock (padlock)
-                {
-                    using (FileStream iccFileStream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
-                    {
-                        outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFileStream);
-                    }
-                }
-
                 using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
                 using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
                 using (PdfReader reader = new PdfReader(filename))
                 {
-                    
                     PdfDocument pdfDocument = new PdfDocument(reader);
                     
 			        pdfADocument.SetTagged();
@@ -354,7 +353,7 @@ public class iText7 : Converter
                         var landscape = ps.GetWidth() > ps.GetHeight();
                         if (landscape)
                         {
-                            Console.WriteLine("Landscape");
+                            //Console.WriteLine("Landscape");
                         }
 
                         PdfPage page = pdfADocument.AddNewPage(new iText.Kernel.Geom.PageSize(sourcePage.GetPageSize()));
@@ -368,7 +367,7 @@ public class iText7 : Converter
                     // Close the PDF documents
                     pdfDocument.Close();
                 }
-                converted = CheckConversionStatus(newFileName, pronom, file);
+                converted = CheckConversionStatus(newFileName, pronom);
             } while (!converted && ++count < 3);
             if (!converted)
             {
@@ -377,7 +376,7 @@ public class iText7 : Converter
             {
                 File.Delete(filename);
                 File.Move(newFileName, filename);
-                replaceFileInList(newFileName, file);
+                //replaceFileInList(newFileName, file);
             }
         }
         catch (Exception e)
@@ -387,6 +386,79 @@ public class iText7 : Converter
         }
     }
 
+    /// <summary>
+    /// Convert from any pdf format to another pdf format. This includes PDF to PDF-A, but not PDF-A to PDF.
+    /// </summary>
+    /// <param name="file">The filename to convert</param>
+    /// <param name="pronom">The file format to convert to</param>
+    /// 
+    public void convertFromPDFToPDF(FileToConvert file, string pronom)
+    {
+        try
+        {
+            PdfVersion? pdfVersion;
+            if(PronomToPdfVersion.ContainsKey(pronom))
+            {
+                pdfVersion = PronomToPdfVersion[pronom];
+            }
+            else
+            {
+                Logger.Instance.SetUpRunTimeLogMessage("PDF pronom not found in dictionary. Using default PDF version 2.0", true, pronom, file.FilePath);
+                pdfVersion = PdfVersion.PDF_2_0; //Default PDF version
+            }
+            if(PronomToPdfAConformanceLevel.ContainsKey(pronom))
+            {
+                convertFromPDFToPDFA(file, PronomToPdfAConformanceLevel[pronom], pronom);
+                return;
+            }
+
+            string newFileName = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_TEMP.pdf");
+            string filename = Path.Combine(file.FilePath);
+            int count = 0;
+            bool converted = false;
+            do
+            {
+                using (PdfWriter writer = new PdfWriter(newFileName, new WriterProperties().SetPdfVersion(pdfVersion))) // Create PdfWriter instance
+                using (PdfDocument pdfDocument = new PdfDocument(writer))
+                using (PdfReader reader = new PdfReader(filename))
+                {
+                    PdfDocument sourceDoc = new PdfDocument(reader);
+                    pdfDocument.SetTagged();
+                    for (int pageNum = 1; pageNum <= sourceDoc.GetNumberOfPages(); pageNum++)
+                    {
+                        PdfPage sourcePage = sourceDoc.GetPage(pageNum);
+                        var ps = sourcePage.GetPageSize();
+                        var landscape = ps.GetWidth() > ps.GetHeight();
+                        if (landscape)
+                        {
+                            //Console.WriteLine("Landscape");
+                        }
+
+                        PdfPage page = pdfDocument.AddNewPage(new iText.Kernel.Geom.PageSize(sourcePage.GetPageSize()));
+                        PdfFormXObject pageCopy = sourcePage.CopyAsFormXObject(pdfDocument);
+                        PdfCanvas canvas = new PdfCanvas(page);
+                        canvas.AddXObject(pageCopy);
+                    }
+                }
+                converted = CheckConversionStatus(newFileName, pronom);
+            } while (!converted && ++count < 3);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+            else
+            {
+                File.Delete(filename);
+                File.Move(newFileName, filename);
+                //replaceFileInList(newFileName, file);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
+            throw;
+        }
+    }
 
 
     /// <summary>
@@ -496,6 +568,7 @@ public class iText7 : Converter
             if (result != null)
             {
                 FileInfo fi = new FileInfo(result);
+                fi.Id = new Guid();
                 fi.IsMerged = true;
                 fi.ShouldMerge = true;
                 fi.AddConversionTool(Name);

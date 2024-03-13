@@ -220,7 +220,6 @@ class Settings
 						if (Directory.Exists(outputFolder + "/" + folderPath)) 
 						{ 
 							GlobalVariables.FolderOverride[folderPath] = settings;
-						
 							List<string> subfolders = GetSubfolderPaths(folderPath);
 							if (subfolders.Count > 0)
 							{

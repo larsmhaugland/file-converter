@@ -21,6 +21,7 @@ public class LibreOfficeConverter : Converter
 	Logger log = Logger.Instance;
 	private static readonly object locker = new object();
 	OperatingSystem currentOS;
+
 	/// <summary>
 	/// Constructor setting important properties for the class.
 	/// </summary>
@@ -360,20 +361,36 @@ public class LibreOfficeConverter : Converter
 					Console.WriteLine("Standard Output:\n" + standardOutput);
 					Console.WriteLine("Standard Error:\n" + standardError);
 				}
-
-				// Get the new filename and check if the document was converted correctly
-				string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
-                file.FilePath = sourceDoc;
-                bool converted = CheckConversionStatus(newFileName, pronom, file);
-				if (!converted)
-				{
-					throw new Exception("File was not converted");
-				}
-				else
-				{
-					// Delete copy in ouputfolder if converted successfully
-					deleteOriginalFileFromOutputDirectory(sourceDoc);
-				}
+			}
+			// Get the new filename and check if the document was converted correctly
+			string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
+            file.FilePath = newFileName;
+			string? currPronom = GetPronom(newFileName);
+			if(currPronom == null)
+			{
+				throw new Exception("Could not get pronom for file");
+			}
+			//Convert to another PDF format if standard format is not the desired one
+			if(currPronom != pronom)
+			{
+				var converter = new iText7();
+				converter.convertFromPDFToPDF(file, pronom);
+				// Add iText7 to the list of conversion tools
+				var FileInfoMap = ConversionManager.Instance.FileInfoMap;
+                if (!FileInfoMap[file.Id].ConversionTools.Contains(converter.Name))
+                {
+                    FileInfoMap[file.Id].ConversionTools.Add(converter.Name);
+                }
+            }
+            bool converted = CheckConversionStatus(newFileName, pronom, file);
+			if (!converted)
+			{
+                throw new Exception("File was not converted");
+			}
+			else
+			{
+				// Delete copy in ouputfolder if converted successfully
+				deleteOriginalFileFromOutputDirectory(sourceDoc);
 			}
 		}
 		catch (Exception e)
@@ -519,6 +536,38 @@ public class LibreOfficeConverter : Converter
 
 		return extensionNameForConversion;
 	}
+
+	/// <summary>
+	/// Returns the long corresponding to the target pdf version
+	/// </summary>
+	/// <param name="pronom">Pronom to check for</param>
+	/// <returns>Long corresponding to the target pdf if found, otherwise 0 (default pdf version)</returns>
+	long PronomToPDFversion(string pronom)
+	{
+        long version = 0;
+        switch (pronom)
+		{
+			case "fmt/354":
+				version = 1; //PDF / A - 1b
+				break;
+			case "fmt/477":
+				version = 2;  //PDF / A - 2b
+				break;
+			case "fmt/480":
+				version = 3; //PDF / A - 3b
+				break;
+			case "fmt/19":
+				version = 15; //PDF 1.5
+				break;
+			case "fmt/20":
+				version = 16; //PDF 1.6
+				break;
+			case "fmt/276":
+				version = 17; //PDF 1.7
+				break;
+        }
+        return version;
+    }
 
 
 	List<string> PDFPronoms =

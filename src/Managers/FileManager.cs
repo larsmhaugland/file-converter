@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using SharpCompress;
+using System.Collections.Concurrent;
 
 public class FileManager
 {
@@ -126,17 +127,39 @@ public class FileManager
 		var converters = AddConverters.Instance.GetConverters();
 		bool result = false;
 
+		var totalIsConverted = Files.Values.Count(x => x.IsConverted == true);
+
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files.Values)
 		{
-			string currentPronom = file.NewPronom != "" ? file.NewPronom : file.OriginalPronom;
-			string? targetPronom = Settings.GetTargetPronom(file);
-			bool supported = false;
-			if(file.NewPronom != "")
+			//Skip files that should be merged
+			if (file.ShouldMerge)
 			{
-				result = true;
+				continue;
 			}
+			//If NewPronom is set, the conversion is done and result should be printed out	
+            if (file.NewPronom != "")
+            {
+                result = true;
+            }
+            string currentPronom = (file.NewPronom != "") ? file.NewPronom : file.OriginalPronom;
+			string? targetPronom = Settings.GetTargetPronom(file);
+			var col = Console.ForegroundColor;
+
+            if (file.NewPronom == "" && !file.ShouldMerge)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine("New pronom not set for file: {0}", file.FilePath);
+			}
+			if(targetPronom != currentPronom && !file.ShouldMerge)
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.WriteLine("Target: {0} | Current: {1} | Filename: {2}", targetPronom, currentPronom, file.FilePath);
+			}
+			Console.ForegroundColor = col;
+			bool supported = false;
+			
             //Check if the conversion is supported by any of the converters
             if (targetPronom != null) { 
 				converters.ForEach(c =>
@@ -190,11 +213,12 @@ public class FileManager
 				targetMax = targetFormat.Length;
 			}
 		}
-		currentMax = currentMax < "Full name".Length ? "Full name".Length : currentMax;
-		targetMax  = targetMax  < "Full name".Length ? "Full name".Length : targetMax;
+		//Adjust length to be at least as big as the column name
+		currentMax = Math.Max(currentMax, "Full name".Length);
+        targetMax  = Math.Max(targetMax, "Full name".Length);
 
-		//Sort the fileCount dictionary by the number of files
-		fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+        //Sort the fileCount dictionary by the number of files
+        fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
 
 
 		var firstName = result ? "Actual pronom" : "Input pronom";
@@ -204,7 +228,6 @@ public class FileManager
 		var oldColor = Console.ForegroundColor;
 		Console.ForegroundColor = GlobalVariables.INFO_COL;
 		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstName, "Full name", secondName, "Full name", "Count");
-		Console.ForegroundColor = oldColor;
 
 		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
 		{
@@ -242,7 +265,7 @@ public class FileManager
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
-
+		//Get a list of all directories that will be merged
 		List<string> mergedirs = new List<string>();
 		foreach (var entry in GlobalVariables.FolderOverride)
 		{
@@ -251,12 +274,45 @@ public class FileManager
 				mergedirs.Add(entry.Key);
 			}
 		}
+		//Print out the directories that will be or have been merged
 		if (mergedirs.Count > 0)
 		{
-			Console.WriteLine("Some folders will be merged:");
-			foreach (var dir in mergedirs)
+			//Print plan for merge
+			if (!result)
 			{
-                Console.WriteLine("\t{0}",dir);
+				Console.WriteLine("Some folders will be merged:");
+				foreach (var dir in mergedirs)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
+			}
+			//Check result of merge
+			else
+			{
+                List<string> mergedDirs = new List<string>();
+                foreach (var file in Files.Values)
+                {
+                    var parent = Path.GetRelativePath(GlobalVariables.parsedOptions.Output, Directory.GetParent(file.FilePath)?.ToString() ?? "");
+					//Check if file was merged, only add the parent directory once
+                    if (!mergedDirs.Contains(parent) && mergedirs.Contains(parent) && file.IsMerged)
+                    {
+                        mergedDirs.Add(parent);
+                    }
+                }
+				//Get the directories that were not merged
+                var notMerged = mergedirs.Except(mergedDirs);
+				//Print out the result of the merge
+				Console.WriteLine("{0}/{1} folders were merged:", mergedDirs.Count, mergedirs.Count);
+				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
+				foreach (var dir in mergedDirs)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
+				foreach (var dir in notMerged)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
             }
 		}
 

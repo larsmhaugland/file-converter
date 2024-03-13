@@ -32,7 +32,7 @@ public class FileToConvert
 public class ConversionManager
 {
 	ConcurrentDictionary<KeyValuePair<string, string>, List<string>> ConversionMap = new ConcurrentDictionary<KeyValuePair<string, string>, List<string>>();
-	ConcurrentDictionary<Guid, FileInfo> FileInfoMap = new ConcurrentDictionary<Guid, FileInfo>();
+	public ConcurrentDictionary<Guid, FileInfo> FileInfoMap = new ConcurrentDictionary<Guid, FileInfo>();
 	public Dictionary<string, string> WorkingSetMap = new Dictionary<string, string>();
 	private static ConversionManager? instance;
 	private static readonly object lockObject = new object();
@@ -111,7 +111,8 @@ public class ConversionManager
 	/// </summary>
 	private void initMap()
 	{
-        LibreOfficeConverter converter = new LibreOfficeConverter();
+        /*
+		LibreOfficeConverter converter = new LibreOfficeConverter();
         List<string> supportedConversionsLibreOffice = new List<string>(converter.SupportedConversions?.Keys);
 		string pdfA = "fmt/477";
 		string pdfPronom = OperatingSystem.IsLinux() ? "fmt/20" : "fmt/276";
@@ -121,7 +122,7 @@ public class ConversionManager
 			{
 				ConversionMap.TryAdd(new KeyValuePair<string, string>(file.OriginalPronom, pdfA), [pdfPronom, pdfA]);
 			}
-		}
+		}*/
     }
 
 	private void initFileMap()
@@ -215,7 +216,7 @@ public class ConversionManager
 	{
 		var files = FileManager.Instance.Files.Values.ToList();
 		//Run siegfried on all files
-		var f = Siegfried.Instance.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Output)?.Result;
+		var f = Siegfried.Instance.IdentifyFilesIndividually(files)?.Result;
 
 		//If siegfried fails, log error message and return
 		if (f == null)
@@ -224,14 +225,15 @@ public class ConversionManager
 			Logger.Instance.SetUpRunTimeLogMessage("CM CheckConversion: Could not identify files", true);
 			return;
 		}
-		var fDict = f.ToDictionary(x => x.FilePath, x => x);
+		Dictionary<Guid,FileInfo> fDict = f.ToDictionary(x => x.Id, x => x);
 
 		//Update FileInfoMap with new data
-		Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+		//Parallel.ForEach(files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+		files.ForEach(file =>
 		{
-			if (fDict.ContainsKey(file.FilePath))
+			if (fDict.ContainsKey(file.Id))
 			{
-				file.UpdateSelf(fDict[file.FilePath]);
+				file.UpdateSelf(fDict[file.Id]);
 				file.IsConverted = Settings.GetTargetPronom(file) == file.NewPronom;
 			} else
 			{
