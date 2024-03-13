@@ -146,7 +146,6 @@ public class Logger
 		}
 		foreach (FileInfo file in files)
 		{
-			
 			if (file.ShouldMerge)
 			{
                 var jsonData = new JsonDataMerge
@@ -188,7 +187,8 @@ public class Logger
             }
 		}
 
-
+		jsondata = jsondata.OrderByDescending(x => x.IsConverted).ToList();
+		
 
 		// Create an anonymous object with "requester" and "converter" properties
 		var metadata = new
