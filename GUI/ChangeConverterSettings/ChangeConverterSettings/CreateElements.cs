@@ -15,11 +15,14 @@ using Avalonia.VisualTree;
 
 public class CreateElements
 {
-    public CreateElements()
+    private readonly MainWindow mainWindow;
+    public CreateElements(MainWindow _mainWindow)
     {
+        mainWindow = _mainWindow;
     }
-    public CreateElements(int index, StackPanel mainPanel)
+    public CreateElements(int index, StackPanel mainPanel, MainWindow _mainWindow)
     {
+        mainWindow = _mainWindow;
         StackPanel? stackPanel = null;
         foreach (StackPanel stackpanel in ComponentLists.stackPanels)
         {
@@ -40,7 +43,7 @@ public class CreateElements
     }
 
 
-    public static void CreateAndAddElements(int index, Panel panel)
+    public void CreateAndAddElements(int index, Panel panel)
     {
         if (panel == null)
         {
@@ -65,7 +68,7 @@ public class CreateElements
             ComponentLists.formatDropDowns.Add(formatDropDown);
             formatDropDown.Items.Add(GlobalVariables.defaultText);
             ComponentLists.outputTracker.Add(fileSettings.ClassName, fileSettings.ClassDefault);
-            formatDropDown.SelectionChanged += (sender, e) => FormatDropDown_SelectionChanged(sender);
+            formatDropDown.SelectionChanged += (sender, e) => FormatDropDown_SelectionChanged(sender, e);
 
             var defaultTypeTextBox = CreateTextBox(fileSettings.DefaultType, index);
             panel.Children.Add(defaultTypeTextBox);
@@ -92,15 +95,58 @@ public class CreateElements
         FindWidestElements();
 
     }
-
-    private static void FormatDropDown_SelectionChanged(object sender)
+    public void UpdateState()
     {
+        foreach (StackPanel stackpanel in ComponentLists.stackPanels)
+        {
+            ComboBox comboBox = (ComboBox)stackpanel.Children[1];
+            string item = comboBox.SelectedItem.ToString();
+            UpdateOutputTracker(stackpanel, item);
+        }
+        UpdateWidthsManual();
+    }
+    private static void UpdateOutputTracker(StackPanel stackPanel, string item)
+    {     
+        var className = ((TextBlock)stackPanel.Children[0]).Text;
+        var comboBox = (ComboBox)stackPanel.Children[1];
+        var textBox = (TextBox)stackPanel.Children[2];
+        var readOnlyTextBox = (TextBox)stackPanel.Children[3];
+
+        string newType = textBox.Text.Trim();
+
+        string oldType;
+        if (item == GlobalVariables.defaultText)
+        {
+            item = className;
+        }
+        if (ComponentLists.outputTracker.ContainsKey(item))
+        {
+            oldType = ComponentLists.outputTracker[item];
+
+            if (newType != oldType)
+            {
+                ComponentLists.outputTracker[item] = newType;
+            }
+            readOnlyTextBox.Text = PronomHelper.PronomToFullName(newType);
+        }
+    }
+    private void FormatDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        string previousSelection = "";
+        // Access the previous selection
+        if (e.RemovedItems.Count > 0)
+        {
+            previousSelection = e.RemovedItems[0].ToString();
+        }
+
         var comboBox = (ComboBox)sender;
         var parent = (StackPanel)comboBox.Parent;
         var className = ((TextBlock)parent.Children[0]).Text;
         var textBox = (TextBox)parent.Children[2];
         var readOnlyTextBox = (TextBox)parent.Children[3];
         var item = comboBox.SelectedItem.ToString();
+
+        UpdateOutputTracker(parent, previousSelection);
 
         string type;
         if (item == GlobalVariables.defaultText)
@@ -114,39 +160,11 @@ public class CreateElements
 
         textBox.Text = type;
         readOnlyTextBox.Text = PronomHelper.PronomToFullName(type);
+        UpdateWidthsManual();
     }
 
-    public static void UpdateState()
-    {
-        foreach (StackPanel stackpanel in ComponentLists.stackPanels)
-        {
-            
-            var parent = stackpanel;
-            var className = ((TextBlock)parent.Children[0]).Text;
-            var comboBox = (ComboBox)parent.Children[1];
-            var textBox = (TextBox)parent.Children[2];
-            var readOnlyTextBox = (TextBox)parent.Children[3];
-            var item = comboBox.SelectedItem.ToString();
 
-            var newType = textBox.Text;
-
-            string oldType;
-            if (item == GlobalVariables.defaultText)
-            {
-                item = className;
-            }
-
-            oldType = ComponentLists.outputTracker[item];
-
-            if (newType != oldType)
-            {
-                ComponentLists.outputTracker[item] = newType;
-            }
-
-            readOnlyTextBox.Text = PronomHelper.PronomToFullName(newType);
-        }
-    }
-    private static void UpdateButton_Click(object sender)
+    private void UpdateButton_Click(object sender)
     {
         var button = (Button)sender;
         var parent = (StackPanel)button.Parent;
@@ -156,23 +174,18 @@ public class CreateElements
         var readOnlyTextBox = (TextBox)parent.Children[3];
         var item = comboBox.SelectedItem.ToString();
 
-        var newType = textBox.Text;
-        
-        string oldType;
-        if (item == GlobalVariables.defaultText)
-        {
-            item = className;
-        }
-        
-        oldType = ComponentLists.outputTracker[item];
 
-        if (newType != oldType)
-        {
-            ComponentLists.outputTracker[item] = newType;
-        }
-        
-        readOnlyTextBox.Text = PronomHelper.PronomToFullName(newType);
+        UpdateOutputTracker(parent, item);
 
+        UpdateWidthsManual();
+        
+    }
+    private void UpdateWidthsManual()
+    {
+        UpdateWidths updateWidths = new UpdateWidths(mainWindow);
+        FindWidestElements();
+        updateWidths.UpdateColumnHeaderWidths();
+        updateWidths.UpdateControlWidths();
     }
     public static StackPanel CreateAndAddHorizontalStackPanel(StackPanel mainStackPanel)
     {

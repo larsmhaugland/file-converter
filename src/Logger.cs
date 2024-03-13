@@ -63,7 +63,7 @@ public class Logger
 		// Write the specified text asynchronously to a new file.
 		using (StreamWriter outputFile = new StreamWriter(logPath))
 		{
-			outputFile.WriteAsync("Type: | (Error) Message | Format | Filetype | Filename\n");
+			outputFile.WriteAsync("Type: | (Error) Message | Pronom Code | Mime Type | Filename\n");
 		}
 		docPath = "";
 	}
@@ -118,7 +118,7 @@ public class Logger
 	{
 		string errorM = "Message: ";
 		if (error) { errorM = "Error: "; }
-		string formattedMessage =  errorM + " | " + pronom + " | " + mime + " | " + filename + " | " + message+"\n";
+		string formattedMessage =  errorM + " | " + message + " | " + pronom + " | " + mime + " | " + filename + "\n";
 		WriteLog(formattedMessage, logPath);
 	}
 

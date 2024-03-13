@@ -94,6 +94,7 @@ class Program
 			do
 			{
                 logger.AskAboutReqAndConv();
+				//settings.AskAboutEmptyDefaults();
                 fileManager.DisplayFileList();
 				var oldColor = Console.ForegroundColor;
 				Console.ForegroundColor = ConsoleColor.Blue;
