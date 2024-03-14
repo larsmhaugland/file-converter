@@ -3,6 +3,13 @@ using iText.Kernel.Pdf;
 using iText.Layout.Splitting;
 using System.Diagnostics;
 
+public enum PrintSortBy
+{
+	Count,
+	TargetPronom,
+	CurrentPronom,
+}
+
 public static class GlobalVariables
 {
 	public static Options parsedOptions = new Options();
@@ -19,12 +26,14 @@ public static class GlobalVariables
 	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
 	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
+	public static readonly PrintSortBy SortBy = PrintSortBy.CurrentPronom;
 	
 
 	public static void Reset()
 	{
 		FileSettings.Clear();
 		FolderOverride.Clear();
+		//Set to default values (will be overwritten in Settings.cs if specified by user)
 		checksumHash = new HashAlgorithms();
 		maxThreads = Environment.ProcessorCount * 2;
 		timeout = 30;

@@ -1,5 +1,6 @@
 ﻿using SharpCompress;
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 
 public class FileManager
 {
@@ -121,13 +122,19 @@ public class FileManager
 	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
 	/// Also gives a count of how many files are in each group.
 	/// </summary>
+	class FileInfoGroup
+	{
+        public string CurrentPronom { get; set; }
+		public string CurrentFormatName { get; set; }
+        public string TargetPronom { get; set; }
+		public string TargetFormatName { get; set; }
+        public int Count { get; set; }
+    }
 	public void DisplayFileList()
 	{
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
 		bool result = false;
-
-		var totalIsConverted = Files.Values.Count(x => x.IsConverted == true);
 
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
@@ -180,73 +187,105 @@ public class FileManager
 			}
 		}
 
+		var formatList = new List<FileInfoGroup>();
+		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		{
+            formatList.Add(new FileInfoGroup { CurrentPronom = entry.Key.Key, TargetPronom = entry.Key.Value, Count = entry.Value });
+        }
+
 		//Find the longest format name for current and target formats
 		int currentMax = 0;
 		int targetMax = 0;
-		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		foreach (var format in formatList)
 		{
-			var currentFormat = PronomHelper.PronomToFullName(entry.Key.Key);
-			var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
-            if (entry.Key.Value.Contains(notSupportedString))
+			format.CurrentFormatName = PronomHelper.PronomToFullName(format.CurrentPronom);
+			format.TargetFormatName = PronomHelper.PronomToFullName(format.TargetPronom);
+            if (format.TargetPronom.Contains(notSupportedString))
 			{
-				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]) + notSupportedString;
+                var split = format.TargetPronom.Split(" ")[0];
+                format.TargetFormatName = PronomHelper.PronomToFullName(split) + notSupportedString;
+                format.TargetPronom = split;
+            }
+            if (format.CurrentFormatName.Length > currentMax)
+			{
+				currentMax = format.CurrentFormatName.Length;
 			}
-            if (currentFormat.Length > currentMax)
+			if (format.TargetFormatName.Length > targetMax)
 			{
-				currentMax = currentFormat.Length;
-			}
-			if (targetFormat.Length > targetMax)
-			{
-				targetMax = targetFormat.Length;
+				targetMax = format.TargetFormatName.Length;
 			}
 		}
 		//Adjust length to be at least as big as the column name
 		currentMax = Math.Max(currentMax, "Full name".Length);
         targetMax  = Math.Max(targetMax, "Full name".Length);
 
-        //Sort the fileCount dictionary by the number of files
-        fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-
-
-		var firstName = result ? "Actual pronom" : "Input pronom";
-		var secondName = result ? "Target pronom" : "Output pronom";
+		switch (GlobalVariables.SortBy)
+		{
+			//Sort by the count of files with the same settings
+			case PrintSortBy.Count:
+                formatList = formatList.OrderByDescending(x => x.Count).ToList();
+                break;
+			//Sort by the current pronom code
+			case PrintSortBy.CurrentPronom:
+				formatList = formatList
+					.OrderBy(x =>
+					{
+						if (x.CurrentPronom.StartsWith("UNKNOWN"))
+							return int.MaxValue; // Place "UNKNOWN" at the end of the sorted list
+						else if (x.CurrentPronom.Contains('/'))
+							return int.Parse(x.CurrentPronom.Split('/')[1]); // Sort by the number after the slash
+						else
+							return int.MaxValue - 1; // Handle cases where there's no "/"
+					})
+                    .ToList();	
+                break;
+			//Sort by the target pronom code
+			case PrintSortBy.TargetPronom:
+                formatList = formatList
+                    .OrderBy(x =>
+                    {
+                        if (x.TargetPronom.StartsWith("Not set"))
+                            return int.MaxValue; // Place "Not set" at the end of the sorted list
+                        else if (x.TargetPronom.Contains('/'))
+                            return int.Parse(x.TargetPronom.Split('/')[1]); // Sort by the number after the slash
+                        else
+                            return int.MaxValue - 1; // Handle cases where there's no "/"
+                    })
+                    .ToList();	
+                break;
+		}
+        
+		var firstFormatTitle = result ? "Actual pronom" : "Input pronom";
+		var secondFormatTitle = result ? "Target pronom" : "Output pronom";
 
 		//Print the number of files per pronom code
 		var oldColor = Console.ForegroundColor;
 		Console.ForegroundColor = GlobalVariables.INFO_COL;
-		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstName, "Full name", secondName, "Full name", "Count");
+		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstFormatTitle, "Full name", secondFormatTitle, "Full name", "Count");
 
-		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		foreach (var format in formatList)
 		{
+			//Set color based on the status for the format
 			Console.ForegroundColor = oldColor;
-			var currentPronom = entry.Key.Key;
-			var targetPronom = entry.Key.Value;
-			var count = entry.Value;
-            //Get full name of filetype with pronom code
-            var currentFormat = PronomHelper.PronomToFullName(currentPronom);
-            var targetFormat = PronomHelper.PronomToFullName(targetPronom);
-
-            if (targetPronom.Contains(notSupportedString))
+            if (format.TargetFormatName.Contains(notSupportedString))
 			{
-				var split = targetPronom.Split(" ")[0];
-                targetFormat = PronomHelper.PronomToFullName(split) + notSupportedString;
-				targetPronom = split;
 				Console.ForegroundColor = GlobalVariables.ERROR_COL;
-            } else if (targetPronom == "Not set")
+            } else if (format.TargetPronom == "Not set")
 			{
 				Console.ForegroundColor = GlobalVariables.WARNING_COL;
-			} else if (targetPronom == currentPronom)
+			} else if (format.TargetPronom == format.CurrentPronom)
 			{
 				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
 			}
 
-            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
+            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", format.CurrentPronom, format.CurrentFormatName, format.TargetPronom, format.TargetFormatName, format.Count);
 		}
 		
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
-		int total = fileCount.Where(x => x.Key.Value != "Not set" && !x.Key.Value.Contains(notSupportedString)).Sum(x => x.Value);
+		int total = formatList.Where(x => x.TargetPronom != "Not set" && !x.TargetPronom.Contains(notSupportedString)).Sum(x => x.Count);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
-        int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
+        int totalFinished = formatList.Where(x => x.CurrentPronom == x.TargetPronom).Sum(x => x.Count);
+
         //Print totals to user
         Console.ForegroundColor = GlobalVariables.INFO_COL;
         Console.WriteLine("Number of files: {0,-10}", Files.Count);
