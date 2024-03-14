@@ -26,7 +26,7 @@ public static class GlobalVariables
 	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
 	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
-	public static readonly PrintSortBy SortBy = PrintSortBy.CurrentPronom;
+	public static readonly PrintSortBy SortBy = PrintSortBy.TargetPronom;
 	
 
 	public static void Reset()

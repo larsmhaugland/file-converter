@@ -225,32 +225,18 @@ public class FileManager
 			case PrintSortBy.Count:
                 formatList = formatList.OrderByDescending(x => x.Count).ToList();
                 break;
-			//Sort by the current pronom code
-			case PrintSortBy.CurrentPronom:
+			//Sort by the current or target pronom code with count as a tiebreaker
+			case PrintSortBy.CurrentPronom: case PrintSortBy.TargetPronom:
+				bool current = GlobalVariables.SortBy == PrintSortBy.CurrentPronom; //True if sorting by current pronom
 				formatList = formatList
 					.OrderBy(x =>
 					{
-						if (x.CurrentPronom.StartsWith("UNKNOWN"))
-							return int.MaxValue; // Place "UNKNOWN" at the end of the sorted list
-						else if (x.CurrentPronom.Contains('/'))
-							return int.Parse(x.CurrentPronom.Split('/')[1]); // Sort by the number after the slash
+						if ((current ? x.CurrentPronom : x.TargetPronom).Contains('/'))
+							return int.Parse((current ? x.CurrentPronom : x.TargetPronom).Split('/')[1]); // Sort by the number after the slash
 						else
-							return int.MaxValue - 1; // Handle cases where there's no "/"
+							return int.MaxValue; // Handle cases where there's no "/"
 					})
-                    .ToList();	
-                break;
-			//Sort by the target pronom code
-			case PrintSortBy.TargetPronom:
-                formatList = formatList
-                    .OrderBy(x =>
-                    {
-                        if (x.TargetPronom.StartsWith("Not set"))
-                            return int.MaxValue; // Place "Not set" at the end of the sorted list
-                        else if (x.TargetPronom.Contains('/'))
-                            return int.Parse(x.TargetPronom.Split('/')[1]); // Sort by the number after the slash
-                        else
-                            return int.MaxValue - 1; // Handle cases where there's no "/"
-                    })
+					.ThenByDescending(x => x.Count)	//Tiebreaker is count
                     .ToList();	
                 break;
 		}
@@ -261,7 +247,7 @@ public class FileManager
 		//Print the number of files per pronom code
 		var oldColor = Console.ForegroundColor;
 		Console.ForegroundColor = GlobalVariables.INFO_COL;
-		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstFormatTitle, "Full name", secondFormatTitle, "Full name", "Count");
+		Console.WriteLine("\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstFormatTitle, "Full name", secondFormatTitle, "Full name", "Count");
 
 		foreach (var format in formatList)
 		{
@@ -288,7 +274,7 @@ public class FileManager
 
         //Print totals to user
         Console.ForegroundColor = GlobalVariables.INFO_COL;
-        Console.WriteLine("Number of files: {0,-10}", Files.Count);
+        Console.WriteLine("\nNumber of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
 		//Get a list of all directories that will be merged
