@@ -17,7 +17,7 @@ public static class GlobalVariables
 	public static Dictionary<string, string> FileSettings = new Dictionary<string, string>(); // the key is pronom code 
 	// Map with info about what folders have overrides for specific formats
 	public static Dictionary<string, SettingsData> FolderOverride = new Dictionary<string, SettingsData>(); // the key is a foldername
-	public static HashAlgorithms checksumHash;
+	public static HashAlgorithms checksumHash = HashAlgorithms.SHA256;
 	public static int maxThreads = Environment.ProcessorCount*2;
 	public static int timeout = 30;
     public static double maxFileSize = 1000000000;      //1GB
@@ -34,7 +34,7 @@ public static class GlobalVariables
 		FileSettings.Clear();
 		FolderOverride.Clear();
 		//Set to default values (will be overwritten in Settings.cs if specified by user)
-		checksumHash = new HashAlgorithms();
+		checksumHash = HashAlgorithms.SHA256;
 		maxThreads = Environment.ProcessorCount * 2;
 		timeout = 30;
 	}

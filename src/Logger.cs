@@ -18,6 +18,7 @@ public class Logger
 	{
 		public static string? requester { get; set; } // the person requesting the converting
 		public static string? converter { get; set; } // the person that converts
+		public static string? hashing { get; set; } // the hashing algorithm used
 	}
 	/*
 	JsonRoot root = new JsonRoot
@@ -60,6 +61,15 @@ public class Logger
 	{
         string currentDirectory = Directory.GetCurrentDirectory();
         string path = System.IO.Path.Combine(currentDirectory, "logs");
+		switch (GlobalVariables.checksumHash)
+		{
+			case HashAlgorithms.SHA256:
+				JsonRoot.hashing = "SHA256";
+                break;
+			case HashAlgorithms.MD5:
+				JsonRoot.hashing = "MD5";
+                break;
+		};
 
         if (!Directory.Exists(path))
 		{
@@ -194,7 +204,8 @@ public class Logger
 		var metadata = new
 		{
 			JsonRoot.requester,
-			JsonRoot.converter
+			JsonRoot.converter,
+			JsonRoot.hashing
 		};
 		var FilesWrapper = new
 		{

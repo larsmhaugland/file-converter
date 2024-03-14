@@ -143,7 +143,7 @@ public class Siegfried
         }
     }
 
-	static string HashEnumToString(HashAlgorithms hash)
+	public static string HashEnumToString(HashAlgorithms hash)
 	{
 		switch (hash)
 		{
