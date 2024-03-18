@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Xml.Schema;
 using System.Drawing;
 using System.Net.Http.Headers;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -121,7 +123,7 @@ public class iText7 : Converter
         {"fmt/480", PdfVersion.PDF_2_0 }
     };
 
-    Dictionary<String, PdfAConformanceLevel> PronomToPdfAConformanceLevel = new Dictionary<string, PdfAConformanceLevel>()
+    public Dictionary<String, PdfAConformanceLevel> PronomToPdfAConformanceLevel = new Dictionary<string, PdfAConformanceLevel>()
     {
         {"fmt/95", PdfAConformanceLevel.PDF_A_1A },
         {"fmt/354", PdfAConformanceLevel.PDF_A_1B },
@@ -182,6 +184,7 @@ public class iText7 : Converter
 			{
 				conformanceLevel = PronomToPdfAConformanceLevel[pronom];
 			}
+            //TODO: Check FTC pronom instead of extension
 			string extension = Path.GetExtension(file.FilePath).ToLower();
 			if (extension == ".html" || extension == ".htm")
 			{
@@ -218,7 +221,7 @@ public class iText7 : Converter
 		string dir = Path.GetDirectoryName(file.FilePath)?.ToString() ?? "";
 		string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(file.FilePath));
 		string output = Path.Combine(filePathWithoutExtension + ".pdf");
-
+        string filename = Path.Combine(file.FilePath);
 		try
 		{
             int count = 0;
@@ -231,15 +234,15 @@ public class iText7 : Converter
 		        {
 			        pdfDocument.SetTagged();
 			        PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-			        iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file.FilePath));
+			        iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filename));
 			        document.Add(image);
 		        }
 		        if (conformanceLevel != null)
 		        {
-			        convertFromPDFToPDFA(new FileToConvert(output), conformanceLevel, file.FilePath);
+			        convertFromPDFToPDFA(new FileToConvert(output, file.Id), conformanceLevel, pronom);
 		        }
-			
-			    converted = CheckConversionStatus(file.FilePath, output, pronom);
+			    
+			    converted = CheckConversionStatus(output, pronom, file);
 			} while (!converted && ++count < 3);
 			if (!converted)
 			{
@@ -264,7 +267,7 @@ public class iText7 : Converter
 		string dir = Path.GetDirectoryName(file.FilePath)?.ToString() ?? "";
 		string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(file.FilePath));
 		string output = Path.Combine(filePathWithoutExtension + ".pdf");
-
+        string filename = Path.Combine(file.FilePath);
 		try
 		{
             int count = 0;
@@ -277,7 +280,7 @@ public class iText7 : Converter
 			    {
 				    pdfDocument.SetTagged();
 				    PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-				    using(var htmlSource = new FileStream(file.FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+				    using(var htmlSource = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.None))
 				    {
 					    HtmlConverter.ConvertToPdf(htmlSource, pdfDocument);
 					    document.Close();
@@ -289,19 +292,14 @@ public class iText7 : Converter
 
                 if (conformanceLevel != null)
                 {
-                    convertFromPDFToPDFA(new FileToConvert(output), conformanceLevel, file.FilePath);
+                    convertFromPDFToPDFA(new FileToConvert(output,file.Id), conformanceLevel, filename);
                 }
-                converted = CheckConversionStatus(file.FilePath, output, pronom);
+                converted = CheckConversionStatus(output, pronom, file);
             } while (!converted && ++count < 3);
             if (!converted)
             {
                 throw new Exception("File was not converted");
             }
-            else
-            {
-                deleteOriginalFileFromOutputDirectory(file.FilePath);
-            }
-
         }
 		catch (Exception e)
 		{
@@ -321,26 +319,24 @@ public class iText7 : Converter
     {
         try
         {
-            string newFileName = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_PDFA.pdf");
+            string tmpFilename = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_PDFA.pdf");
+            string filename = Path.Combine(file.FilePath);
             int count = 0;
             bool converted = false;
+            PdfOutputIntent outputIntent;
+            lock (padlock)
+            {
+                using (FileStream iccFileStream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
+                {
+                    outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFileStream);
+                }
+            }
             do
             {
-
-                PdfOutputIntent outputIntent;
-                lock (padlock)
-                {
-                    using (FileStream iccFileStream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
-                    {
-                        outputIntent = new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB IEC61966-2.1", iccFileStream);
-                    }
-                }
-
-                using (PdfWriter writer = new PdfWriter(newFileName)) // Create PdfWriter instance
+                using (PdfWriter writer = new PdfWriter(tmpFilename)) // Create PdfWriter instance
                 using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
-                using (PdfReader reader = new PdfReader(file.FilePath))
+                using (PdfReader reader = new PdfReader(filename))
                 {
-                    
                     PdfDocument pdfDocument = new PdfDocument(reader);
                     
 			        pdfADocument.SetTagged();
@@ -348,29 +344,110 @@ public class iText7 : Converter
                     for (int pageNum = 1; pageNum <= pdfDocument.GetNumberOfPages(); pageNum++)
                     {
                         PdfPage sourcePage = pdfDocument.GetPage(pageNum);
-                        var ps = sourcePage.GetPageSizeWithRotation();
+                        var ps = sourcePage.GetPageSize();
+                        var landscape = ps.GetWidth() > ps.GetHeight();
+                        if (landscape)
+                        {
+                            //Console.WriteLine("Landscape");
+                        }
 
-
-                        PdfPage page = pdfADocument.AddNewPage();
+                        PdfPage page = pdfADocument.AddNewPage(new iText.Kernel.Geom.PageSize(sourcePage.GetPageSize()));
                         PdfFormXObject pageCopy = sourcePage.CopyAsFormXObject(pdfADocument);
-                        PdfCanvas canvas = new PdfCanvas(page);
 
+                        PdfCanvas canvas = new PdfCanvas(page);
                         canvas.AddXObject(pageCopy);
                     }
-
-                    // Close the PDF documents
-                    pdfDocument.Close();
                 }
-                converted = CheckConversionStatus(file.FilePath, newFileName, pronom);
+                converted = CheckConversionStatus(tmpFilename, pronom);
+            if (!converted)
+            {
+                CheckConversionStatus(tmpFilename, pronom);
+            }
             } while (!converted && ++count < 3);
             if (!converted)
             {
                 throw new Exception("File was not converted");
             } else
             {
-                File.Delete(file.FilePath);
-                File.Move(newFileName, file.FilePath);
-                replaceFileInList(newFileName, file.FilePath);
+                File.Delete(filename);
+                File.Move(tmpFilename, filename);
+                replaceFileInList(filename, file);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Convert from any pdf format to another pdf format. This includes PDF to PDF-A, but not PDF-A to PDF.
+    /// </summary>
+    /// <param name="file">The filename to convert</param>
+    /// <param name="pronom">The file format to convert to</param>
+    /// 
+    public void convertFromPDFToPDF(FileToConvert file, string pronom)
+    {
+        try
+        {
+            PdfVersion? pdfVersion;
+            if(PronomToPdfVersion.ContainsKey(pronom))
+            {
+                pdfVersion = PronomToPdfVersion[pronom];
+            }
+            else
+            {
+                Logger.Instance.SetUpRunTimeLogMessage("PDF pronom not found in dictionary. Using default PDF version 2.0", true, pronom, file.FilePath);
+                pdfVersion = PdfVersion.PDF_2_0; //Default PDF version
+            }
+            if(PronomToPdfAConformanceLevel.ContainsKey(pronom))
+            {
+                convertFromPDFToPDFA(file, PronomToPdfAConformanceLevel[pronom], pronom);
+                return;
+            }
+
+            string tmpFilename = Path.Combine(Path.GetDirectoryName(file.FilePath) ?? "", Path.GetFileNameWithoutExtension(file.FilePath) + "_TEMP.pdf");
+            string filename = Path.Combine(file.FilePath);
+            int count = 0;
+            bool converted = false;
+            do
+            {
+                using (PdfWriter writer = new PdfWriter(tmpFilename, new WriterProperties().SetPdfVersion(pdfVersion))) // Create PdfWriter instance
+                using (PdfDocument pdfDocument = new PdfDocument(writer))
+                using (PdfReader reader = new PdfReader(filename))
+                {
+                    PdfDocument sourceDoc = new PdfDocument(reader);
+                    pdfDocument.SetTagged();
+                    for (int pageNum = 1; pageNum <= sourceDoc.GetNumberOfPages(); pageNum++)
+                    {
+                        PdfPage sourcePage = sourceDoc.GetPage(pageNum);
+                        var ps = sourcePage.GetPageSize();
+                        var landscape = ps.GetWidth() > ps.GetHeight();
+                        if (landscape)
+                        {
+                            //Console.WriteLine("Landscape");
+                        }
+
+                        PdfPage page = pdfDocument.AddNewPage(new iText.Kernel.Geom.PageSize(sourcePage.GetPageSize()));
+                        PdfFormXObject pageCopy = sourcePage.CopyAsFormXObject(pdfDocument);
+                        PdfCanvas canvas = new PdfCanvas(page);
+                        canvas.AddXObject(pageCopy);
+                    }
+                }
+                converted = CheckConversionStatus(tmpFilename, pronom);
+            } while (!converted && ++count < 3);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+            else
+            {
+                //Remove old file and replace with new
+                File.Delete(filename);
+                File.Move(tmpFilename, filename);
+                //Rename reference in filemanager
+                replaceFileInList(filename, file);
             }
         }
         catch (Exception e)
@@ -381,15 +458,14 @@ public class iText7 : Converter
     }
 
 
-
     /// <summary>
-    /// Update the fileinfo object with new information after conversion
+    /// Merge files into one PDF
     /// </summary>
-    /// <param name="fileinfo">The file that gets updated information</param>
+    /// <param name="files">List of files that should be nerged</param>
     /// <param name="pronom">The file format to convert to</param>
-    public override void CombineFiles(string[] files, string pronom)
+    public override void CombineFiles(List<FileInfo> files, string pronom)
     {
-        if (files == null || files.Length == 0)
+        if (files == null || files.Count == 0)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Files sent to iText7 to be combined, but no files found.", true);
             return;
@@ -397,24 +473,43 @@ public class iText7 : Converter
 
         try
         {
-            PdfVersion? pdfVersion = PronomToPdfVersion[pronom]; ;
-            PdfAConformanceLevel? conformanceLevel = null;
-
-            if(PronomToPdfAConformanceLevel.ContainsKey(pronom))
-            {
-                conformanceLevel = PronomToPdfAConformanceLevel[pronom];
-            }
-
-            //Set output file name to YYYY-MM-DD_kombinert.pdf
+            //Set base output file name to YYYY-MM-DD
             DateTime currentDateTime = DateTime.Now;
-            string formattedDateTime = currentDateTime.ToString("yyyy-MM-dd HHmmss");
-            string outputFileName = Path.GetDirectoryName(files[0]) + formattedDateTime + ".pdf";
+            string formattedDateTime = currentDateTime.ToString("yyyy-MM-dd");
+            string baseName = Path.GetDirectoryName(files.First().FilePath).Split('\\').Last() ?? "combined";
+            string outputDirectory = Path.GetDirectoryName(files.First().FilePath) ?? GlobalVariables.parsedOptions.Output;
+            string filename = Path.Combine(outputDirectory, baseName + "_" + formattedDateTime);
 
-            MergeFilesToPDF(files, outputFileName, pronom, pdfVersion, conformanceLevel);
+            List<Task> tasks = new List<Task>();
+            List<FileInfo> group = new List<FileInfo>();
+            long groupSize = 0;
+            int groupCount = 1;
+            foreach (var file in files)
+            {
+                string outputFileName = $@"{filename}_{groupCount}.pdf";
+                file.MergedTo = outputFileName;
+                group.Add(file);
+                groupSize += file.OriginalSize;
+                if (groupSize > GlobalVariables.maxFileSize)
+                { 
+                    
+                    tasks.Add(Task.Run(() => MergeFilesToPDF(group, outputFileName, pronom)));
+                    group.Clear();
+                    groupSize = 0;
+                    groupCount++;
+                }
+            }
+            if(group.Count > 0)
+            {
+                string outputFileName = $@"{filename}_{groupCount}.pdf";
+                tasks.Add(Task.Run(() => MergeFilesToPDF(group, outputFileName, pronom)));
+            }
+            //Wait for all files 
+            tasks.ForEach(t => t.Wait());
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error combining files with iText7. Error message: " + e.Message, true, pronom, files[0]);
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files with iText7. Error message: " + e.Message, true, pronom, Path.GetDirectoryName(files.First().FilePath) ?? files.First().FilePath);
         }
     }
 
@@ -423,39 +518,73 @@ public class iText7 : Converter
     /// </summary>
     /// <param name="files"></param>
     /// <param name="outputFileName"></param>
-    /// <param name="outputFolder"></param>
-    /// <param name="pdfVersion"></param>
-    void MergeFilesToPDF(string[] files, string outputFileName, string pronom, PdfVersion? pdfVersion, PdfAConformanceLevel? pdfa)
+    /// <param name="pronom"></param>
+    Task MergeFilesToPDF(List<FileInfo> files, string outputFileName, string pronom)
      {
         try
         {
+            PdfVersion? pdfVersion = PronomToPdfVersion[pronom];
+            if (pdfVersion == null)
+            {
+                pdfVersion = PdfVersion.PDF_2_0; //Default PDF version
+            }
+
+            PdfAConformanceLevel? conformanceLevel = null;
+            if (PronomToPdfAConformanceLevel.ContainsKey(pronom))
+            {
+                conformanceLevel = PronomToPdfAConformanceLevel[pronom];
+            }
+
             using (var pdfWriter = new PdfWriter(outputFileName, new WriterProperties().SetPdfVersion(pdfVersion)))
             using (var pdfDocument = new PdfDocument(pdfWriter))
             using (var document = new iText.Layout.Document(pdfDocument))
             {
                 pdfDocument.SetTagged();                                
                 PdfDocumentInfo info = pdfDocument.GetDocumentInfo();   // Set the document's metadata
-                foreach (string file in files)
+                foreach (var file in files)
                 {
-                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(file));
+                    string filename = Path.Combine(file.FilePath);
+                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filename));
                     document.Add(image);
                 }
             }
-
-            foreach (string file in files)
+            
+            foreach (var file in files)
             {
-                deleteOriginalFileFromOutputDirectory(file);
+                string filename = Path.Combine(file.FilePath);
+                deleteOriginalFileFromOutputDirectory(filename);
+                file.IsMerged = true;
+                file.MergedTo = outputFileName;
             }
-            if(pdfa != null)
-            {
-                FileToConvert f = new FileToConvert(outputFileName);
 
-                convertFromPDFToPDFA(f, pdfa, pronom);
+            FileToConvert ftc = new FileToConvert(outputFileName, new Guid());
+
+            if (conformanceLevel != null)
+            {
+                convertFromPDFToPDFA(ftc, conformanceLevel, pronom);
             }
+
+            var result = Siegfried.Instance.IdentifyFile(outputFileName, false);
+            if (result != null)
+            {
+                FileInfo fi = new FileInfo(result);
+                fi.Id = new Guid();
+                fi.IsMerged = true;
+                fi.ShouldMerge = true;
+                fi.AddConversionTool(Name);
+                FileManager.Instance.Files.TryAdd(fi.Id, fi);
+            }
+            else
+            {
+                Logger.Instance.SetUpRunTimeLogMessage("iText7 CombineFiles: Result could not be identified: " + outputFileName, true);
+            }
+            return Task.CompletedTask;
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true, pronom, files[0]);
+            Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true, pronom, outputFileName);
+            return Task.CompletedTask;
         }
+        
      }
 }

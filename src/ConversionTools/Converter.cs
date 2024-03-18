@@ -8,7 +8,6 @@ public class Converter
 	public Dictionary<string, List<string>>? SupportedConversions { get; set; }
 	public List<string> SupportedOperatingSystems { get; set; } = new List<string>();
 
-	private List<FileInfo> files = new List<FileInfo>(FileManager.Instance.Files);
 	public Converter()
 	{ }
 
@@ -42,7 +41,17 @@ public class Converter
 	/// <param name="fileinfo"></param>
 	public void ConvertFile(FileToConvert fileinfo)
 	{
+		/*
+		if(fileinfo.FilePath.First() != '"')
+		{
+			fileinfo.FilePath = "\"" + fileinfo.FilePath;
+		}
+		if(fileinfo.FilePath.Last() != '"')
+		{
+			fileinfo.FilePath += "\"";
+		}*/
 		ConvertFile(fileinfo, fileinfo.Route.First());
+
 	}
 
 	/// <summary>
@@ -56,62 +65,102 @@ public class Converter
 	/// <summary>
 	/// Combine multiple files into one file
 	/// </summary>
-	/// <param name="files">Array of files that should be combined</param>
+	/// <param name="files">List of files that should be combined</param>
 	/// <param name="pronom">The file format to convert to</param>
-	public virtual void CombineFiles(string []files, string pronom)
+	public virtual void CombineFiles(List<FileInfo> files, string pronom)
 	{ }
 
 	/// <summary>
 	/// Delete an original file, that has been converted, from the output directory
 	/// </summary>
-	/// <param name="fileInfo">The specific file to be deleted</param>
-	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo)
+	/// <param name="filePath">The specific file to be deleted</param>
+	public virtual void deleteOriginalFileFromOutputDirectory(string filePath)
 	{
-		if (File.Exists(fileInfo))
+		try
 		{
-			File.Delete(fileInfo);
-		}
-	}
-	public virtual void replaceFileInList(string filepathBefore, string filepathAfter)
-	{
-		foreach (var file in files) 
-		{
-			if (filepathBefore.Equals(file.FilePath)) 
+			if (File.Exists(filePath))
 			{
-				file.FilePath = filepathAfter;
+				File.Delete(filePath);
+			} else
+			{
+				Console.Write("");
 			}
+		} catch (Exception e)
+		{
+            Logger.Instance.SetUpRunTimeLogMessage("deleteOriginalFileFromOutputDirectory: " + e.Message, true, filename: filePath);
+        }
+	}
+
+	public virtual void replaceFileInList(string newPath, FileToConvert f)
+	{
+        f.FilePath = newPath;
+        var file = FileManager.Instance.GetFile(f.Id);
+		if (file != null)
+		{
+			file.FilePath = newPath;
+			file.FileName = Path.GetFileName(newPath);
+		} else
+		{
+			Logger.Instance.SetUpRunTimeLogMessage("replaceFileInList: File not found in FileManager", true, filename: f.FilePath);
 		}
-		ConversionManager cm = ConversionManager.Instance;
-		cm.WorkingSetMap.TryAdd(filepathBefore, filepathAfter);
+		
 	}
 
 	/// <summary>
 	/// Check if a file has been converted and update the file list
 	/// </summary>
-	/// <param name="oldFilepath">Filepath to original file</param>
+	/// <param name="file">File that has been converted</param>
 	/// <param name="newFilepath">Filepath to new file</param>
 	/// <param name="newFormat">Target pronom code</param>
 	/// <returns>True if the conversion succeeded, otherwise false</returns>
-	public bool CheckConversionStatus(string oldFilepath, string newFilepath, string newFormat)
+	public bool CheckConversionStatus(string newFilepath, string newFormat, FileToConvert file)
 	{
-		var file = Siegfried.Instance.IdentifyFile(newFilepath, false);
-		if (file != null)
+		try
 		{
-			if (file.matches[0].id == newFormat)
+			var result = Siegfried.Instance.IdentifyFile(newFilepath, false);
+			if (result != null)
 			{
-				replaceFileInList(oldFilepath, newFilepath);
-				deleteOriginalFileFromOutputDirectory(oldFilepath);
-				return true;
+				if (result.matches[0].id == newFormat)
+				{
+					deleteOriginalFileFromOutputDirectory(file.FilePath);
+					replaceFileInList(newFilepath, file);
+					return true;
+				}
 			}
-			else
-			{
-                //Console.WriteLine("File not found 1");
-            }
 		}
-		else
+        catch (Exception e)
 		{
-			//Console.WriteLine("File not found 2");
+			Logger.Instance.SetUpRunTimeLogMessage("CheckConversionStatus: " + e.Message, true);
+        }
+		return false;
+	}
+
+	public bool CheckConversionStatus(string filePath, string pronom)
+	{
+		try
+		{
+			var result = Siegfried.Instance.IdentifyFile(filePath, false);
+			return result != null && result.matches[0].id == pronom;
+		} catch(Exception e)
+		{
+			Logger.Instance.SetUpRunTimeLogMessage("CheckConversionStatus: " + e.Message, true);
 		}
 		return false;
+	}
+
+	public string? GetPronom(string filepath)
+	{
+		try
+		{
+			var result = Siegfried.Instance.IdentifyFile(filepath, false);
+			if (result != null && result.matches.Length > 0)
+			{
+                return result.matches[0].id;
+            }
+		} catch (Exception e)
+		{
+            Logger.Instance.SetUpRunTimeLogMessage("GetPronom: " + e.Message, true);
+        }
+		return null;
 	}
 }

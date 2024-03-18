@@ -1,14 +1,18 @@
-﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+﻿using Org.BouncyCastle.Asn1.Mozilla;
+using SharpCompress;
+using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 
 public class FileManager
 {
     private static FileManager? instance;
     private static readonly object lockObject = new object();
-	public List<FileInfo> Files;	// List of files to be converted
-	private bool identifyingFiles = false; // True if files are being identified
+	public ConcurrentDictionary<Guid,FileInfo> Files;	// List of files to be converted
+	private static readonly object identifyingFiles = new object(); // True if files are being identified
+	public bool ConversionFinished = false; // True if conversion is finished
     private FileManager()
     {
-        Files = new List<FileInfo>();
+        Files = new ConcurrentDictionary<Guid, FileInfo>();
     }
     public static FileManager Instance
     {
@@ -28,40 +32,44 @@ public class FileManager
         }
     }
   
-    public async void IdentifyFiles()
+    public void IdentifyFiles()
     {
-		identifyingFiles = true;
-		Siegfried sf = Siegfried.Instance;
-		Logger logger = Logger.Instance;
-		//TODO: Can maybe run both individually and compressed files at the same time
-		//Identifying all uncompressed files
-		List<FileInfo>? files = await sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!; //Search for files in output folder since they are copied there from input folder
-		if (files != null)
+		lock (identifyingFiles)
 		{
-			//Change path from input to output directory
-			foreach (FileInfo file in files)
+			Siegfried sf = Siegfried.Instance;
+			Logger logger = Logger.Instance;
+			//TODO: Can maybe run both individually and compressed files at the same time
+			//Identifying all uncompressed files
+			List<FileInfo>? files = sf.IdentifyFilesIndividually(GlobalVariables.parsedOptions.Input)!.Result; //Search for files in output folder since they are copied there from input folder
+			if (files != null)
 			{
-				//Replace first occurence of input path with output path
-				file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+				//TODO: Should be more robust
+				//Change path from input to output directory
+				foreach (FileInfo file in files)
+				{
+					//Replace first occurence of input path with output path
+					file.FilePath = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, GlobalVariables.parsedOptions.Output);
+					Guid id = Guid.NewGuid();
+					file.Id = id;
+					Files.TryAdd(id, file);
+				}
+
 			}
-			Files.AddRange(files);
-		}
-		else
-		{
-			logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
-		}
+			else
+			{
+				logger.SetUpRunTimeLogMessage("Error when discovering files / No files found", true);
+			}
 
-		//Identifying all compressed files
-		List<FileInfo>? compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
+			//Identifying all compressed files
+			List<FileInfo>? compressedFiles = sf.IdentifyCompressedFilesJSON(GlobalVariables.parsedOptions.Input)!;
 
-		if (compressedFiles != null)
-		{
-			Files.AddRange(compressedFiles);
+			foreach (var file in compressedFiles)
+			{
+				Guid id = Guid.NewGuid();
+				file.Id = id;
+				Files.TryAdd(id, file);
+			}
 		}
-        Files = Files.GroupBy(file => file.FilePath)
-                     .Select(group => group.First())
-                     .ToList();
-        identifyingFiles = false;
     }
 
     public void ImportFiles(List<FileInfo> files)
@@ -74,20 +82,22 @@ public class FileManager
             files.RemoveAll(file => !FileExistsInDirectory(GlobalVariables.parsedOptions.Input, file.ShortFilePath));
 
             //Copy files to output directory
-            Parallel.ForEach(Files, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+            Parallel.ForEach(Files.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
             {
 				if (!FileExistsInDirectory(GlobalVariables.parsedOptions.Output, file.ShortFilePath))
 				{
 					var newPath = Path.Combine(GlobalVariables.parsedOptions.Output, file.ShortFilePath);
 					File.Copy(file.FilePath,newPath);
 				}
+				Guid id = Guid.NewGuid();
+				file.Id = id;
+				Files.TryAdd(id, file);
 			});
 		} catch (Exception e)
 		{
             Logger logger = Logger.Instance;
             logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
         }
-		Files.AddRange(files);
     }
 
 	public void ImportCompressedFiles(List<FileInfo> files)
@@ -102,26 +112,46 @@ public class FileManager
             Logger logger = Logger.Instance;
             logger.SetUpRunTimeLogMessage("Error when copying files: " + e.Message, true);
         }
-        Files.AddRange(files);
+        files.ForEach(file =>
+		{
+            Guid id = Guid.NewGuid();
+            file.Id = id;
+            Files.TryAdd(id, file);
+        });
     }
 
 	/// <summary>
 	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
 	/// Also gives a count of how many files are in each group.
 	/// </summary>
+	class FileInfoGroup
+	{
+        public string CurrentPronom { get; set; }
+		public string CurrentFormatName { get; set; }
+        public string TargetPronom { get; set; }
+		public string TargetFormatName { get; set; }
+        public int Count { get; set; }
+    }
 	public void DisplayFileList()
 	{
+
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
 
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
-		foreach (FileInfo file in Files)
+		foreach (FileInfo file in Files.Values)
 		{
-			string currentPronom = file.NewPronom != "" ? file.NewPronom : file.OriginalPronom;
+			//Skip files that should be merged
+			if (file.ShouldMerge)
+			{
+				continue;
+			}
+
+            string currentPronom = (file.NewPronom != "") ? file.NewPronom : file.OriginalPronom;
 			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
-
+			
             //Check if the conversion is supported by any of the converters
             if (targetPronom != null) { 
 				converters.ForEach(c =>
@@ -138,10 +168,12 @@ public class FileManager
 			if (targetPronom == null)
 			{
 				targetPronom = "Not set";
+				file.OutputNotSet = true;
 			}
 			else if (!supported)
 			{
                 targetPronom = targetPronom + notSupportedString;
+				file.NotSupported = true;
             }
 			//Add new entry in dictionary or add to count if entry already exists
 			KeyValuePair<string, string> key = new KeyValuePair<string, string>(currentPronom, targetPronom);
@@ -155,89 +187,173 @@ public class FileManager
 			}
 		}
 
+		var formatList = new List<FileInfoGroup>();
+		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		{
+            formatList.Add(new FileInfoGroup { CurrentPronom = entry.Key.Key, TargetPronom = entry.Key.Value, Count = entry.Value });
+        }
+
 		//Find the longest format name for current and target formats
 		int currentMax = 0;
 		int targetMax = 0;
-		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		foreach (var format in formatList)
 		{
-			var currentFormat = PronomHelper.PronomToFullName(entry.Key.Key);
-			var targetFormat = PronomHelper.PronomToFullName(entry.Key.Value);
-            if (entry.Key.Value.Contains(notSupportedString))
+			format.CurrentFormatName = PronomHelper.PronomToFullName(format.CurrentPronom);
+			format.TargetFormatName = PronomHelper.PronomToFullName(format.TargetPronom);
+            if (format.TargetPronom.Contains(notSupportedString))
 			{
-				targetFormat = PronomHelper.PronomToFullName(entry.Key.Value.Split(" ")[0]) + notSupportedString;
+                var split = format.TargetPronom.Split(" ")[0];
+                format.TargetFormatName = PronomHelper.PronomToFullName(split) + notSupportedString;
+                format.TargetPronom = split;
+            }
+            if (format.CurrentFormatName.Length > currentMax)
+			{
+				currentMax = format.CurrentFormatName.Length;
 			}
-            if (currentFormat.Length > currentMax)
+			if (format.TargetFormatName.Length > targetMax)
 			{
-				currentMax = currentFormat.Length;
-			}
-			if (targetFormat.Length > targetMax)
-			{
-				targetMax = targetFormat.Length;
+				targetMax = format.TargetFormatName.Length;
 			}
 		}
-		currentMax = currentMax < "Full name".Length ? "Full name".Length : currentMax;
-		targetMax  = targetMax  < "Full name".Length ? "Full name".Length : targetMax;
+		//Adjust length to be at least as big as the column name
+		currentMax = Math.Max(currentMax, "Full name".Length);
+        targetMax  = Math.Max(targetMax, "Full name".Length);
 
-		//Sort the fileCount dictionary by the number of files
-		fileCount = fileCount.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+		switch (GlobalVariables.SortBy)
+		{
+			//Sort by the count of files with the same settings
+			case PrintSortBy.Count:
+                formatList = formatList.OrderByDescending(x => x.Count).ToList();
+                break;
+			//Sort by the current or target pronom code with count as a tiebreaker
+			case PrintSortBy.CurrentPronom: case PrintSortBy.TargetPronom:
+				bool current = GlobalVariables.SortBy == PrintSortBy.CurrentPronom; //True if sorting by current pronom
+				formatList = formatList
+					.OrderBy(x =>
+					{
+						if ((current ? x.CurrentPronom : x.TargetPronom).Contains('/'))
+							return int.Parse((current ? x.CurrentPronom : x.TargetPronom).Split('/')[1]); // Sort by the number after the slash
+						else
+							return int.MaxValue; // Handle cases where there's no "/"
+					})
+					.ThenByDescending(x => x.Count)	//Tiebreaker is count
+                    .ToList();	
+                break;
+		}
+        
+		var firstFormatTitle = ConversionFinished ? "Actual pronom" : "Input pronom";
+		var secondFormatTitle = ConversionFinished ? "Target pronom" : "Output pronom";
 
 		//Print the number of files per pronom code
 		var oldColor = Console.ForegroundColor;
-		Console.ForegroundColor = ConsoleColor.Blue;
-		Console.WriteLine("\n\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", "Input pronom", "Full name", "Output pronom", "Full name", "Count");
-		Console.ForegroundColor = oldColor;
+		Console.ForegroundColor = GlobalVariables.INFO_COL;
+		Console.WriteLine("\n{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", firstFormatTitle, "Full name", secondFormatTitle, "Full name", "Count");
 
-		foreach (KeyValuePair<KeyValuePair<string, string>, int> entry in fileCount)
+		foreach (var format in formatList)
 		{
+			//Set color based on the status for the format
 			Console.ForegroundColor = oldColor;
-			var currentPronom = entry.Key.Key;
-			var targetPronom = entry.Key.Value;
-			var count = entry.Value;
-            //Get full name of filetype with pronom code
-            var currentFormat = PronomHelper.PronomToFullName(currentPronom);
-            var targetFormat = PronomHelper.PronomToFullName(targetPronom);
-            if (targetPronom.Contains(notSupportedString))
+            if (format.TargetFormatName.Contains(notSupportedString))
 			{
-				var split = targetPronom.Split(" ")[0];
-                targetFormat = PronomHelper.PronomToFullName(split) + notSupportedString;
-				targetPronom = split;
-				Console.ForegroundColor = ConsoleColor.Red;
-            } else if (targetPronom == "Not set")
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
+            } else if (format.TargetPronom == "Not set")
 			{
-				Console.ForegroundColor = ConsoleColor.Yellow;
-			} else if (targetPronom == currentPronom)
+				Console.ForegroundColor = GlobalVariables.WARNING_COL;
+			} else if (format.TargetPronom == format.CurrentPronom)
 			{
-				Console.ForegroundColor = ConsoleColor.Green;
+				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
 			}
 
-            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", currentPronom, currentFormat, targetPronom, targetFormat, count);
+            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", format.CurrentPronom, format.CurrentFormatName, format.TargetPronom, format.TargetFormatName, format.Count);
 		}
 		
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
-		int total = fileCount.Where(x => x.Key.Value != "Not set" && !x.Key.Value.Contains(notSupportedString)).Sum(x => x.Value);
+		int total = formatList.Where(x => x.TargetPronom != "Not set" && !x.TargetPronom.Contains(notSupportedString)).Sum(x => x.Count);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
-        int totalFinished = fileCount.Where(x => x.Key.Key == x.Key.Value).Sum(x => x.Value);
+        int totalFinished = formatList.Where(x => x.CurrentPronom == x.TargetPronom).Sum(x => x.Count);
         //Print totals to user
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("Number of files: {0,-10}", Files.Count);
+        Console.ForegroundColor = GlobalVariables.INFO_COL;
+        Console.WriteLine("\nNumber of files: {0,-10}", Files.Count);
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
+		//Get a list of all directories that will be merged
+		List<string> mergedirs = new List<string>();
+		foreach (var entry in GlobalVariables.FolderOverride)
+		{
+			if (entry.Value.Merge)
+			{
+				mergedirs.Add(entry.Key);
+			}
+		}
+		//Print out the directories that will be or have been merged
+		if (mergedirs.Count > 0)
+		{
+			//Print plan for merge
+			if (!ConversionFinished)
+			{
+				Console.WriteLine("Some folders will be merged:");
+				foreach (var dir in mergedirs)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
+			}
+			//Check result of merge
+			else
+			{
+                List<string> mergedDirs = new List<string>();
+                foreach (var file in Files.Values)
+                {
+                    var parent = Path.GetRelativePath(GlobalVariables.parsedOptions.Output, Directory.GetParent(file.FilePath)?.ToString() ?? "");
+					//Check if file was merged, only add the parent directory once
+                    if (!mergedDirs.Contains(parent) && mergedirs.Contains(parent) && file.IsMerged)
+                    {
+                        mergedDirs.Add(parent);
+                    }
+                }
+				//Get the directories that were not merged
+                var notMerged = mergedirs.Except(mergedDirs);
+				//Print out the result of the merge
+				Console.WriteLine("{0}/{1} folders were merged:", mergedDirs.Count, mergedirs.Count);
+				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
+				foreach (var dir in mergedDirs)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
+				foreach (var dir in notMerged)
+				{
+					Console.WriteLine("\t{0}", dir);
+				}
+            }
+		}
+
         Console.ForegroundColor = oldColor;
+
     }
 
 	public List<FileInfo> GetFiles()
 	{
-		while (identifyingFiles)
+		lock (identifyingFiles)
 		{
-            Thread.Sleep(100);
-        }
-		return Files;
+			return Files.Values.ToList();
+		}
+	}
+
+	public FileInfo? GetFile(Guid id)
+	{
+		if (!Files.ContainsKey(id)) return null;
+		return Files[id];
 	}
 
 	public void DocumentFiles()
 	{
 		Logger logger = Logger.Instance;
-		logger.SetUpDocumentation(Files);
+		List<FileInfo> files = new List<FileInfo>();
+		foreach (var file in Files)
+		{
+            files.Add(file.Value);
+        }
+		logger.SetUpDocumentation(files);
 	}
 
     private static bool FileExistsInDirectory(string directoryPath, string fileName)

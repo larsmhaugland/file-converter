@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using System.Drawing;
 
 public enum HashAlgorithms
 {
@@ -10,24 +11,30 @@ public enum HashAlgorithms
 
 public class FileInfo
 {
-	public string FilePath { get; set; } = "";                // Filepath relative to input directory
-	public string FileName { get; set; } = "";                // Filename with extension
-	public string ShortFilePath { get; set; } = "";					// Filepath without input/output directory
+	public string FilePath { get; set; } = "";					// Filepath relative to input directory
+	public string FileName { get; set; } = "";					// Filename with extension
+	public string ShortFilePath { get; set; } = "";				// Filepath without input/output directory
 	public string OriginalPronom { get; set; } = "";            // Original Pronom ID
-	public string NewPronom { get; set; } = "";             // New Pronom ID
-	public string OriginalMime { get; set; } = "";          // Original Mime Type
-	public string NewMime { get; set; } = "";                 // New Mime Type
-	public string OriginalFormatName { get; set; } = "";      // Original Format Name
-	public string NewFormatName { get; set; } = "";           // New Format Name
-	public string OriginalChecksum { get; set; } = "";        // Original Checksum
-	public string NewChecksum { get; set; } = "";             // New Checksum
+	public string NewPronom { get; set; } = "";					// New Pronom ID
+	public string OriginalMime { get; set; } = "";				// Original Mime Type
+	public string NewMime { get; set; } = "";					// New Mime Type
+	public string OriginalFormatName { get; set; } = "";		// Original Format Name
+	public string NewFormatName { get; set; } = "";				// New Format Name
+	public string OriginalChecksum { get; set; } = "";			// Original Checksum
+	public string NewChecksum { get; set; } = "";				// New Checksum
 	public List<string> ConversionTools { get; set; } = new List<string>();   // List of conversion tools used
-	public long OriginalSize { get; set; } = 0;              // Original file size (bytes)
-	public long NewSize { get; set; } = 0;                   // New file size (bytes)
+	public long OriginalSize { get; set; } = 0;					// Original file size (bytes)
+	public long NewSize { get; set; } = 0;						// New file size (bytes)
 	public bool IsConverted { get; set; } = false;				// True if file is converted
 	public bool IsModified { get; set; } = false;				// True if file is modified
 	public List<string> Route { get; set; } = new List<string>();   // List of modification tools used
 	public string TargetPronom { get; set; } = "";				// The pronom the file should be converted to
+	public Guid Id { get; set; }								// Unique identifier for the file
+	public bool ShouldMerge { get; set; } = false;				// True if file should be merged
+	public bool IsMerged { get; set; } = false;					// True if file is merged
+	public bool NotSupported { get; set; } = false;				// True if file is not supported
+	public bool OutputNotSet { get; set; } = false;				// True if file didn't have a specified format
+	public string MergedTo { get; set; } = "";					// The file the file is merged to
 
 	public FileInfo()
 	{
@@ -68,6 +75,24 @@ public class FileInfo
 		FilePath = siegfriedFile.filename;
 		OriginalChecksum = siegfriedFile.hash;
 	}
+
+	public FileInfo(FileToConvert f)
+	{
+		var result = Siegfried.Instance.IdentifyFile(f.FilePath, true);
+		if (result != null)
+		{
+			OriginalChecksum = NewChecksum = result.hash;
+			OriginalSize = NewSize = result.filesize;
+			FileName = Path.GetFileName(f.FilePath);
+			if (result.matches.Length > 0)
+			{
+                OriginalPronom = NewChecksum = result.matches[0].id;
+                OriginalFormatName = NewFormatName = result.matches[0].format;
+                OriginalMime = OriginalMime = result.matches[0].mime;
+            }
+		}
+        FilePath = f.FilePath;
+    }
 
 	/// <summary>
 	/// Update the properties of the FileInfo object based on a FileInfo object

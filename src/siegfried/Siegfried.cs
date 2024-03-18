@@ -172,7 +172,7 @@ public class Siegfried
         }
     }
 
-	static string HashEnumToString(HashAlgorithms hash)
+	public static string HashEnumToString(HashAlgorithms hash)
 	{
 		switch (hash)
 		{
@@ -415,7 +415,38 @@ public class Siegfried
 		return Task.FromResult(files.ToList());
 	}
 
-	List<string[]> GroupPaths(List<string> paths)
+    /// <summary>
+    /// Less parallelised version of IdentifyFilesIndividually, but ensures that the given files are correctly updated and the result is tied to the same file ID.
+    /// </summary>
+    /// <param name="input">Path to root folder for search</param>
+    /// <returns>A List of identified files</returns>
+    public Task<List<FileInfo>>? IdentifyFilesIndividually(List<FileInfo> inputFiles)
+    {
+        Logger logger = Logger.Instance;
+        var files = new ConcurrentBag<FileInfo>();
+
+        Parallel.ForEach(inputFiles, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, file =>
+        {
+			//Skip files that should be merged (they may not exist anymore and are documented in other methods)
+			if (file.ShouldMerge)
+			{
+				return;
+			}
+            var result = IdentifyFile(file.FilePath, true);
+			if (result == null)
+			{
+                logger.SetUpRunTimeLogMessage("SF IdentifyFilesIndividually: could not identify file", true, filename: file.FilePath);
+                return; //Skip current file
+            }
+			var newFile = new FileInfo(result);
+			newFile.Id = file.Id;
+            files.Add(newFile);
+        });
+
+        return Task.FromResult(files.ToList());
+    }
+
+    List<string[]> GroupPaths(List<string> paths)
 	{
 		int groupSize = 128; //Number of files to be identified in each group
 		int groupCount = paths.Count / groupSize;

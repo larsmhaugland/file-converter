@@ -1,11 +1,12 @@
 <root>
   <Requester>Larsarn</Requester>
   <Converter>Larsern</Converter>
-  <InputFolder>input</InputFolder>
-  <OutputFolder>output</OutputFolder>
+  <InputFolder></InputFolder>
+  <OutputFolder></OutputFolder>
   <MaxThreads>1</MaxThreads>
   <ChecksumHashing>SHA256</ChecksumHashing>
   <Timeout></Timeout>
+  <MaxFileSize></MaxFileSize>
 	<!-- When converting to XLSX only fmt/214 is supported 
          When converting to ODS only fmt/1755 is supported
 		 When converting to PDF only fmt/477 is supported for Windows and fmt/20 for Linux
@@ -21,17 +22,17 @@
     <FileTypes>
       <Filename>xls</Filename>
       <Pronoms>fmt/55, fmt/56, fmt/57, fmt/61, fmt/62, fmt/59</Pronoms>
-      <Default>fmt/1755</Default>
+      <Default>fmt/477</Default>
     </FileTypes>
     <FileTypes>
       <Filename>xlsm</Filename>
       <Pronoms>fmt/445</Pronoms>
-      <Default />
+      <Default/>
     </FileTypes>
     <FileTypes>
       <Filename>xlsx</Filename>
       <Pronoms>fmt/214, fmt/1828</Pronoms>
-      <Default>fmt/1755</Default>
+      <Default>fmt/477</Default>
     </FileTypes>
   </FileClass>
   <FileClass>
@@ -49,17 +50,17 @@
     <FileTypes>
       <Filename>gif</Filename>
       <Pronoms>fmt/3, fmt/4</Pronoms>
-      <Default>fmt/14</Default>
+      <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>jpg</Filename>
       <Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398, x-fmt/390, x-fmt/391, fmt/645, fmt/1507, fmt/112, fmt/367</Pronoms>
-      <Default />
+	  <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>png</Filename>
       <Pronoms>fmt/11, fmt/12, fmt/13, fmt/935</Pronoms>
-      <Default />
+		<Default></Default>
     </FileTypes>
   </FileClass>
   <FileClass>
@@ -132,7 +133,7 @@
   </FileClass>
   <FileClass>
 	  <ClassName>pdf/A</ClassName>
-	  <Default></Default>
+	  <Default>fmt/477</Default>
 	  <FileTypes>
 		  <Filename>pdf/A-1a</Filename>
 		  <Pronoms>fmt/95</Pronoms>
@@ -184,7 +185,7 @@
     <FileTypes>
       <Filename>ppt</Filename>
       <Pronoms>fmt/1537, fmt/1866, fmt/181, fmt/1867, fmt/179, fmt/1747, fmt/1748, x-fmt/88, fmt/125, fmt/126, </Pronoms>
-      <Default>fmt/1754</Default>
+      <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>pptm</Filename>
@@ -212,7 +213,7 @@
     <FileTypes>
       <Filename>doc</Filename>
       <Pronoms>x-fmt/329, fmt/609, fmt/39, x-fmt/274, x-fmt/275, x-fmt/276, fmt/1688, fmt/37, fmt/38, fmt/1282, fmt/1283, x-fmt/131, x-fmt/42, x-fmt/43, fmt/40, x-fmt/44, x-fmt/393, x-fmt/394, fmt/892</Pronoms>
-      <Default>fmt/412</Default>
+      <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>docm</Filename>
@@ -222,7 +223,7 @@
     <FileTypes>
       <Filename>docx</Filename>
       <Pronoms>fmt/473, fmt/1827, fmt/412</Pronoms>
-      <Default>fmt/1756</Default>
+	  <Default></Default>
     </FileTypes>
     <FileTypes>
       <Filename>dot</Filename>
@@ -240,4 +241,12 @@
       <Default />
     </FileTypes>
   </FileClass>
+	<FolderOverride>
+		<FolderPath>apekatter\noeKult</FolderPath>
+		<!-- Path relative to input folder example: documents/word -->
+		<Pronoms>fmt/41, fmt/42, fmt/43, fmt/44, x-fmt/398</Pronoms>
+		<ConvertTo>fmt/14</ConvertTo>
+		<MergeImages>Yes</MergeImages>
+		<!-- Yes, No -->
+	</FolderOverride>
 </root>
