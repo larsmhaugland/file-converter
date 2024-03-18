@@ -3,7 +3,7 @@
   <Converter>Larsern</Converter>
   <InputFolder>input</InputFolder>
   <OutputFolder>output</OutputFolder>
-  <MaxThreads></MaxThreads>
+  <MaxThreads>1</MaxThreads>
   <ChecksumHashing>SHA256</ChecksumHashing>
   <Timeout></Timeout>
 	<!-- When converting to XLSX only fmt/214 is supported 
