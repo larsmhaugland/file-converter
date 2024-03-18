@@ -1,0 +1,4 @@
+GhostScript is not installed.
+If you are on Ubuntu/Debian run: sudo apt install ghostscript
+For other Linux distros see https://www.ghostscript.com/ for installation instructions.
+The program will continue to run but without the GhostScript converter. (This may mean a loss of functionality)

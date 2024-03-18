@@ -47,6 +47,10 @@ class Program
 		{
             Directory.SetCurrentDirectory("../../../");
         }
+		else
+		{
+			LinuxSetup.Setup();
+		}
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
