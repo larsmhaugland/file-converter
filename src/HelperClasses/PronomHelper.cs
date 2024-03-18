@@ -19,6 +19,7 @@ class PronomHelper
         string output = "";
         switch (pronom)
         {
+            case "": output = "Empty"; break;
             case "fmt/1": output = "Broadcast WAVE 0 Generic"; break;
             case "fmt/2": output = "Broadcast WAVE 1 Generic"; break;
             case "fmt/3": output = "Graphics Interchange Format 87a"; break;

@@ -55,6 +55,10 @@ class Program
 		{
             Directory.SetCurrentDirectory("../../../");
         }
+		else
+		{
+			LinuxSetup.Setup();
+		}
 		Settings settings = Settings.Instance;
 		Console.WriteLine("Reading settings...");
 		settings.ReadSettings("./Settings.xml");
@@ -102,6 +106,7 @@ class Program
 			do
 			{
                 logger.AskAboutReqAndConv();
+				//settings.AskAboutEmptyDefaults();
                 fileManager.DisplayFileList();
 				var oldColor = Console.ForegroundColor;
 				Console.ForegroundColor = ConsoleColor.Blue;

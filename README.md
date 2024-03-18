@@ -5,20 +5,6 @@
 ![dotnet-badge](https://github.com/larsmhaugland/file-converter/actions/workflows/dotnet.yml/badge.svg?event=push)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-Unhandled exception. System.TypeInitializationException: The type initializer for 'LinuxSetup' threw an exception.
- ---> System.InvalidOperationException: Cannot start process because a file name has not been provided.
-   at System.Diagnostics.Process.Start()
-   at LinuxSetup.RunProcess(Action`1 configure) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 50
-   at LinuxSetup.GetLinuxDistro() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 162
-   at LinuxSetup..cctor() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 14
-   --- End of inner exception stack trace ---
-   at LinuxSetup.<>c.<checkInstallSiegfried>b__5_0(ProcessStartInfo startInfo) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 62
-   at LinuxSetup.RunProcess(Action`1 configure) in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 46
-   at LinuxSetup.checkInstallSiegfried() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 61
-   at LinuxSetup.Setup() in /home/aurora/file-converter/LinuxSpecifics/LinuxSetup.cs:line 26
-   at Program.Main(String[] args) in /home/aurora/file-converter/Main.cs:line 53
-
-
 A module-based .NET application that converts files and generates documentation for archiving.
 
 This application provides a framework for different conversion libraries/software to work together. It aims to promote a comprehensive open-source solution for file conversion, as opposed to the many paid options, which allows for multi-step conversion between different external libraries. 
@@ -76,7 +62,7 @@ dotnet build
 
 |OS| Dependencies | Needed for? |
 |---|---|---|
-|Linux| [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) <br> LibreOffice | Needed to run program. <br> Needed to be able to run LibreOffice |
+|Linux| [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run program. |
 | Windows | [dotnet version 8.0](https://dotnet.microsoft.com/en-us/download) | Needed to run program. |
 
 #### External libraries/software used
@@ -96,10 +82,11 @@ dotnet build
 ### Installation for Linux
 
 **Downloading dependencies for Linux distributions**
-| Distro | Dependency | Download |
-|---|---|---|
-| Ubuntu/Debian | curl  <br> LibreOffice | ```sudo apt install curl``` <br>```sudo apt install libreoffice```|
-| Fedora/Red Hat | brew [^2] | ```sudo yum groupinstall 'Development Tools'``` <br> ```sudo yum install procps-ng curl file git```|
+| Distro | Dependency |
+|---|---|
+| Ubuntu/Debian | curl |
+| Arch Linux | curl <br> brew |
+| Fedora/Red Hat | brew [^2] |
 
 > NOTE: Fedora/Red hat has not been tested yet! We're working on it
 

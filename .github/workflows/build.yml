@@ -1,0 +1,40 @@
+name: Analyze code with SonarQube 
+
+on:
+  push:
+    branches:
+      - doesNotExist
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update System and Install OpenJDK 11
+        run: |
+          echo "GitHub Actions Workflow Directory: $GITHUB_WORKSPACE"
+          sudo apt-get update
+          sudo apt-get install --yes openjdk-11-jre
+          echo 'Installed openJDK 11'
+          
+      - name: Install dotnet and sonarscanner
+        run: |
+          echo "Types: deb
+          URIs: https://packages.microsoft.com/ubuntu/22.04/prod/
+          Suites: jammy
+          Components: main
+          Architectures: amd64
+          Signed-By: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/microsoft.sources > /dev/null
+          sudo apt update
+          sudo apt install dotnet-sdk-8.0
+          dotnet tool install -g dotnet-sonarscanner
+          source ~/.bashrc
+          
+      - name: Clone repository, Configure and Run SonarScanner
+        run:  |
+          git clone https://sunpile01:TOKEN_HERE@github.com/larsmhaugland/file-converter
+          cd file-converter
+          source ~/.bashrc
+          dotnet sonarscanner begin /k:"Github-File-Converter-Correct" /d:sonar.host.url="http://10.212.172.150:9000" /d:sonar.login="TOKEN_HERE"
+          dotnet build
+          dotnet sonarscanner end /d:sonar.login="TOKEN_HERE"
+

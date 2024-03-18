@@ -147,12 +147,12 @@ class Settings
                         SettingsData settings = new SettingsData
                         {
                             PronomsList = pronomsList,
-                            DefaultType = innerDefault ?? defaultType,
+                            DefaultType = innerDefault,
                             FormatName = extension,
                             ClassName = className ?? "unknown",
                             ClassDefault = defaultType
                         };
-                        if (settings.PronomsList.Count > 0 && !String.IsNullOrEmpty(defaultType))
+                        if (settings.PronomsList.Count > 0)
                         {
                             GlobalVariables.FileSettings.Add(settings);
                         }

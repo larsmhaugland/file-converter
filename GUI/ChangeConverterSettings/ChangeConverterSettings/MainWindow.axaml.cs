@@ -58,11 +58,17 @@ namespace ChangeConverterSettings
             Settings settings = Settings.Instance;
             settings.ReadSettings(GlobalVariables.defaultSettingsPath);
             WriteSettingsToScreen();
-            Console.WriteLine(ComponentLists.outputTracker);
+            Console.WriteLine(GlobalVariables.FileSettings);
+        }
+        private void InitializeComponent()
+        {
+            AvaloniaXamlLoader.Load(this);
         }
         public void SaveButton(object sender, RoutedEventArgs args)
         {
-            CreateElements.UpdateState();
+            CreateElements createElements = new CreateElements(this);
+            createElements.UpdateState();
+
             TextBox? requesterTextBox = this.FindControl<TextBox>("Requester");
             if (requesterTextBox != null)
                 GlobalVariables.requester = requesterTextBox.Text;
@@ -107,7 +113,7 @@ namespace ChangeConverterSettings
                         }
                         if (name != null && text != null)
                         {
-                            if(settingsData.FormatName == name)
+                            if (settingsData.FormatName == name)
                                 settingsData.DefaultType = text;
                             else if (name == GlobalVariables.defaultText && settingsData.ClassName == ComponentLists.formatNames[i].Text)
                                 settingsData.ClassDefault = text;
@@ -135,39 +141,6 @@ namespace ChangeConverterSettings
             Settings settings = Settings.Instance;
             settings.WriteSettings(GlobalVariables.defaultSettingsPath);
         }
-
-        public double GetControlWidth(Control control)
-        {
-            double padding = 10;
-            if (control is TextBox textBox)
-            {
-                var formattedText = new FormattedText(
-                    textBox.Text,
-                    CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface(textBox.FontFamily, textBox.FontStyle, textBox.FontWeight, textBox.FontStretch),
-                    textBox.FontSize,
-                    Brushes.Black);
-
-                // Add padding to accommodate the text properly
-                return formattedText.Width + padding * 2; // Add padding on both sides
-            }
-            else if (control is TextBlock textBlock)
-            {
-                textBlock.Measure(Size.Infinity);
-                return textBlock.DesiredSize.Width;
-            }
-            else if (control is ComboBox comboBox)
-            {
-                comboBox.Measure(Size.Infinity);
-                return comboBox.DesiredSize.Width;
-            }
-            else
-            {
-                // Handle other types of controls or throw an exception
-                throw new ArgumentException("Unsupported control type");
-            }
-        }
         private void WriteSettingsToScreen()
         {
             TextBox? requesterTextBox = this.FindControl<TextBox>("Requester");
@@ -194,106 +167,30 @@ namespace ChangeConverterSettings
                 }
                 checksumComboBox.SelectedItem = GlobalVariables.checksumHash;
             }
-                
+
             TextBox? timeoutTextBox = this.FindControl<TextBox>("Timeout");
             if (timeoutTextBox != null)
                 timeoutTextBox.Text = GlobalVariables.timeout;
 
-            
+
             GlobalVariables.FileSettings.Sort((x, y) => x.FormatName.CompareTo(y.FormatName));
-            
-            for(int i = 0; i < GlobalVariables.FileSettings.Count; i++)
+
+            for (int i = 0; i < GlobalVariables.FileSettings.Count; i++)
             {
                 ComboBox? formatDropDown = this.FindControl<ComboBox>("formatDropDown" + (i + 1).ToString());
-                if(formatDropDown == null)
+                if (formatDropDown == null)
                 {
                     StackPanel? stackPanelMain = this.FindControl<StackPanel>("MainStackPanel");
                     if (stackPanelMain != null)
                     {
-                        CreateElements creator = new CreateElements(i, stackPanelMain); 
+                        CreateElements creator = new CreateElements(i, stackPanelMain, this);
                     }
                 }
             }
-            UpdateColumnHeaderWidths();
-            UpdateWidths();
-        }
-        
-        private void UpdateColumnHeaderWidths()
-        {
-            TextBlock? formatColumn = this.FindControl<TextBlock>("FormatColumn");
-            if (formatColumn != null)
-            {
-                double width = GetControlWidth(formatColumn);
-                if (width > WidthInfo.longestName)
-                    WidthInfo.longestName = (int)width;
-                else
-                    formatColumn.Width = WidthInfo.longestName;
-            }
 
-            TextBlock? pronomColumn = this.FindControl<TextBlock>("pronomColumn");
-            if (pronomColumn != null)
-            {
-                double width = GetControlWidth(pronomColumn);
-                if (width > WidthInfo.longestFormat)
-                    WidthInfo.longestFormat = (int)width;
-                else
-                    pronomColumn.Width = WidthInfo.longestFormat;
-            }
-
-
-            TextBlock? outputColumn = this.FindControl<TextBlock>("outputColumn");
-            if (outputColumn != null)
-            {
-                double width = GetControlWidth(outputColumn);
-                if (width > WidthInfo.longestOutput)
-                    WidthInfo.longestOutput = (int)width;
-                else
-                    outputColumn.Width = WidthInfo.longestOutput;
-            }
-           
-
-            TextBlock? outputNameColumn = this.FindControl<TextBlock>("outputNameColumn");
-            if (outputNameColumn != null)
-            {
-                double width = GetControlWidth(outputNameColumn);
-                if (width > WidthInfo.longestOutputType)
-                    WidthInfo.longestOutputType = (int)width;
-                else
-                    outputNameColumn.Width = WidthInfo.longestOutputType;
-            }
-        }
-        public void UpdateWidths()
-        {
-            if (WidthInfo.longestName > 0)
-            {
-                foreach (TextBlock formatName in ComponentLists.formatNames)
-                {
-                    formatName.Width = WidthInfo.longestName;
-                }
-            }
-            if (WidthInfo.longestFormat > 0)
-            {
-                
-
-                foreach (var comboBox in ComponentLists.formatDropDowns)
-                {
-                    comboBox.Width = WidthInfo.longestFormat;
-                }
-            }
-            if (WidthInfo.longestOutput > 0)
-            {
-                foreach (TextBox outputTypeTextBox in ComponentLists.outputPronomCodeTextBoxes)
-                {
-                    outputTypeTextBox.Width = WidthInfo.longestOutput;
-                }
-            }
-            if (WidthInfo.longestOutputType > 0)
-            {
-                foreach (TextBox outputTypeTextBox in ComponentLists.outputNameTextBoxes)
-                {
-                    outputTypeTextBox.Width = WidthInfo.longestOutputType;
-                }
-            }
+            UpdateWidths updateWidths = new UpdateWidths(this);
+            updateWidths.UpdateColumnHeaderWidths();
+            updateWidths.UpdateControlWidths();
         }
     }
 }

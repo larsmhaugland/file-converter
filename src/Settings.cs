@@ -121,9 +121,9 @@ class Settings
 						string? extension = fileTypeNode.SelectSingleNode("Filename")?.InnerText;
 						string? pronoms = fileTypeNode.SelectSingleNode("Pronoms")?.InnerText;
 						string? innerDefault = fileTypeNode.SelectSingleNode("Default")?.InnerText;
-						if (!String.IsNullOrEmpty(innerDefault))
+						if (String.IsNullOrEmpty(innerDefault))
 						{
-							defaultType = innerDefault;
+                            innerDefault = defaultType;
 						}
 
 						// Remove whitespace and split pronoms string by commas into a list of strings
@@ -136,9 +136,9 @@ class Settings
 						SettingsData settings = new SettingsData
 						{
 							PronomsList = pronomsList,
-							DefaultType = defaultType
+							DefaultType = innerDefault
 						};
-						if (settings.PronomsList.Count > 0 && !String.IsNullOrEmpty(defaultType))
+						if (settings.PronomsList.Count > 0)
 						{
 							foreach (string pronom in settings.PronomsList)
 							{
@@ -293,5 +293,43 @@ class Settings
         }
 		return null;
     }
+	/*
+	 * probably not necessary
+	 * 
+	public void AskAboutEmptyDefaults()
+	{
+		foreach(KeyValuePair<string, string> entry in GlobalVariables.FileSettings)
+		{
+            if (entry.Value == "")
+			{
+                Console.WriteLine("No default type found for " + entry.Key + ". Do you want it to NOT convert(Y/N): ");
+                string? input = Console.ReadLine();
+				if (input != null)
+				{
+                    input = input.ToUpper().Trim();
+                    if (input.Equals("N"))
+                    {
+                        Console.WriteLine("What should it convert to(pronomcode example: fmt/14): ");
+                        input = Console.ReadLine();
+						if (input != null )
+						{
+							string pronomName = PronomHelper.PronomToFullName(input.Trim());
+							if (pronomName != "Empty" && pronomName != "Unknown")
+							{
+                                GlobalVariables.FileSettings[entry.Key] = input;
+                            }
+
+                        }
+                    }
+					else
+					{
+                        GlobalVariables.FileSettings[entry.Key] = entry.Key;
+                    }
+                }
+				
+            }
+        }
+	}
+	*/
 }
 
