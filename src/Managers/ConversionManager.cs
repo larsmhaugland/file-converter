@@ -465,10 +465,6 @@ public class ConversionManager
 				
 				f.IsModified = true;
 			}
-			catch(OperationCanceledException)
-			{
-				Logger.Instance.SetUpRunTimeLogMessage("CM SendToConverter: Conversion timed out: " + c.Name, true, filename: f.FilePath);
-			}
 			catch (Exception e)
 			{
 				//Set success to false and log the error message if an exception was thrown

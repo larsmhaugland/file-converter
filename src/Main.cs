@@ -2,6 +2,8 @@
 using iText.Kernel.Pdf;
 using iText.Layout.Splitting;
 using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Reflection.Emit;
 
 public enum PrintSortBy
 {
@@ -54,14 +56,6 @@ class Program
 		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
 		{
 			GlobalVariables.parsedOptions = options;
-			if (options.Input != null)
-			{
-				Console.WriteLine("Input: " + options.Input);
-			}
-			if (options.Output != null)
-			{
-				Console.WriteLine("Output: " + options.Output);
-			}
 		});
 
 		//Only maximize and center the console window if the OS is Windows
@@ -164,6 +158,7 @@ class Program
 			finally
 			{
 				Console.WriteLine("Conversion finished:");
+				fileManager.ConversionFinished = true;
 				fileManager.DisplayFileList();
 				Console.WriteLine("Documenting conversion...");
 				fileManager.DocumentFiles();

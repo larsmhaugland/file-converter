@@ -73,20 +73,24 @@ public class Converter
 	/// <summary>
 	/// Delete an original file, that has been converted, from the output directory
 	/// </summary>
-	/// <param name="fileInfo">The specific file to be deleted</param>
-	public virtual void deleteOriginalFileFromOutputDirectory(string fileInfo)
+	/// <param name="filePath">The specific file to be deleted</param>
+	public virtual void deleteOriginalFileFromOutputDirectory(string filePath)
 	{
 		try
 		{
-			if (File.Exists(fileInfo))
+			if (File.Exists(filePath))
 			{
-				File.Delete(fileInfo);
+				File.Delete(filePath);
+			} else
+			{
+				Console.Write("");
 			}
 		} catch (Exception e)
 		{
-            Logger.Instance.SetUpRunTimeLogMessage("deleteOriginalFileFromOutputDirectory: " + e.Message, true);
+            Logger.Instance.SetUpRunTimeLogMessage("deleteOriginalFileFromOutputDirectory: " + e.Message, true, filename: filePath);
         }
 	}
+
 	public virtual void replaceFileInList(string newPath, FileToConvert f)
 	{
         f.FilePath = newPath;
@@ -95,10 +99,9 @@ public class Converter
 		{
 			file.FilePath = newPath;
 			file.FileName = Path.GetFileName(newPath);
-
 		} else
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("replaceFileInList: File not found in FileManager", true,filename: f.FilePath);
+			Logger.Instance.SetUpRunTimeLogMessage("replaceFileInList: File not found in FileManager", true, filename: f.FilePath);
 		}
 		
 	}

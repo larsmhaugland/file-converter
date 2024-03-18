@@ -1,4 +1,5 @@
-﻿using SharpCompress;
+﻿using Org.BouncyCastle.Asn1.Mozilla;
+using SharpCompress;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
@@ -8,6 +9,7 @@ public class FileManager
     private static readonly object lockObject = new object();
 	public ConcurrentDictionary<Guid,FileInfo> Files;	// List of files to be converted
 	private static readonly object identifyingFiles = new object(); // True if files are being identified
+	public bool ConversionFinished = false; // True if conversion is finished
     private FileManager()
     {
         Files = new ConcurrentDictionary<Guid, FileInfo>();
@@ -132,9 +134,9 @@ public class FileManager
     }
 	public void DisplayFileList()
 	{
+
 		//Get converters supported formats
 		var converters = AddConverters.Instance.GetConverters();
-		bool result = false;
 
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
@@ -145,11 +147,7 @@ public class FileManager
 			{
 				continue;
 			}
-			//If NewPronom is set, the conversion is done and result should be printed out	
-            if (file.NewPronom != "")
-            {
-                result = true;
-            }
+
             string currentPronom = (file.NewPronom != "") ? file.NewPronom : file.OriginalPronom;
 			string? targetPronom = Settings.GetTargetPronom(file);
 			bool supported = false;
@@ -170,10 +168,12 @@ public class FileManager
 			if (targetPronom == null)
 			{
 				targetPronom = "Not set";
+				file.OutputNotSet = true;
 			}
 			else if (!supported)
 			{
                 targetPronom = targetPronom + notSupportedString;
+				file.NotSupported = true;
             }
 			//Add new entry in dictionary or add to count if entry already exists
 			KeyValuePair<string, string> key = new KeyValuePair<string, string>(currentPronom, targetPronom);
@@ -241,8 +241,8 @@ public class FileManager
                 break;
 		}
         
-		var firstFormatTitle = result ? "Actual pronom" : "Input pronom";
-		var secondFormatTitle = result ? "Target pronom" : "Output pronom";
+		var firstFormatTitle = ConversionFinished ? "Actual pronom" : "Input pronom";
+		var secondFormatTitle = ConversionFinished ? "Target pronom" : "Output pronom";
 
 		//Print the number of files per pronom code
 		var oldColor = Console.ForegroundColor;
@@ -271,7 +271,6 @@ public class FileManager
 		int total = formatList.Where(x => x.TargetPronom != "Not set" && !x.TargetPronom.Contains(notSupportedString)).Sum(x => x.Count);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = formatList.Where(x => x.CurrentPronom == x.TargetPronom).Sum(x => x.Count);
-
         //Print totals to user
         Console.ForegroundColor = GlobalVariables.INFO_COL;
         Console.WriteLine("\nNumber of files: {0,-10}", Files.Count);
@@ -290,7 +289,7 @@ public class FileManager
 		if (mergedirs.Count > 0)
 		{
 			//Print plan for merge
-			if (!result)
+			if (!ConversionFinished)
 			{
 				Console.WriteLine("Some folders will be merged:");
 				foreach (var dir in mergedirs)

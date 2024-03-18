@@ -43,6 +43,23 @@ public class Logger
 		public bool IsConverted { get; set; }
 	}
 
+	public class JsonDataOutputNotSet
+	{
+        public string? Filename { get; set; }
+        public string? OriginalPronom { get; set; }
+        public string? OriginalChecksum { get; set; }
+        public long OriginalSize { get; set; }
+    }
+
+    public class JsonDataOutputNotSupported
+    {
+        public string? Filename { get; set; }
+        public string? OriginalPronom { get; set; }
+        public string? OriginalChecksum { get; set; }
+        public long OriginalSize { get; set; }
+        public string? TargetPronom { get; set; }
+    }
+
     public class JsonDataMerge
     {
         public string? Filename { get; set; }
@@ -53,9 +70,14 @@ public class Logger
         public List<string>? Tool { get; set; }
         public bool ShouldMerge { get; set; }
         public bool IsMerged { get; set; }
+		public string? MergedTo { get; set; }
     }
-	List<JsonData> jsondata = new List<JsonData>();
-	Dictionary<string,List<JsonDataMerge>> jsondatamerge = new Dictionary<string, List<JsonDataMerge>>();
+
+
+	List<JsonData> jsonFiles = new List<JsonData>();
+	Dictionary<string,Dictionary<string,List<JsonDataMerge>>> jsonMergedFiles = new Dictionary<string, Dictionary<string, List<JsonDataMerge>>>();
+	List<JsonDataOutputNotSupported> JsonNotSupportedFiles = new List<JsonDataOutputNotSupported>();
+	List<JsonDataOutputNotSet> JsonOutputNotSetFiles = new List<JsonDataOutputNotSet>();
 
 	private Logger()
 	{
@@ -166,19 +188,53 @@ public class Logger
                     Size = file.OriginalSize,
 					Tool = file.ConversionTools,
 					ShouldMerge = file.ShouldMerge,
-					IsMerged = file.IsMerged
+					IsMerged = file.IsMerged,
+					MergedTo = file.MergedTo
                 };
                 var parentDir = Path.GetDirectoryName(file.FilePath) ?? "";
 
-				if (jsondatamerge.ContainsKey(parentDir))
+				if (jsonMergedFiles.ContainsKey(parentDir))
 				{
-					jsondatamerge[parentDir].Add(jsonData);
+					if (jsonMergedFiles[parentDir].ContainsKey(jsonData.MergedTo))
+					{
+                        jsonMergedFiles[parentDir][jsonData.MergedTo].Add(jsonData);
+                    } else
+					{
+						jsonMergedFiles[parentDir].Add(jsonData.MergedTo, new List<JsonDataMerge>());
+						jsonMergedFiles[parentDir][jsonData.MergedTo].Add(jsonData);
+					}
+					
                 } else
 				{
-                    jsondatamerge.Add(parentDir, new List<JsonDataMerge>());
-					jsondatamerge[parentDir].Add(jsonData);
+                    jsonMergedFiles.Add(parentDir, new Dictionary<string, List<JsonDataMerge>>());
+					jsonMergedFiles[parentDir].Add(jsonData.MergedTo, new List<JsonDataMerge>());
+					jsonMergedFiles[parentDir][jsonData.MergedTo].Add(jsonData);
                 }
-            } else
+            } 
+			else if (file.NotSupported)
+			{
+				var jsonData = new JsonDataOutputNotSupported
+				{
+                    Filename = file.FilePath,
+                    OriginalPronom = file.OriginalPronom,
+                    OriginalChecksum = file.OriginalChecksum,
+                    OriginalSize = file.OriginalSize,
+                    TargetPronom = file.TargetPronom
+                };
+				JsonNotSupportedFiles.Add(jsonData);
+			}
+			else if (file.OutputNotSet)
+			{
+				var jsonData = new JsonDataOutputNotSet
+				{
+                    Filename = file.FilePath,
+                    OriginalPronom = file.OriginalPronom,
+                    OriginalChecksum = file.OriginalChecksum,
+                    OriginalSize = file.OriginalSize
+                };
+				JsonOutputNotSetFiles.Add(jsonData);
+			}
+			else
 			{
                 var jsonData = new JsonData
                 {
@@ -193,12 +249,11 @@ public class Logger
                     Converter = file.ConversionTools,
                     IsConverted = file.IsConverted
                 };
-                jsondata.Add(jsonData);
+                jsonFiles.Add(jsonData);
             }
 		}
 
-		jsondata = jsondata.OrderByDescending(x => x.IsConverted).ToList();
-		
+		jsonFiles = jsonFiles.OrderByDescending(x => x.IsConverted).ToList();
 
 		// Create an anonymous object with "requester" and "converter" properties
 		var metadata = new
@@ -209,8 +264,10 @@ public class Logger
 		};
 		var FilesWrapper = new
 		{
-            ConvertedFiles = jsondata,
-            MergedFiles = jsondatamerge
+            ConvertedFiles = jsonFiles,
+            NotSupported = JsonNotSupportedFiles,
+			OutputNotSet = JsonOutputNotSetFiles,
+			MergedFiles = jsonMergedFiles
         };
 
 		// Create an anonymous object with a "Files" property

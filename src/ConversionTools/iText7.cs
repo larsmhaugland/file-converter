@@ -239,9 +239,9 @@ public class iText7 : Converter
 		        }
 		        if (conformanceLevel != null)
 		        {
-			        convertFromPDFToPDFA(new FileToConvert(output, file.Id), conformanceLevel, file.FilePath);
+			        convertFromPDFToPDFA(new FileToConvert(output, file.Id), conformanceLevel, pronom);
 		        }
-			
+			    
 			    converted = CheckConversionStatus(output, pronom, file);
 			} while (!converted && ++count < 3);
 			if (!converted)
@@ -356,13 +356,13 @@ public class iText7 : Converter
 
                         PdfCanvas canvas = new PdfCanvas(page);
                         canvas.AddXObject(pageCopy);
-                        
                     }
-
-                    // Close the PDF document
-                    pdfDocument.Close();
                 }
                 converted = CheckConversionStatus(tmpFilename, pronom);
+            if (!converted)
+            {
+                CheckConversionStatus(tmpFilename, pronom);
+            }
             } while (!converted && ++count < 3);
             if (!converted)
             {
@@ -486,11 +486,13 @@ public class iText7 : Converter
             int groupCount = 1;
             foreach (var file in files)
             {
+                string outputFileName = $@"{filename}_{groupCount}.pdf";
+                file.MergedTo = outputFileName;
                 group.Add(file);
                 groupSize += file.OriginalSize;
                 if (groupSize > GlobalVariables.maxFileSize)
-                {
-                    string outputFileName = $@"{filename}_{groupCount}.pdf";
+                { 
+                    
                     tasks.Add(Task.Run(() => MergeFilesToPDF(group, outputFileName, pronom)));
                     group.Clear();
                     groupSize = 0;
@@ -552,6 +554,7 @@ public class iText7 : Converter
                 string filename = Path.Combine(file.FilePath);
                 deleteOriginalFileFromOutputDirectory(filename);
                 file.IsMerged = true;
+                file.MergedTo = outputFileName;
             }
 
             FileToConvert ftc = new FileToConvert(outputFileName, new Guid());

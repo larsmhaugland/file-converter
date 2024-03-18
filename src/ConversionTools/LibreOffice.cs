@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using iText.Layout.Splitting;
+using System.Diagnostics;
 
 /// <summary>
 /// Libreoffice supports the following conversions for both Linux and Windows:
@@ -383,6 +384,11 @@ public class LibreOfficeConverter : Converter
                 }
             }
             bool converted = CheckConversionStatus(newFileName, pronom);
+
+			if(Path.GetExtension(file.FilePath) != ("." + targetFormat))
+			{
+				Console.Write("");
+			} 
 			if (!converted)
 			{
                 throw new Exception("File was not converted");
@@ -391,7 +397,12 @@ public class LibreOfficeConverter : Converter
 			{
 				// Delete copy in ouputfolder if converted successfully
 				deleteOriginalFileFromOutputDirectory(sourceDoc);
+				if (File.Exists(sourceDoc))
+				{
+					Console.Write("");
+				}
 			}
+			replaceFileInList(newFileName, file);
 		}
 		catch (Exception e)
 		{
