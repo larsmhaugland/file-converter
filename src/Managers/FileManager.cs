@@ -208,6 +208,15 @@ public class FileManager
 		public string TargetFormatName { get; set; }
         public int Count { get; set; }
     }
+
+	int ParsePronom(string pronom)
+	{
+        if (pronom.Contains('/'))
+		{
+            return int.Parse(pronom.Split('/')[1]);
+        }
+        return int.MaxValue;
+    }
 	public void DisplayFileList()
 	{
 
@@ -215,11 +224,12 @@ public class FileManager
 		var converters = AddConverters.Instance.GetConverters();
 
 		string notSupportedString = " (Not supported)"; //Needs to have a space in front to extract the pronom code from the string
+		string notSetString = "Not set";
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files.Values)
 		{
 			//Skip files that should be merged
-			if (file.ShouldMerge)
+			if (Settings.ShouldMerge(file))
 			{
 				continue;
 			}
@@ -240,10 +250,10 @@ public class FileManager
 					}
 				});
 			}
-			//If no supported format is found, set the overrideFormat to "Not set"
+			//If no supported format is found, set the overrideFormat to notSetString
 			if (targetPronom == null)
 			{
-				targetPronom = "Not set";
+				targetPronom = notSetString;
 				file.OutputNotSet = true;
 			}
 			else if (!supported)
@@ -295,23 +305,22 @@ public class FileManager
 		currentMax = Math.Max(currentMax, "Full name".Length);
         targetMax  = Math.Max(targetMax, "Full name".Length);
 
+		//Sort list
 		switch (GlobalVariables.SortBy)
 		{
 			//Sort by the count of files with the same settings
+			//TODO: Ask archive if they want the not set and not supported files to be at the bottom or in between the other files
 			case PrintSortBy.Count:
-                formatList = formatList.OrderByDescending(x => x.Count).ToList();
+                formatList = formatList.OrderBy(x => x.TargetPronom == notSetString || x.TargetFormatName.Contains(notSupportedString))
+                    .ThenByDescending(x => x.Count)
+					.ThenBy(x => ParsePronom(x.CurrentPronom))
+                    .ToList();
                 break;
 			//Sort by the current or target pronom code with count as a tiebreaker
 			case PrintSortBy.CurrentPronom: case PrintSortBy.TargetPronom:
 				bool current = GlobalVariables.SortBy == PrintSortBy.CurrentPronom; //True if sorting by current pronom
 				formatList = formatList
-					.OrderBy(x =>
-					{
-						if ((current ? x.CurrentPronom : x.TargetPronom).Contains('/'))
-							return int.Parse((current ? x.CurrentPronom : x.TargetPronom).Split('/')[1]); // Sort by the number after the slash
-						else
-							return int.MaxValue; // Handle cases where there's no "/"
-					})
+					.OrderBy(x => ParsePronom(current ? x.CurrentPronom : x.TargetPronom))
 					.ThenByDescending(x => x.Count)	//Tiebreaker is count
                     .ToList();	
                 break;
@@ -344,7 +353,7 @@ public class FileManager
 		}
 		
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
-		int total = formatList.Where(x => x.TargetPronom != "Not set" && !x.TargetPronom.Contains(notSupportedString)).Sum(x => x.Count);
+		int total = formatList.Where(x => x.TargetPronom != notSetString && !x.TargetPronom.Contains(notSupportedString)).Sum(x => x.Count);
 		//Sum total from all entries in fileCount where the input pronom is the same as the output pronom
         int totalFinished = formatList.Where(x => x.CurrentPronom == x.TargetPronom).Sum(x => x.Count);
         //Print totals to user

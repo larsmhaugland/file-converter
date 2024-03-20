@@ -5,6 +5,7 @@ public class Converter
 {
 	public string? Name { get; set; } // Name of the converter
 	public string? Version { get; set; } // Version of the converter
+	public string? NameAndVersion { get; set; } // Name and version of the converter
 	public Dictionary<string, List<string>>? SupportedConversions { get; set; }
 	public List<string> SupportedOperatingSystems { get; set; } = new List<string>();
 
@@ -19,6 +20,12 @@ public class Converter
 	{
 		return new Dictionary<string, List<string>>();
 	}
+	public virtual void SetNameAndVersion() 
+	{
+		GetVersion();
+		NameAndVersion = Name + " " + Version;
+	}
+	public virtual void GetVersion() { }
 
 	/// <summary>
 	/// Checks if the converter supports the conversion of a file from one format to another
@@ -81,9 +88,6 @@ public class Converter
 			if (File.Exists(filePath))
 			{
 				File.Delete(filePath);
-			} else
-			{
-				Console.Write("");
 			}
 		} catch (Exception e)
 		{

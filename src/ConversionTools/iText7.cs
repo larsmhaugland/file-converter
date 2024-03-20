@@ -32,10 +32,15 @@ public class iText7 : Converter
     public iText7()
 	{
 		Name = "iText7";
-		Version = "8.0.2";
+        SetNameAndVersion();
 		SupportedConversions = getListOfSupportedConvesions();
         SupportedOperatingSystems = getSupportedOS();
 	}
+
+    public override void GetVersion()
+    {
+        Version = typeof(PdfWriter).Assembly.GetName().Version?.ToString() ?? "";
+    }
 
     List<string> ImagePronoms = [
         "fmt/3",
@@ -85,22 +90,22 @@ public class iText7 : Converter
         "fmt/583"
     ];
     List<string> PDFPronoms = [
-        "fmt/95",
-        "fmt/354",
-        "fmt/476",
-        "fmt/477",
-        "fmt/478",
-        "fmt/479",
-        "fmt/480",
-        "fmt/14",
-        "fmt/15",
-        "fmt/16",
-        "fmt/17",
-        "fmt/18",
-        "fmt/19",
-        "fmt/20",
-        "fmt/276",
-        "fmt/1129"
+        "fmt/95",       // PDF/A 1A
+        "fmt/354",      // PDF/A 1B
+        "fmt/476",      // PDF/A 2A
+        "fmt/477",      // PDF/A 2B
+        "fmt/478",      // PDF/A 2U
+        "fmt/479",      // PDF/A 3A
+        "fmt/480",      // PDF/A 3B
+        "fmt/14",       // PDF 1.0
+        "fmt/15",       // PDF 1.1
+        "fmt/16",       // PDF 1.2
+        "fmt/17",       // PDF 1.3
+        "fmt/18",       // PDF 1.4
+        "fmt/19",       // PDF 1.5
+        "fmt/20",       // PDF 1.6
+        "fmt/276",      // PDF 1.7
+        "fmt/1129"      // PDF 2.0
     ];
 
     Dictionary<String, PdfVersion> PronomToPdfVersion = new Dictionary<string, PdfVersion>()
@@ -184,20 +189,19 @@ public class iText7 : Converter
 			{
 				conformanceLevel = PronomToPdfAConformanceLevel[pronom];
 			}
-            //TODO: Check FTC pronom instead of extension
-			string extension = Path.GetExtension(file.FilePath).ToLower();
-			if (extension == ".html" || extension == ".htm")
+           
+			if (HTMLPronoms.Contains(file.CurrentPronom))
 			{
 				convertFromHTMLToPDF(file, pdfVersion ?? PdfVersion.PDF_1_2, conformanceLevel != null, pronom, conformanceLevel);
 			}
-			else if (extension == ".pdf")
+			else if (PDFPronoms.Contains(file.CurrentPronom))
 			{
 				if (conformanceLevel != null)
 				{
 					convertFromPDFToPDFA(file, conformanceLevel, pronom);
 				}
 			}
-			else if (extension == ".jpg" || extension == ".png" || extension == ".gif" || extension == ".tiff" || extension == ".bmp")
+			else if (ImagePronoms.Contains(file.CurrentPronom))
 			{
 				convertFromImageToPDF(file, pdfVersion ?? PdfVersion.PDF_2_0, pronom, conformanceLevel);
 			}
@@ -571,7 +575,7 @@ public class iText7 : Converter
                 fi.Id = new Guid();
                 fi.IsMerged = true;
                 fi.ShouldMerge = true;
-                fi.AddConversionTool(Name);
+                fi.AddConversionTool(NameAndVersion);
                 FileManager.Instance.Files.TryAdd(fi.Id, fi);
             }
             else

@@ -20,13 +20,19 @@ public class GhostscriptConverter : Converter
 	public GhostscriptConverter()
 	{
 		Name = "Ghostscript";
-		Version = "1.23.1";
+		SetNameAndVersion();
 		SupportedConversions = getListOfSupportedConvesions();
 		SupportedOperatingSystems = getSupportedOS();
 	  
 	}
 
-	public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
+    public override void GetVersion()
+    {
+		//TODO: Actually fetch version
+		Version = "1.23.1";
+    }
+
+    public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
 
 	List<string> ImagePronoms = [
 	//PNG

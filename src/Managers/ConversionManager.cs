@@ -467,10 +467,10 @@ public class ConversionManager
                 //Send file to converter
                 c.ConvertFile(f);
                 //Add the name of the converter to the file if the previous entry is not the same converter for documentation
-                if (c.Name != null &&
-                    (FileInfoMap[f.Id].ConversionTools.Count == 0 || FileInfoMap[f.Id].ConversionTools.Last() != c.Name))
+                if (c.NameAndVersion != null &&
+                    (FileInfoMap[f.Id].ConversionTools.Count == 0 || FileInfoMap[f.Id].ConversionTools.Last() != c.NameAndVersion))
                 {
-                    FileInfoMap[f.Id].ConversionTools.Add(c.Name);
+                    FileInfoMap[f.Id].ConversionTools.Add(c.NameAndVersion);
                 }
 
                 f.IsModified = true;
@@ -541,7 +541,7 @@ public class ConversionManager
                 converter.CombineFiles(entry.Value, outputPronom);
                 foreach (FileInfo file in entry.Value)
                 {
-                    file.ConversionTools.Add(converter.Name!);
+                    file.ConversionTools.Add(converter.NameAndVersion ?? "Not found");
                 }
             });
         }

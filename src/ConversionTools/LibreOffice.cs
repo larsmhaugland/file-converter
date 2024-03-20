@@ -1,5 +1,6 @@
 ﻿using iText.Layout.Splitting;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Libreoffice supports the following conversions for both Linux and Windows:
@@ -29,18 +30,17 @@ public class LibreOfficeConverter : Converter
 	public LibreOfficeConverter()
 	{
 		Name = "Libreoffice";
-		Version = getLibreOfficeVersion();
+		SetNameAndVersion();
 		SupportedConversions = getListOfSupportedConvesions();
 		SupportedOperatingSystems = getSupportedOS();
 		currentOS = Environment.OSVersion;
 	}
 
-	private static string getLibreOfficeVersion()
+	public override void GetVersion()
 	{
-        //TODO: This opens a new window that needs user input. Not sure what the problem is
-        //Run command soffice --version to get the version of LibreOffice
+        //TODO: Actually fetch version
 
-		string version = "";
+        Version = "7.6.4";
         /*
 		string output = "";
 		string error = "";
@@ -67,10 +67,7 @@ public class LibreOfficeConverter : Converter
 
 		version = output.Split(' ')[1];
 		*/
-        version = "7.6.4"; 
-		
-		return version;
-	}
+    }
 
 	/// <summary>
 	/// Gets the supported operating system for the converter
@@ -371,24 +368,20 @@ public class LibreOfficeConverter : Converter
 			{
 				throw new Exception("Could not get pronom for file");
 			}
-			//Convert to another PDF format if standard format is not the desired one
-			if(currPronom != pronom)
+			//Convert to another PDF format if LibreOffice's standard format is not the desired one
+			if(currPronom != pronom && PDFPronoms.Contains(pronom))
 			{
 				var converter = new iText7();
 				converter.convertFromPDFToPDF(file, pronom);
 				// Add iText7 to the list of conversion tools
 				var FileInfoMap = ConversionManager.Instance.FileInfoMap;
-                if (!FileInfoMap[file.Id].ConversionTools.Contains(converter.Name))
+                if (!FileInfoMap[file.Id].ConversionTools.Contains(converter.NameAndVersion))
                 {
-                    FileInfoMap[file.Id].ConversionTools.Add(converter.Name);
+                    FileInfoMap[file.Id].ConversionTools.Add(converter.NameAndVersion);
                 }
             }
             bool converted = CheckConversionStatus(newFileName, pronom);
 
-			if(Path.GetExtension(file.FilePath) != ("." + targetFormat))
-			{
-				Console.Write("");
-			} 
 			if (!converted)
 			{
                 throw new Exception("File was not converted");
@@ -397,10 +390,6 @@ public class LibreOfficeConverter : Converter
 			{
 				// Delete copy in ouputfolder if converted successfully
 				deleteOriginalFileFromOutputDirectory(sourceDoc);
-				if (File.Exists(sourceDoc))
-				{
-					Console.Write("");
-				}
 			}
 			replaceFileInList(newFileName, file);
 		}
@@ -581,13 +570,26 @@ public class LibreOfficeConverter : Converter
     }
 
 
-	List<string> PDFPronoms =
-	[
-		"fmt/276", // 1.7
-		"fmt/20",  // 1.6
-		"fmt/477", // PDF 2-B
-	];
-	List<string> DOCPronoms =
+    List<string> PDFPronoms = [
+        "fmt/95",       // PDF/A 1A
+        "fmt/354",      // PDF/A 1B
+        "fmt/476",      // PDF/A 2A
+        "fmt/477",      // PDF/A 2B
+        "fmt/478",      // PDF/A 2U
+        "fmt/479",      // PDF/A 3A
+        "fmt/480",      // PDF/A 3B
+        "fmt/14",       // PDF 1.0
+        "fmt/15",       // PDF 1.1
+        "fmt/16",       // PDF 1.2
+        "fmt/17",       // PDF 1.3
+        "fmt/18",       // PDF 1.4
+        "fmt/19",       // PDF 1.5
+        "fmt/20",       // PDF 1.6
+        "fmt/276",      // PDF 1.7
+        "fmt/1129"      // PDF 2.0
+    ];
+
+    List<string> DOCPronoms =
 	[
 		// DOC
 		"x-fmt/329",
