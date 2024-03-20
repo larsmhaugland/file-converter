@@ -99,7 +99,7 @@ Common usage (code block)
 ### Beta
 Since the program is still in beta, there are some limitations to the software. This section will be updated throughout the development process.
 - Multi-threading
-	- The program gets varied results if multi-threading (```<MaxThreads>``` is over 1) is enabled. For consistent results, use ```<MaxThreads>1</MaxThreads>```
+	- The current version of the program gets varied results if multi-threading is enabled (```<MaxThreads>``` is over 1). For consistent results, use ```<MaxThreads>1</MaxThreads>```
 - Parsing siegfried data from incomplete run
   	- The current version of the program cannot successfully recover siegfried data from an incomplete run
 
