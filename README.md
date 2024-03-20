@@ -16,6 +16,7 @@ This application provides a framework for different conversion libraries/softwar
   - [Installation for Windows](#installation-for-windows)
   - [Installation for Linux](#installation-for-linux)
 - [Usage](#usage)
+  - [Beta notes](#beta)	 
   - [GUI](#gui)
   - [CLI](#cli)
   - [Settings](#settings)
@@ -95,6 +96,14 @@ dotnet build
 ## Usage
 Common usage (code block)
 
+### Beta
+Since the program is still in beta, there are some limitations to the software. This section will be updated throughout the development process.
+- Multi-threading
+	- The program gets varied results if multi-threading (```<MaxThreads>``` is over 1) is enabled. For consistent results, use ```<MaxThreads>1</MaxThreads>```
+- Parsing siegfried data from incomplete run
+  	- The current version of the program cannot successfully recover siegfried data from an incomplete run
+
+
 ### GUI
 Common usage GUI
 
@@ -130,8 +139,8 @@ Settings can be manually set in the ```settings.xml``` file.
 ```
 
 The first part of the XML file concerns arguments needed to run the program. The second part allows you to set up two things:
-1. Global settings stating that file format ```x```should be converted to file format ```y```.
-2. Folder settings stating that file format ```x```should be converted to file format ```y``` in the specific folder ```folder```.
+1. Global settings stating that file format ```x``` should be converted to file format ```y```.
+2. Folder settings stating that file format ```x``` should be converted to file format ```y``` in the specific folder ```folder```.
 
 #### Global settings
 ```xml
