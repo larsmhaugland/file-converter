@@ -1,9 +1,11 @@
 ﻿using CommandLine;
 using iText.Kernel.Pdf;
 using iText.Layout.Splitting;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 
 public enum PrintSortBy
 {
@@ -23,7 +25,7 @@ public static class GlobalVariables
 	public static int maxThreads = Environment.ProcessorCount*2;
 	public static int timeout = 30;
     public static double maxFileSize = 1000000000;      //1GB
-    public const int MAX_RETRIES = 3; //Maximum number of retries for a failed conversion
+    public const int MAX_RETRIES = 3; //Maximum number of attempts in case of a failed conversion
 	public const ConsoleColor INFO_COL = ConsoleColor.Cyan;
 	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
@@ -42,7 +44,7 @@ public static class GlobalVariables
 }
 public class Options
 {
-	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "duplicateTest")]
+	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "testNoZip")]
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
@@ -180,27 +182,5 @@ class Program
 				Console.WriteLine("No errors happened during runtime. See documentation.json file in output dir.");
 			}
 		}
-	}
-	static void MaximizeAndCenterConsoleWindow()
-	{
-		//Only maximize and center the console window if the OS is Windows
-		if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-		{
-			return;
-		}
-		int screenWidth = Console.LargestWindowWidth;
-		int screenHeight = Console.LargestWindowHeight;
-
-		int windowWidth = screenWidth ;  // You can adjust this as needed
-		int windowHeight = screenHeight; // You can adjust this as needed
-
-		Console.SetWindowSize(windowWidth, windowHeight);
-		Console.BufferHeight = windowHeight;
-		Console.BufferWidth = windowWidth;
-
-		int left = Math.Max((screenWidth - windowWidth) / 2, 0);
-		int top = Math.Max((screenHeight - windowHeight) / 2, 0);
-
-		//Console.SetWindowPosition(left, top);
 	}
 }
