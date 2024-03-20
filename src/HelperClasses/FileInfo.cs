@@ -108,6 +108,13 @@ public class FileInfo
 		NewChecksum = f.OriginalChecksum;
 	}
 
+	public void RenameFile(string newName)
+	{
+		File.Move(FilePath, newName);
+        FilePath = newName;
+        FileName = Path.GetFileName(newName);
+    }
+
 	public void AddConversionTool(string tool)
 	{
 		ConversionTools.Add(tool);

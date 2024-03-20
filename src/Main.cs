@@ -28,9 +28,8 @@ public static class GlobalVariables
 	public const ConsoleColor ERROR_COL = ConsoleColor.Red;
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
 	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
-	public static readonly PrintSortBy SortBy = PrintSortBy.TargetPronom;
+	public static readonly PrintSortBy SortBy = PrintSortBy.Count;
 	
-
 	public static void Reset()
 	{
 		FileSettings.Clear();
@@ -43,7 +42,7 @@ public static class GlobalVariables
 }
 public class Options
 {
-	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "testNoZip")]
+	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "duplicateTest")]
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
@@ -125,7 +124,7 @@ class Program
 				Console.WriteLine("MaxThreads: {0}", GlobalVariables.maxThreads);
 				Console.WriteLine("Timeout in minutes: {0}", GlobalVariables.timeout);
 				Console.ForegroundColor = oldColor;
-				Console.Write("Do you want to proceed with these settings (Y (Yes) / A (Abort) / R (Reload) / G (Change in GUI): ");
+				Console.Write("Do you want to proceed with these settings (Y (Yes) / N (Exit program) / R (Reload) / G (Change in GUI): ");
 				string ?r = Console.ReadLine();
 				r = r?.ToUpper() ?? " ";
 				input = r;
@@ -143,16 +142,18 @@ class Program
 					settings.ReadSettings("./Settings.xml");
 					settings.SetUpFolderOverride("./Settings.xml");
 				}
-			} while (input != "Y" && input != "A");
-			if (input == "A")
+			} while (input != "Y" && input != "N");
+			if (input == "N")
 			{
 				return;
 			}
-			Console.WriteLine("Converting files...");
+			
 
 			try
 			{
-				cm.ConvertFiles();
+				fileManager.CheckForNamingConflicts();
+                Console.WriteLine("Converting files...");
+                cm.ConvertFiles();
 				//Delete siegfrieds json files
 				sf.ClearOutputFolder();
 			} catch (Exception e)

@@ -121,6 +121,82 @@ public class FileManager
     }
 
 	/// <summary>
+	/// Checks for potential conflicts in file naming after conversion. <br></br>
+	/// Will resolve conflicts by renaming files in this order: <br></br>
+	/// 1. Add the original extension to the file name <br></br>
+	/// 2. Add a number to the file name <br></br>
+	/// </summary>
+	public void CheckForNamingConflicts()
+	{
+        var directoriesWithFiles = Files
+										.GroupBy(kv => Path.GetDirectoryName(kv.Value.FilePath) ?? "")
+										.ToDictionary(
+											g => g.Key,
+											g => g.Select(kv => kv.Value).ToList()
+										);
+
+        filterNonDuplicates(directoriesWithFiles);
+
+        //If no filenames are duplicates, no need to check more
+        if (directoriesWithFiles.Count == 0)
+		{
+            return;
+        }
+
+		foreach(var fileGroup in directoriesWithFiles.Values)
+		{
+			foreach(var file in fileGroup)
+			{
+				var lastDot = file.FilePath.LastIndexOf('.');
+				//Add the original extension to the file name
+				var newName = string.Format("{0}_{1}{2}",file.FilePath.Substring(0,lastDot), Path.GetExtension(file.FilePath).ToUpper().TrimStart('.'), Path.GetExtension(file.FilePath));
+				file.RenameFile(newName);
+			}
+		}
+		filterNonDuplicates(directoriesWithFiles);
+        //If no filenames are duplicates, no need to check more
+        if (directoriesWithFiles.Count == 0)
+		{
+			return;
+		}
+
+		//Add number to the file name
+		foreach (var fileGroup in directoriesWithFiles.Values)
+		{
+			foreach (var file in fileGroup)
+			{
+                var lastDot = file.FilePath.LastIndexOf('.');
+				if(lastDot == -1)
+				{
+					Logger.Instance.SetUpRunTimeLogMessage("CheckForNamingConflicts: Error when renaming files: No extension found", true, filename: file.FilePath);
+					continue;
+				}
+                //Add a number to the file name
+                var newName = string.Format("{0}_{1}{2}", file.FilePath.Substring(0, lastDot), fileGroup.IndexOf(file), Path.GetExtension(file.FilePath));
+                file.RenameFile(newName);
+            }
+		}
+    }
+
+	private void filterNonDuplicates(Dictionary<string,List<FileInfo>> dict)
+	{
+        // Remove groups with only one file name
+        var filteredFiles = dict
+            .Where(kv => kv.Value.Count > 1)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+
+        //Remove the files that are not duplicates
+        filteredFiles.ForEach(kv =>
+        {
+            kv.Value.RemoveAll(f => kv.Value
+                .Count(x => Path.GetFileNameWithoutExtension(x.FilePath) == Path.GetFileNameWithoutExtension(f.FilePath)) == 1);
+        });
+        //Remove the keys that have no values
+        filteredFiles = filteredFiles.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+	/// <summary>
 	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
 	/// Also gives a count of how many files are in each group.
 	/// </summary>
