@@ -136,6 +136,7 @@ public class GhostscriptConverter : Converter
 	{
 		var supportedOS = new List<string>();
 		supportedOS.Add(PlatformID.Win32NT.ToString());
+		supportedOS.Add(PlatformID.Unix.ToString());
 		//Add more supported OS here
 		return supportedOS;
 	}
@@ -165,7 +166,15 @@ public class GhostscriptConverter : Converter
 				}
 				else if (extension == ".png" || extension == ".jpg" || extension == ".tiff" || extension == ".bmp")
 				{
-					convertToImage(fileinfo, outputFileName, sDevice, extension, pronom);
+					if(OperatingSystem.IsWindows())
+					{
+                        convertToImagesWindows(fileinfo, outputFileName, sDevice, extension, pronom);
+                    }
+					else 
+					{
+						convertToImagesLinux(fileinfo, outputFileName, sDevice, extension, pronom);
+					}
+					
 				}
 			}
 		}catch(Exception e)
@@ -182,7 +191,7 @@ public class GhostscriptConverter : Converter
 	/// <param name="outputFileName">The name of the new file</param>
 	/// <param name="sDevice">What format GhostScript will convert to</param>
 	/// <param name="extension">Extension type for after the conversion</param>
-	void convertToImage(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
+	void convertToImagesWindows(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
 		try
@@ -216,7 +225,7 @@ public class GhostscriptConverter : Converter
 							count++;
 							if (!converted)
 							{
-								convertToImage(file, outputFileName, sDevice, extension, pronom);
+								convertToImagesWindows(file, outputFileName, sDevice, extension, pronom);
 							}
 						} while (!converted && count < 4);
 						if (!converted)
@@ -264,7 +273,66 @@ public class GhostscriptConverter : Converter
 		}
 	}
 
-	void convertToPDF(FileToConvert file, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
+    /// <summary>
+    /// Convert a file to images using GhostScript command line
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="outputFileName"></param>
+    /// <param name="sDevice"></param>
+    /// <param name="extension"></param>
+    /// <param name="pronom"></param>
+    void convertToImagesLinux(FileToConvert fileinfo, string outputFileName, string sDevice, string extension, string pronom)
+    {
+        try
+        {
+            string? outputFolder = Path.GetDirectoryName(fileinfo.FilePath);
+            string outputName = Path.Combine(outputFolder, outputFileName);
+
+            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {fileinfo.FilePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "/bin/bash";
+            startInfo.Arguments = $"-c \"{command}\"";
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardError = true;
+
+            using (Process? process = Process.Start(startInfo))
+            {
+                string? output = process?.StandardOutput.ReadToEnd();
+                string? error = process?.StandardError.ReadToEnd();
+
+                process?.WaitForExit();
+            }
+			//TODO: How to check conversion for one file that turns into multiple files?
+            /*int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus(filePath, outputFileName+extension, pronom);
+                count++;
+                if (!converted)
+                {
+                    convertToImagesLinux(filePath, outputFileName, sDevice, extension, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }*/
+
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
+        }
+
+    }
+
+
+
+    void convertToPDF(FileToConvert file, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
 	{
 		Logger log = Logger.Instance;
 		string outputFolder = Path.GetDirectoryName(file.FilePath);
