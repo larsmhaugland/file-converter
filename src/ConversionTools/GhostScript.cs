@@ -325,7 +325,7 @@ public class GhostscriptConverter : Converter
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: filePath);
+            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo.FilePath);
         }
 
     }
