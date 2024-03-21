@@ -307,7 +307,7 @@ public class GhostscriptConverter : Converter
 
             int count = 1;
             bool converted = false;
-            /*do
+            do
             {
                 converted = CheckConversionStatus(filePath, outputFileName+extension, pronom);
                 count++;
@@ -319,7 +319,7 @@ public class GhostscriptConverter : Converter
             if (!converted)
             {
                 throw new Exception("File was not converted");
-            }*/
+            }
 
         }
         catch(Exception e)
@@ -395,7 +395,7 @@ public class GhostscriptConverter : Converter
 
             int count = 1;
             bool converted = false;
-            /*do
+            do
             {
                 converted = CheckConversionStatus(filePath,outputFilePath, pronom);
                 count++;
@@ -407,7 +407,7 @@ public class GhostscriptConverter : Converter
             if (!converted)
             {
                 throw new Exception("File was not converted");
-            }*/
+            }
 
 		}
 		catch (Exception e)
