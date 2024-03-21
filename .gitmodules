@@ -3,4 +3,4 @@
 	url = https://github.com/seigmenn/GhostscriptBinaryFiles.git
 [submodule "testfiles"]
 	path = testfiles
-	url = git@github.com:larsmhaugland/fileconversion-testing.git
+	url = https://github.com/larsmhaugland/fileconversion-testing.git

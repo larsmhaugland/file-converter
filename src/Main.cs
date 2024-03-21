@@ -44,7 +44,7 @@ public static class GlobalVariables
 }
 public class Options
 {
-	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "testNoZip")]
+	[Option('i', "input", Required = false, HelpText = "Specify input directory", Default = "input")]
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
@@ -58,6 +58,8 @@ class Program
 		{
 			GlobalVariables.parsedOptions = options;
 		});
+		bool debug = true;
+		string settingsPath = debug ? "./Settings_Testing.xml" : "./Settings.xml";
 
 		//Only maximize and center the console window if the OS is Windows
 		Console.Title = "FileConverter";
@@ -71,8 +73,8 @@ class Program
 			LinuxSetup.Setup();
 		}
 		Settings settings = Settings.Instance;
-		Console.WriteLine("Reading settings...");
-		settings.ReadSettings("./Settings.xml");
+		Console.WriteLine("Reading settings from {0}...",settingsPath);
+		settings.ReadSettings(settingsPath);
 		Logger logger = Logger.Instance;
 
 		FileManager fileManager = FileManager.Instance;
@@ -109,7 +111,7 @@ class Program
 		}
 		ConversionManager cm = ConversionManager.Instance;
 		//Set up folder override after files have been copied over
-        settings.SetUpFolderOverride("./Settings.xml");
+        settings.SetUpFolderOverride(settingsPath);
 
         if (fileManager.Files.Count > 0)
 		{			
@@ -134,15 +136,15 @@ class Program
 				{
 					Console.WriteLine("Change settings file and hit enter when finished (Remember to save file)");
 					Console.ReadLine();
-					settings.ReadSettings("./Settings.xml");
-					settings.SetUpFolderOverride("./Settings.xml");
+					settings.ReadSettings(settingsPath);
+					settings.SetUpFolderOverride(settingsPath);
 				}
 				if (input == "G")
 				{
 					//TODO: Start GUI
 					Console.WriteLine("Not implemented yet...");
-					settings.ReadSettings("./Settings.xml");
-					settings.SetUpFolderOverride("./Settings.xml");
+					settings.ReadSettings(settingsPath);
+					settings.SetUpFolderOverride(settingsPath);
 				}
 			} while (input != "Y" && input != "N");
 			if (input == "N")
