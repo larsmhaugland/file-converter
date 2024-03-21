@@ -110,9 +110,15 @@ public class FileInfo
 
 	public void RenameFile(string newName)
 	{
-		File.Move(FilePath, newName);
-        FilePath = newName;
-        FileName = Path.GetFileName(newName);
+		try 
+		{ 
+			File.Move(FilePath, newName);
+			FilePath = newName;
+			FileName = Path.GetFileName(newName);
+		} catch (Exception e)
+		{
+			Logger.Instance.SetUpRunTimeLogMessage("RenameFile: " + e.Message, true);
+		}
     }
 
 	public void AddConversionTool(string tool)

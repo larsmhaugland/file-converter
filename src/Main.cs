@@ -48,32 +48,48 @@ public class Options
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
-
+	[Option('s', "settings", Required = false, HelpText = "Specify settings file", Default = "Settings.xml")]
+	public string Settings { get; set; } = "";
 }
 class Program
 { 
 	static void Main(string[] args)
 	{
-		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
-		{
-			GlobalVariables.parsedOptions = options;
-		});
-		bool debug = true;
-		string settingsPath = debug ? "./Settings_Testing.xml" : "./Settings.xml";
+        bool debug = false;
+		string settingsPath = "";
+        Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
+        {
+            GlobalVariables.parsedOptions = options;
+        });
+
+        if (GlobalVariables.parsedOptions.Settings == "Settings.xml")
+        {
+            settingsPath = debug ? "Settings_Testing.xml" : "Settings.xml";
+        }
 
 		//Only maximize and center the console window if the OS is Windows
 		Console.Title = "FileConverter";
 		//MaximizeAndCenterConsoleWindow();
 		if (!OperatingSystem.IsLinux())
 		{
-			Directory.SetCurrentDirectory("../../../");
+			//Look for settings file in parent directories as long as settings file is not found and we are not in the root directory
+			while (!File.Exists(settingsPath) && Directory.GetCurrentDirectory() != Directory.GetDirectoryRoot(Directory.GetCurrentDirectory()))
+			{
+				Directory.SetCurrentDirectory("..");
+			}
+			if (!File.Exists(settingsPath))
+			{
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
+				Console.WriteLine("Could not find settings file. Please make sure that the settings file is in the root directory of the program.");
+				return;
+			}
 		}
 		else
 		{
 			LinuxSetup.Setup();
 		}
 		Settings settings = Settings.Instance;
-		Console.WriteLine("Reading settings from {0}...",settingsPath);
+		Console.WriteLine("Reading settings from '{0}'...",settingsPath);
 		settings.ReadSettings(settingsPath);
 		Logger logger = Logger.Instance;
 
@@ -105,7 +121,8 @@ class Program
 			}
 		} catch (Exception e)
 		{
-			Console.WriteLine("[FATAL] Could not identify files: " + e.Message);
+            Console.ForegroundColor = GlobalVariables.ERROR_COL;
+            Console.WriteLine("[FATAL] Could not identify files: " + e.Message);
 			logger.SetUpRunTimeLogMessage("Main: Error when copying/unpacking/identifying files: " + e.Message, true);
 			return;
 		}
@@ -151,7 +168,6 @@ class Program
 			{
 				return;
 			}
-			
 
 			try
 			{
