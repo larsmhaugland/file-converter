@@ -285,8 +285,9 @@ public class GhostscriptConverter : Converter
             string? outputFolder = Path.GetDirectoryName(filePath);
             string fullPath = Path.GetFullPath(filePath);
            // string outputName = Path.Combine(fullPath, outputFileName);
+           string outputName = Path.Combine(outputFolder, outputFileName);
 
-            string command = $"gs -dDEBUG -sDEVICE={sDevice} -o {outputFileName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+            string command = $"gs -dDEBUG -sDEVICE={sDevice} -o {outputName}%d{extension} {filePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "/bin/bash";
