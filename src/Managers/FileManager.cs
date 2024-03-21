@@ -1,7 +1,9 @@
-﻿using Org.BouncyCastle.Asn1.Mozilla;
+﻿using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Mozilla;
 using SharpCompress;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Xml.Serialization;
 
 public class FileManager
 {
@@ -344,12 +346,15 @@ public class FileManager
             } else if (format.TargetPronom == "Not set")
 			{
 				Console.ForegroundColor = GlobalVariables.WARNING_COL;
-			} else if (format.TargetPronom == format.CurrentPronom)
-			{
-				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
 			}
-
-            Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", format.CurrentPronom, format.CurrentFormatName, format.TargetPronom, format.TargetFormatName, format.Count);
+			if (format.TargetPronom != format.CurrentPronom)
+			{
+				Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", format.CurrentPronom, format.CurrentFormatName, format.TargetPronom, format.TargetFormatName, format.Count);
+			}
+            else
+			{
+				PrintStrikeThrough(format, currentMax, targetMax);
+            }
 		}
 		
 		//Sum total from all entries in fileCount where key. is not "Not set" or "Not supported"
@@ -362,43 +367,42 @@ public class FileManager
 		Console.WriteLine("Number of files with output specified: {0,-10}", total);
 		Console.WriteLine("Number of files not at target pronom: {0,-10}", total-totalFinished);
 		//Get a list of all directories that will be merged
-		List<string> mergedirs = new List<string>();
+		List<(string,string)> dirsToBeMerged = new List<(string, string)>();
 		foreach (var entry in GlobalVariables.FolderOverride)
 		{
 			if (entry.Value.Merge)
 			{
-				mergedirs.Add(entry.Key);
+				dirsToBeMerged.Add((entry.Key,entry.Value.DefaultType));
 			}
 		}
 		//Print out the directories that will be or have been merged
-		if (mergedirs.Count > 0)
+		if (dirsToBeMerged.Count > 0)
 		{
 			//Print plan for merge
 			if (!ConversionFinished)
 			{
-				Console.WriteLine("Some folders will be merged:");
-				foreach (var dir in mergedirs)
+				Console.WriteLine("Some folders will be merged (output pronom):");
+				foreach (var dir in dirsToBeMerged)
 				{
-					Console.WriteLine("\t{0}", dir);
+					Console.WriteLine("\t{0} ({1})", dir.Item1,dir.Item2);
 				}
 			}
-			//Check result of merge
-			else
-			{
+            else	//Check result of merge
+            {
                 List<string> mergedDirs = new List<string>();
                 foreach (var file in Files.Values)
                 {
                     var parent = Path.GetRelativePath(GlobalVariables.parsedOptions.Output, Directory.GetParent(file.FilePath)?.ToString() ?? "");
 					//Check if file was merged, only add the parent directory once
-                    if (!mergedDirs.Contains(parent) && mergedirs.Contains(parent) && file.IsMerged)
+                    if (!mergedDirs.Contains(parent) && dirsToBeMerged.Any(tuple => tuple.Item1 == parent) && file.IsMerged)
                     {
                         mergedDirs.Add(parent);
                     }
                 }
 				//Get the directories that were not merged
-                var notMerged = mergedirs.Except(mergedDirs);
-				//Print out the result of the merge
-				Console.WriteLine("{0}/{1} folders were merged:", mergedDirs.Count, mergedirs.Count);
+                var notMerged = dirsToBeMerged.Where(tuple => !mergedDirs.Contains(tuple.Item1)).ToList();
+                //Print out the result of the merge
+                Console.WriteLine("{0}/{1} folders were merged:", mergedDirs.Count, dirsToBeMerged.Count);
 				Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
 				foreach (var dir in mergedDirs)
 				{
@@ -416,7 +420,9 @@ public class FileManager
 
     }
 
-	public List<FileInfo> GetFiles()
+    
+
+    public List<FileInfo> GetFiles()
 	{
 		lock (identifyingFiles)
 		{
@@ -468,4 +474,38 @@ public class FileManager
         return false;
 
     }
+
+
+    //******************************************************      Helper functions for formatting output      ***************************************************************//
+    /// <summary>
+	/// Creates a strikethrough string with the specified length <br></br>
+	/// The padding for length is spaces on the left (negative length) or right (positive length) side of the text
+	/// </summary>
+	/// <param name="text">string that should be formatted</param>
+	/// <param name="length">total length of string after padding (either before or after)</param>
+	/// <returns>formatted string</returns>
+	static string StrikeThrough(string text, int length)
+    {
+        return (length > 0) 
+						? (new string(' ',length - text.Length) + $"\u001b[9m{text}\u001b[0m") //Padding to front of string
+						: ($"\u001b[9m{text}\u001b[0m") + (new string(' ', (-length) - text.Length)); // Padding to end of string
+    }
+
+	/// <summary>
+	/// Prints a GlobalVariables.SUCCESS_COL colored line for DisplayFiles() with a strikethrough for the target format name and pronom, to be used if the current and target pronom are the same
+	/// </summary>
+	/// <param name="f">FileInfoGroup that should be printed</param>
+	/// <param name="currentMax">Maximum length of current format name</param>
+	/// <param name="targetMax">Maximum length of target format name</param>
+    static void PrintStrikeThrough(FileInfoGroup f, int currentMax, int targetMax)
+	{
+		Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
+		string targetPronom = StrikeThrough(f.TargetPronom, 13);
+		string targetFormatName = StrikeThrough(f.TargetFormatName, -targetMax);
+		Console.Write("{0,13} - {1,-" + currentMax + "} | {2} ", f.CurrentPronom, f.CurrentFormatName, targetPronom);
+		Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
+		Console.Write("- {0,-" + targetMax + "} ",targetFormatName);
+        Console.ForegroundColor = GlobalVariables.SUCCESS_COL;
+        Console.Write("| {0,6}\n",f.Count);
+	}
 }
