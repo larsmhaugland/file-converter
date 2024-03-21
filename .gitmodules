@@ -1,3 +1,6 @@
 [submodule "GhostscriptBinaryFiles"]
 	path = GhostscriptBinaryFiles
 	url = https://github.com/seigmenn/GhostscriptBinaryFiles.git
+[submodule "testfiles"]
+	path = testfiles
+	url = git@github.com:larsmhaugland/fileconversion-testing.git
