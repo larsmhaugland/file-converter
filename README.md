@@ -98,7 +98,7 @@ Common usage (code block)
 
 ### Beta
 Since the program is still in beta, there are some limitations to the software. This section will be updated throughout the development process.
-- Landscape oriented documents -> PDF
+- Landscape oriented PDF or PDF/A -> PDF/A or other PDF version
   	- There is a bug where iText7 doesn't recognize that a document is landscape oriented when converting from PDF->PDF/A. This results in the content of the file being cropped to portrait.
 - Multi-threading
 	- The current version of the program gets varied results if multi-threading is enabled (```<MaxThreads>``` is over 1). For consistent results, use ```<MaxThreads>1</MaxThreads>```
