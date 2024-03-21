@@ -305,7 +305,7 @@ public class GhostscriptConverter : Converter
                 process?.WaitForExit();
             }
 
-            int count = 1;
+            /*int count = 1;
             bool converted = false;
             do
             {
@@ -319,7 +319,7 @@ public class GhostscriptConverter : Converter
             if (!converted)
             {
                 throw new Exception("File was not converted");
-            }
+            }*/
 
         }
         catch(Exception e)
