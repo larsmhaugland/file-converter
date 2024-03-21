@@ -157,6 +157,7 @@ public class Logger
 	/// <returns> returns the message in the correct format </returns>
 	public void SetUpRunTimeLogMessage(string message, bool error, string pronom = "N/A", string mime = "N/A", string filename = "N/A")
 	{
+		errorHappened = errorHappened ? true : error;
 		string errorM = "Message: ";
 		if (error) { errorM = "Error: "; }
 		string formattedMessage =  errorM + " | " + message + " | " + pronom + " | " + mime + " | " + filename + "\n";

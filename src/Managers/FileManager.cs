@@ -150,6 +150,11 @@ public class FileManager
 			foreach(var file in fileGroup)
 			{
 				var lastDot = file.FilePath.LastIndexOf('.');
+				if(lastDot == -1)
+				{
+                    Logger.Instance.SetUpRunTimeLogMessage("CheckForNamingConflicts: Error when renaming files: No extension found", true, filename: file.FilePath);
+                    continue;
+                }
 				//Add the original extension to the file name
 				var newName = string.Format("{0}_{1}{2}",file.FilePath.Substring(0,lastDot), Path.GetExtension(file.FilePath).ToUpper().TrimStart('.'), Path.GetExtension(file.FilePath));
 				file.RenameFile(newName);

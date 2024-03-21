@@ -48,18 +48,24 @@ public class Options
 	public string Input { get; set; } = "";
 	[Option('o', "output", Required = false, HelpText = "Specify output directory", Default = "output")]
 	public string Output { get; set; } = "";
-
+	[Option('s', "settings", Required = false, HelpText = "Specify settings file", Default = "Settings.xml")]
+	public string Settings { get; set; } = "";
 }
 class Program
 { 
 	static void Main(string[] args)
 	{
-		Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
-		{
-			GlobalVariables.parsedOptions = options;
-		});
-		bool debug = true;
-		string settingsPath = debug ? "Settings_Testing.xml" : "Settings.xml";
+        bool debug = false;
+		string settingsPath = "";
+        Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
+        {
+            GlobalVariables.parsedOptions = options;
+        });
+
+        if (GlobalVariables.parsedOptions.Settings == "Settings.xml")
+        {
+            settingsPath = debug ? "Settings_Testing.xml" : "Settings.xml";
+        }
 
 		//Only maximize and center the console window if the OS is Windows
 		Console.Title = "FileConverter";
@@ -83,7 +89,7 @@ class Program
 			LinuxSetup.Setup();
 		}
 		Settings settings = Settings.Instance;
-		Console.WriteLine("Reading settings from {0}...",settingsPath);
+		Console.WriteLine("Reading settings from '{0}'...",settingsPath);
 		settings.ReadSettings(settingsPath);
 		Logger logger = Logger.Instance;
 
