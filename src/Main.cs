@@ -59,14 +59,24 @@ class Program
 			GlobalVariables.parsedOptions = options;
 		});
 		bool debug = true;
-		string settingsPath = debug ? "./Settings_Testing.xml" : "./Settings.xml";
+		string settingsPath = debug ? "Settings_Testing.xml" : "Settings.xml";
 
 		//Only maximize and center the console window if the OS is Windows
 		Console.Title = "FileConverter";
 		//MaximizeAndCenterConsoleWindow();
 		if (!OperatingSystem.IsLinux())
 		{
-			Directory.SetCurrentDirectory("../../../");
+			//Look for settings file in parent directories as long as settings file is not found and we are not in the root directory
+			while (!File.Exists(settingsPath) && Directory.GetCurrentDirectory() != Directory.GetDirectoryRoot(Directory.GetCurrentDirectory()))
+			{
+				Directory.SetCurrentDirectory("..");
+			}
+			if (!File.Exists(settingsPath))
+			{
+				Console.ForegroundColor = GlobalVariables.ERROR_COL;
+				Console.WriteLine("Could not find settings file. Please make sure that the settings file is in the root directory of the program.");
+				return;
+			}
 		}
 		else
 		{
@@ -105,7 +115,8 @@ class Program
 			}
 		} catch (Exception e)
 		{
-			Console.WriteLine("[FATAL] Could not identify files: " + e.Message);
+            Console.ForegroundColor = GlobalVariables.ERROR_COL;
+            Console.WriteLine("[FATAL] Could not identify files: " + e.Message);
 			logger.SetUpRunTimeLogMessage("Main: Error when copying/unpacking/identifying files: " + e.Message, true);
 			return;
 		}
@@ -151,7 +162,6 @@ class Program
 			{
 				return;
 			}
-			
 
 			try
 			{
