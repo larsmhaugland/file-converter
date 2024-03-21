@@ -332,44 +332,69 @@ public class GhostscriptConverter : Converter
 
 
 
-    void convertToPDF(FileToConvert file, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
-	{
-		Logger log = Logger.Instance;
-		string outputFolder = Path.GetDirectoryName(file.FilePath);
-		string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
-		string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + file.FilePath;
-		int count = 0;
-		bool converted;
-		try
-		{
-			do
-			{
-				ProcessStartInfo startInfo = new ProcessStartInfo();
-				startInfo.FileName = gsExecutable;
-				startInfo.Arguments = arguments;
-				startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-				startInfo.RedirectStandardOutput = true;
-				startInfo.UseShellExecute = false;
-				startInfo.CreateNoWindow = true;
-				using (Process? exeProcess = Process.Start(startInfo))
-				{
-					exeProcess?.WaitForExit();
-				}
-				converted = CheckConversionStatus(outputFilePath, pronom,file);
-				count++;
-				
-			} while (!converted && count < GlobalVariables.MAX_RETRIES);
-			if (!converted)
-			{
-				throw new Exception("File was not converted");
-			}
-		}
-		catch (Exception e)
-		{
-			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
-		}
+    /// <summary>
+    ///     Convert to PDF using GhostScript
+    /// </summary>
+    /// <param name="filePath"> Name and path of original file </param>
+    /// <param name="outputFileName"> Filename of the converted file </param>
+    /// <param name="sDevice"> Ghostscript variable that determines what conversion it should do </param>
+    /// <param name="extension"> Extension for the new file </param>
+    /// <param name="pdfVersion"> The PDF version to covnert to </param>
+    /// <param name="pronom"> The output pronom </param>
+	void convertToPDF(FileToConvert fileinfo, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
+    {
+        string? outputFolder = Path.GetDirectoryName(fileinfo.FilePath);
 
-	}
+        string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
+        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + fileinfo.FilePath;
+        string command;
+
+        try
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            if (OperatingSystem.IsWindows())
+            {
+                startInfo.FileName = gsExecutable;
+                command = arguments;
+            }
+            else
+            {
+                startInfo.FileName = "/bin/bash";
+                string linuxCommand = $"gs " + arguments;
+                command = $"-c \"{linuxCommand}\"";
+            }
+            startInfo.Arguments = command;
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+            using (Process? exeProcess = Process.Start(startInfo))
+            {
+                exeProcess?.WaitForExit();
+            }
+
+            int count = 1;
+            bool converted = false;
+            do
+            {
+                converted = CheckConversionStatus( outputFilePath, pronom, fileinfo);
+                count++;
+                if (!converted)
+                {
+                    convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion, pronom);
+                }
+            } while (!converted && count < 4);
+            if (!converted)
+            {
+                throw new Exception("File was not converted");
+            }
+
+        }
+        catch (Exception e)
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo.FilePath);
+        }
+    }
 
 }
 
