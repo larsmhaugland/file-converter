@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 public class SiegfriedJSON
@@ -68,7 +69,7 @@ public class Siegfried
 	private string ExecutablePath = OperatingSystem.IsLinux() ? "sf" : "src/siegfried/sf.exe";
 	private string HomeFolder = "src/siegfried";
     private static readonly object lockObject = new object();
-	private List<string> CompressedFolders;
+	private List<List<string>> CompressedFolders;
 	public ConcurrentBag<FileInfo> Files = new ConcurrentBag<FileInfo>();
 	public static Siegfried Instance
 	{
@@ -92,7 +93,7 @@ public class Siegfried
 	{
 		Logger logger = Logger.Instance;
 		//TODO: Should check Version and ScanDate here
-		CompressedFolders = new List<string>();
+		CompressedFolders = new List<List<string>>();
 		//Look for Siegfried files
 		if (OperatingSystem.IsWindows())
 		{
@@ -469,28 +470,31 @@ public class Siegfried
 		var fileBag = new ConcurrentBag<FileInfo>();
 		
 		//For eaccompressed folder, identify all files
-		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, folder =>
+		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, folders =>
 		{
-			//Identify all file paths in compressed folder and group them
-			var pathWithoutExt = folder.Split('.')[0]; //TODO: This might not work for paths with multiple file extensions
-			var paths = Directory.GetFiles(pathWithoutExt, "*.*", SearchOption.AllDirectories);
-			var filePathGroups = GroupPaths(new List<string>(paths));
-			//Identify all files in each group
-			Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, paths =>
+			foreach (string folder in folders)
 			{
-				var files = IdentifyList(paths);
-				if (files != null)
+				//Identify all file paths in compressed folder and group them
+				var pathWithoutExt = folder.LastIndexOf('.') > 0 ? folder.Substring(0, folder.LastIndexOf('.')) : folder;
+                var paths = Directory.GetFiles(pathWithoutExt, "*.*", SearchOption.TopDirectoryOnly);
+				var filePathGroups = GroupPaths(new List<string>(paths));
+				//Identify all files in each group
+				Parallel.ForEach(filePathGroups, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, paths =>
 				{
-					foreach (FileInfo file in files)
+					var files = IdentifyList(paths);
+					if (files != null)
 					{
-						fileBag.Add(file);
+						foreach (FileInfo file in files)
+						{
+							fileBag.Add(file);
+						}
 					}
-				}
-				else
-				{
-					logger.SetUpRunTimeLogMessage("SF IdentifyCompressedFilesJSON: " + folder + " could not be identified", true);
-				}
-			});
+					else
+					{
+						logger.SetUpRunTimeLogMessage("SF IdentifyCompressedFilesJSON: " + folder + " could not be identified", true);
+					}
+				});
+			}
 		});
 		return fileBag.ToList();
 	}
@@ -640,30 +644,33 @@ public class Siegfried
 	public void CompressFolders()
 	{
 		//In Parallel: Identify original compression formats and compress the previously identified folders
-		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePath =>
+		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, folders =>
 		{
-			var extention = Path.GetExtension(filePath);
-			//Switch for different compression formats
-			switch (extention)
-			{
-				case ".zip":
-					CompressFolder(filePath, ArchiveType.Zip);
-					break;
-				case ".tar":
-					CompressFolder(filePath, ArchiveType.Tar);
-					break;
-				case ".gz":
-					CompressFolder(filePath, ArchiveType.GZip);
-					break;
-				case ".rar":
-					CompressFolder(filePath, ArchiveType.Rar);
-					break;
-				case ".7z":
-					CompressFolder(filePath, ArchiveType.SevenZip);
-					break;
-				default:
-					//Do nothing
-					break;
+			foreach(string folder in folders)
+			{ 
+				var extention = Path.GetExtension(folder);
+				//Switch for different compression formats
+				switch (extention)
+				{
+					case ".zip":
+						CompressFolder(folder, ArchiveType.Zip);
+						break;
+					case ".tar":
+						CompressFolder(folder, ArchiveType.Tar);
+						break;
+					case ".gz":
+						CompressFolder(folder, ArchiveType.GZip);
+						break;
+					case ".rar":
+						CompressFolder(folder, ArchiveType.Rar);
+						break;
+					case ".7z":
+						CompressFolder(folder, ArchiveType.SevenZip);
+						break;
+					default:
+						//Do nothing
+						break;
+				}
 			}
 		});
 	}
@@ -674,72 +681,73 @@ public class Siegfried
 	public void UnpackCompressedFolders()
 	{
 		//Identify all files in output directory
-		List<string> compressedFoldersOutput = new List<string>(Directory.GetFiles(GlobalVariables.parsedOptions.Output, "*.*", SearchOption.AllDirectories));
-		List<string> compressedFoldersInput = new List<string>(Directory.GetFiles(GlobalVariables.parsedOptions.Input, "*.*", SearchOption.AllDirectories));
+		var compressedFoldersOutput = GetCompressedFolders(GlobalVariables.parsedOptions.Output); 
+		var compressedFoldersInput = GetCompressedFolders(GlobalVariables.parsedOptions.Input);
 
-		List<string> outputFoldersWithoutRoot = new List<string>();
-		List<string> inputFoldersWithoutRoot = new List<string>();
+        // Remove root path from all paths in compressedFoldersInput
+        var inputWithoutRoot = compressedFoldersInput.Select(file =>
+        {
+            int index = file.IndexOf(GlobalVariables.parsedOptions.Input);
+            return index >= 0 ? file.Substring(0, index) + file.Substring(index + GlobalVariables.parsedOptions.Input.Length) : file;
+        }).ToList();
 
-		//Remove root path from all paths
-		//TODO: Should not use replace, just remove first occurence
-		foreach (string compressedFolder in compressedFoldersOutput)
+        // Remove root path from all paths in compressedFoldersOutput
+        var outputWithoutRoot = compressedFoldersOutput.Select(file =>
+        {
+            int index = file.IndexOf(GlobalVariables.parsedOptions.Output);
+            return index >= 0 ? file.Substring(0, index) + file.Substring(index + GlobalVariables.parsedOptions.Output.Length) : file;
+        }).ToList();
+
+        //Remove all folders that are not in input directory
+        foreach (string folder in outputWithoutRoot)
 		{
-			string relativePath = compressedFolder.Replace(GlobalVariables.parsedOptions.Output, "");
-			outputFoldersWithoutRoot.Add(relativePath);
-		}
-
-		foreach (string compressedFolder in compressedFoldersInput)
-		{
-			string relativePath = compressedFolder.Replace(GlobalVariables.parsedOptions.Input, "");
-			inputFoldersWithoutRoot.Add(relativePath);
-		}
-
-		//Remove all folders that are not in input directory
-		foreach (string folder in outputFoldersWithoutRoot)
-		{
-			if (!inputFoldersWithoutRoot.Contains(folder))
+			if (!inputWithoutRoot.Contains(folder))
 			{
 				compressedFoldersOutput.Remove(GlobalVariables.parsedOptions.Output + folder);
 			}
 		}
-		ConcurrentBag<string> unpackedFolders = new ConcurrentBag<string>();
-		//In Parallel: Unpack compressed folders and delete the compressed folder
-		Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, filePath =>
+
+		ConcurrentBag<List<string>> allUnpackedFolders = new ConcurrentBag<List<string>>();
+		//In Parallel: Unpack compressed folders recursively and delete the compressed folder
+		Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, root =>
 		{
-			var extension = Path.GetExtension(filePath);
-			//Switch for different compression formats
-			switch (extension)
-			{
-				case ".zip":
-					UnpackFolder(filePath);
-					unpackedFolders.Add(filePath);
-					break;
-				case ".tar":
-					UnpackFolder(filePath);
-					unpackedFolders.Add(filePath);
-					break;
-				case ".gz":
-					UnpackFolder(filePath);
-					unpackedFolders.Add(filePath);
-					break;
-				case ".rar":
-					UnpackFolder(filePath);
-					unpackedFolders.Add(filePath);
-					break;
-				case ".7z":
-					UnpackFolder(filePath);
-					unpackedFolders.Add(filePath);
-					break;
-				default:
-					//Do nothing
-					break;
-			}
+			allUnpackedFolders.Add(UnpackRecursively(root));
 		});
-		foreach (string folder in unpackedFolders)
+
+		foreach (List<string> folder in allUnpackedFolders)
 		{
 			CompressedFolders.Add(folder);
 		}
 	}
+
+	private List<string> UnpackRecursively(string root)
+	{
+		List<string> unpackedFolders = new List<string>();
+
+		UnpackFolder(root);
+		unpackedFolders.Add(root);
+
+		var extractedFolder = root.LastIndexOf('.') > 0 ? root.Substring(0, root.LastIndexOf('.')) : root;
+		var subFolders = GetCompressedFolders(extractedFolder);
+		foreach (string folder in subFolders)
+		{
+			var path = Path.Combine(extractedFolder, Path.GetFileName(folder));
+			unpackedFolders.AddRange(UnpackRecursively(path));
+        }
+		return unpackedFolders;
+	}
+
+	private List<string> GetCompressedFolders(string dir)
+	{
+		if (!Directory.Exists(dir))
+		{
+			return new List<string>();
+		}
+		var files = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories).ToList();
+        var compressedFolders = files.FindAll(file => file.EndsWith(".zip") || file.EndsWith(".tar") || file.EndsWith(".gz") || file.EndsWith(".rar") || file.EndsWith(".7z"));
+		return compressedFolders;
+    }
+
 
 
 	/// <summary>
@@ -794,6 +802,7 @@ public class Siegfried
 						}
 					}
 				}
+				File.Delete(path);
 			} catch (CryptographicException)
 			{
 				Logger.Instance.SetUpRunTimeLogMessage("SF UnpackFolder " + path + " is encrypted", true);

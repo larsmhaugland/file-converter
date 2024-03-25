@@ -55,7 +55,7 @@ class Program
 { 
 	static void Main(string[] args)
 	{
-        bool debug = false;
+        bool debug = true;
 		string settingsPath = "";
         Parser.Default.ParseArguments<Options>(args).WithParsed(options =>
         {

@@ -261,7 +261,7 @@ class Settings
             {
                 // Add current folder to subfolders list
                 // TODO: This is not needed, as the folder is already added in the main function
-                //subfolders.Add(relativePath); 
+                subfolders.Add(relativePath); 
 
                 // Add immediate subfolders
                 foreach (string subfolder in Directory.GetDirectories(targetFolderPath))
