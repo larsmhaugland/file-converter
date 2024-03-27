@@ -643,9 +643,11 @@ public class Siegfried
 	/// </summary>
 	public void CompressFolders()
 	{
-		//In Parallel: Identify original compression formats and compress the previously identified folders
-		Parallel.ForEach(CompressedFolders, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, folders =>
+		//Identify original compression formats and compress the folders
+		CompressedFolders.ForEach( folders =>
 		{
+			//Compress in reverse order to avoid compressing a folder that contains an uncompressed folder that should be compressed
+			folders.Reverse();
 			foreach(string folder in folders)
 			{ 
 				var extention = Path.GetExtension(folder);
@@ -709,7 +711,7 @@ public class Siegfried
 
 		ConcurrentBag<List<string>> allUnpackedFolders = new ConcurrentBag<List<string>>();
 		//In Parallel: Unpack compressed folders recursively and delete the compressed folder
-		Parallel.ForEach(compressedFoldersOutput, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, root =>
+		compressedFoldersOutput.ForEach(root =>
 		{
 			allUnpackedFolders.Add(UnpackRecursively(root));
 		});

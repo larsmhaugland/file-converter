@@ -1,7 +1,9 @@
 ﻿using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Mozilla;
 using SharpCompress;
+using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 
@@ -69,9 +71,17 @@ public class FileManager
 			{
 				Guid id = Guid.NewGuid();
 				file.Id = id;
-				Files.TryAdd(id, file);
+                Files.TryAdd(id, file);
 			}
-		}
+
+            //Remove all compressed files from the list
+            var compressedExtensions = new List<string> { ".zip", ".tar", ".tar.gz", ".tar.bz2", ".7z", ".rar" };
+            var entriesToRemove = Files.Where(kvp => compressedExtensions.Contains(Path.GetExtension(kvp.Value.FilePath))).ToList();
+            foreach (var kvp in entriesToRemove)
+            {
+                Files.TryRemove(kvp.Key, out _);
+            }
+        }
     }
 
     public void ImportFiles(List<FileInfo> files)
