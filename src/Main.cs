@@ -31,6 +31,7 @@ public static class GlobalVariables
 	public const ConsoleColor WARNING_COL = ConsoleColor.Yellow;
 	public const ConsoleColor SUCCESS_COL = ConsoleColor.Green;
 	public static readonly PrintSortBy SortBy = PrintSortBy.Count;
+	public static readonly object IOlock = new object();
 	
 	public static void Reset()
 	{
@@ -198,6 +199,10 @@ class Program
             } else
 			{
 				Console.WriteLine("No errors happened during runtime. See documentation.json file in output dir.");
+			}
+			if (debug)
+			{
+				Console.Beep();
 			}
 		}
 	}

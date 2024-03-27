@@ -331,7 +331,7 @@ public class ConversionManager
 	/// <param name="mf">Files that should be combined</param>
 	void SetupWorkingSet(ConcurrentDictionary<Guid, FileToConvert> ws, Dictionary<string, List<FileInfo>> mf)
 	{
-		//TODO: Can we parallelize this?
+		//TODO: Should we parallelize this?
 		foreach (FileInfo file in FileManager.Instance.Files.Values)
 		{
 			//Create a new FileToConvert object

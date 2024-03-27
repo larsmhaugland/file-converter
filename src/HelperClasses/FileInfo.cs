@@ -35,6 +35,7 @@ public class FileInfo
 	public bool NotSupported { get; set; } = false;				// True if file is not supported
 	public bool OutputNotSet { get; set; } = false;				// True if file didn't have a specified format
 	public string NewFileName { get; set; } = "";				// The new name of the file
+	public bool Display { get; set; } = true;					// True if file should be displayed in the file list at the end
 
 
 	/// <summary>
@@ -128,7 +129,11 @@ public class FileInfo
 	public void RenameFile(string newName)
 	{
 		try 
-		{ 
+		{
+			if (File.Exists(newName))
+			{
+				File.Delete(newName);
+			}
 			File.Move(FilePath, newName);
 			FilePath = newName;
 			OriginalFilePath = Path.GetFileName(newName);

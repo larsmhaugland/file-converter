@@ -252,8 +252,9 @@ public class FileManager
 		Dictionary<KeyValuePair<string, string>, int> fileCount = new Dictionary<KeyValuePair<string, string>, int>();
 		foreach (FileInfo file in Files.Values)
 		{
-			//Skip files that should be merged
-			if (Settings.ShouldMerge(file))
+			
+			//Skip files that should be merged or should not be displayed
+			if (Settings.ShouldMerge(file) || !file.Display)
 			{
 				continue;
 			}
@@ -280,7 +281,7 @@ public class FileManager
 				targetPronom = notSetString;
 				file.OutputNotSet = true;
 			}
-			else if (!supported)
+			else if (!supported && targetPronom != currentPronom)
 			{
                 targetPronom = targetPronom + notSupportedString;
 				file.NotSupported = true;
@@ -325,6 +326,7 @@ public class FileManager
 				targetMax = format.TargetFormatName.Length;
 			}
 		}
+
 		//Adjust length to be at least as big as the column name
 		currentMax = Math.Max(currentMax, "Full name".Length);
         targetMax  = Math.Max(targetMax, "Full name".Length);
@@ -369,7 +371,8 @@ public class FileManager
 			{
 				Console.ForegroundColor = GlobalVariables.WARNING_COL;
 			}
-			if (format.TargetPronom != format.CurrentPronom)
+
+			if (format.TargetPronom != format.CurrentPronom || format.TargetFormatName.Contains(notSupportedString))
 			{
 				Console.WriteLine("{0,13} - {1,-" + currentMax + "} | {2,13} - {3,-" + targetMax + "} | {4,6}", format.CurrentPronom, format.CurrentFormatName, format.TargetPronom, format.TargetFormatName, format.Count);
 			}

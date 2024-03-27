@@ -134,6 +134,9 @@ class Settings
 						if (String.IsNullOrEmpty(innerDefault))
 						{
                             innerDefault = defaultType;
+						} else
+						{
+							Console.Write("");
 						}
 
 						// Remove whitespace and split pronoms string by commas into a list of strings
@@ -152,7 +155,7 @@ class Settings
 						{
 							foreach (string pronom in settings.PronomsList)
 							{
-								GlobalVariables.FileSettings[pronom] = defaultType;
+								GlobalVariables.FileSettings[pronom] = settings.DefaultType;
 							}
 						}
 						else
@@ -260,7 +263,7 @@ class Settings
             if (Directory.Exists(targetFolderPath))
             {
                 // Add current folder to subfolders list
-                // TODO: This is not needed, as the folder is already added in the main function
+                // TODO: Is this not needed?, as the folder is already added in the main function
                 subfolders.Add(relativePath); 
 
                 // Add immediate subfolders
@@ -303,6 +306,7 @@ class Settings
         }
 		return null;
     }
+
 	/*
 	 * probably not necessary
 	 * 

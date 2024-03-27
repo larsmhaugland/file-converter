@@ -877,7 +877,7 @@ public class Siegfried
 			case "fmt/42": output = "JPEG 1.00"; break;
             case "fmt/43": output = "JPEG 1.01"; break;
             case "fmt/44": output = "JPEG 1.02"; break;
-			//TODO: Hva er Exchagable Image File Format?
+			//TODO: Hva er Exchangeable Image File Format?
 			#endregion
 			#region GIF
 			case "fmt/3": output = "GIF 87a"; break;

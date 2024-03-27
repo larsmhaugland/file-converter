@@ -32,11 +32,13 @@ public class GhostscriptConverter : Converter
 		Version = "1.23.1";
     }
 
-    public string gsExecutable = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
+    public string gsExecutable = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gswin64c.exe");
+    public string gsLibrary = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GhostscriptBinaryFiles", "gs10.02.1", "bin", "gsdll64.dll");
 
-	List<string> ImagePronoms = [
-	//PNG
-	"fmt/11",
+    List<string> ImagePronoms = 
+		[
+		//PNG
+		"fmt/11",
 		"fmt/12",
 		"fmt/13",
 		"fmt/935",
@@ -70,8 +72,9 @@ public class GhostscriptConverter : Converter
 		"fmt/114",
 		"fmt/116",
 		"fmt/117",
-	];
-	List<string> PDFPronoms = [
+		];
+	List<string> PDFPronoms = 
+		[
 		"fmt/15",
 		"fmt/16",
 		"fmt/17",
@@ -80,8 +83,9 @@ public class GhostscriptConverter : Converter
 		"fmt/20",
 		"fmt/276",
 		"fmt/1129"
-	];
-	List<string> PostScriptPronoms = [
+		];
+	List<string> PostScriptPronoms = 
+		[
 		"fmt/124",
 		"x-fmt/91",
 		"x-fmt/406",
@@ -100,7 +104,7 @@ public class GhostscriptConverter : Converter
 		{"fmt/20", 1.6},
 		{"fmt/276", 1.7},
 		{"fmt/1129", 2 }
-};
+	};
 
 	Dictionary<List<string>, Tuple<string, string>> keyValuePairs = new Dictionary<List<string>, Tuple<string, string>>() 
 	{
@@ -146,9 +150,9 @@ public class GhostscriptConverter : Converter
 	/// </summary>
 	/// <param name="filePath">The file to be converted</param>
 	/// <param name="pronom">The file format to convert to</param>
-	public override void ConvertFile(FileToConvert fileinfo, string pronom)
+	public override void ConvertFile(FileToConvert file, string pronom)
 	{
-		string outputFileName = Path.GetFileNameWithoutExtension(fileinfo.FilePath);
+		string outputFileName = Path.GetFileNameWithoutExtension(file.FilePath);
 		string extension;
 		string sDevice;
 
@@ -162,26 +166,24 @@ public class GhostscriptConverter : Converter
 				if (extension == ".pdf")
 				{
 					string pdfVersion = pdfVersionMap[pronom].ToString();
-					convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion, pronom);
+					convertToPDF(file, outputFileName, sDevice, extension, pdfVersion, pronom);
 				}
 				else if (extension == ".png" || extension == ".jpg" || extension == ".tiff" || extension == ".bmp")
 				{
 					if(OperatingSystem.IsWindows())
 					{
-                        convertToImagesWindows(fileinfo, outputFileName, sDevice, extension, pronom);
+                        convertToImagesWindows(file, outputFileName, sDevice, extension, pronom);
                     }
 					else 
 					{
-						convertToImagesLinux(fileinfo, outputFileName, sDevice, extension, pronom);
+						convertToImagesLinux(file, outputFileName, sDevice, extension, pronom);
 					}
-					
 				}
 			}
 		}catch(Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, fileinfo.FilePath);
+			Logger.Instance.SetUpRunTimeLogMessage(pronom + " is not supported by GhostScript. File is not converted.", true, file.FilePath);
 		}
-		
 	}
 
 	/// <summary>
@@ -194,62 +196,79 @@ public class GhostscriptConverter : Converter
 	void convertToImagesWindows(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
 	{
 		Logger log = Logger.Instance;
+		if (!System.OperatingSystem.IsWindowsVersionAtLeast(6,1) ) 
+		{
+			log.SetUpRunTimeLogMessage("GhostScript is not supported on this version of Windows (6.1). File is not converted.", true, filename: file.FilePath);
+			return; 
+		}
 		try
 		{
-			using (var rasterizer = new GhostscriptRasterizer())
+            int count = 0;
+			bool converted = true;
+			List<FileInfo> files;
+			var originalFileInfo = FileManager.Instance.GetFile(file.Id);
+			if(originalFileInfo == null)
 			{
-				GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(0, 0, 0), gsExecutable, string.Empty, GhostscriptLicense.GPL);
-				using (var stream = new FileStream(file.FilePath, FileMode.Open, FileAccess.Read))
+				file.Failed = true;
+				return;
+			}
+			do {
+				files = new List<FileInfo>(); //Clear list of files
+
+                //Create folder for images with original name
+                string filename = Path.GetFileNameWithoutExtension(file.FilePath);
+				string relPath = Path.GetRelativePath(Directory.GetCurrentDirectory(),file.FilePath);
+				 
+                string folderPath = relPath.Substring(0, relPath.LastIndexOf('.'));
+                if (Directory.Exists(folderPath))
 				{
-					rasterizer.Open(stream, versionInfo, false);
+                    //Clear folder if it already exists
+                    Directory.Delete(folderPath, true);
+                }
+				Directory.CreateDirectory(folderPath);
 
-					ImageFormat? imageFormat = GetImageFormat(extension);
-
-					if (imageFormat != null)
+                using (var rasterizer = new GhostscriptRasterizer())
+				{
+					GhostscriptVersionInfo versionInfo = new GhostscriptVersionInfo(new Version(), gsLibrary, string.Empty, GhostscriptLicense.GPL);
+					using (var stream = new FileStream(file.FilePath, FileMode.Open, FileAccess.Read))
 					{
-
-						for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
+						rasterizer.Open(stream, versionInfo, false);
+						ImageFormat? imageFormat = GetImageFormat(extension);
+						if (imageFormat != null)
 						{
-							string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
-							using (var image = rasterizer.GetPage(300, pageNumber))
+							for (int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
 							{
-								image.Save(pageOutputFileName, imageFormat);
+								string pageOutputFileName = String.Format("{0}{1}{2}_{3}{4}", folderPath, Path.DirectorySeparatorChar, outputFileName, pageNumber.ToString(), extension);
+								using (var image = rasterizer.GetPage(300, pageNumber))
+								{
+									image.Save(pageOutputFileName, imageFormat);
+								}
+
+								var newFile = new FileInfo(pageOutputFileName, originalFileInfo);
+								newFile.AddConversionTool(NameAndVersion);
+								files.Add(newFile);
 							}
 						}
-
-						int count = 1;
-						bool converted = false;
-						do
-						{
-							converted = CheckConversionStatus(outputFileName, pronom, file);
-							count++;
-							if (!converted)
-							{
-								convertToImagesWindows(file, outputFileName, sDevice, extension, pronom);
-							}
-						} while (!converted && count < 4);
-						if (!converted)
-						{
-							throw new Exception("File was not converted");
-						}
-
-						//Create folder for images with original name
-						string folder = Path.GetFileNameWithoutExtension(file.FilePath);
-						string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
-						Directory.CreateDirectory(folderPath);
-						
-						for(int pageNumber = 1; pageNumber <= rasterizer.PageCount; pageNumber++)
-						{
-							string pageOutputFileName = outputFileName + "_" + pageNumber.ToString() + extension;
-							string pageOutputFilePath = Path.Combine(GlobalVariables.parsedOptions.Output, pageOutputFileName);
-							string pageOutputFilePathInFolder = Path.Combine(folderPath, pageOutputFileName);
-							File.Move(pageOutputFilePath, pageOutputFilePathInFolder);
-						}
-		
 					}
 				}
+				foreach (var newFile in files)
+				{
+					converted = CheckConversionStatus(newFile.FilePath, pronom);
+					//It is only relevant to check if at least one file is not converted, rest will be checked at the end of conversion
+					if (!converted)
+					{
+						break;
+					}
+				}
+			} while (!converted && ++count < GlobalVariables.MAX_RETRIES);
+            FileManager.Instance.AddFiles(files);
+			if (converted)
+			{
+				deleteOriginalFileFromOutputDirectory(file.FilePath);
+				originalFileInfo.Display = false;
 			}
-		}
+			file.Failed = !converted;
+        }
 		catch (Exception e)
 		{
 			log.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
@@ -258,7 +277,12 @@ public class GhostscriptConverter : Converter
 
 	private ImageFormat ?GetImageFormat(string extension)
 	{
-		switch (extension)
+        if (!System.OperatingSystem.IsWindowsVersionAtLeast(6, 1))
+        {
+            Logger.Instance.SetUpRunTimeLogMessage("GhostScript is not supported on this version of Windows (6.1).", true);
+            return null;
+        }
+        switch (extension)
 		{
 			case ".png":
 				return ImageFormat.Png;
@@ -281,53 +305,62 @@ public class GhostscriptConverter : Converter
     /// <param name="sDevice"></param>
     /// <param name="extension"></param>
     /// <param name="pronom"></param>
-    void convertToImagesLinux(FileToConvert fileinfo, string outputFileName, string sDevice, string extension, string pronom)
+    void convertToImagesLinux(FileToConvert file, string outputFileName, string sDevice, string extension, string pronom)
     {
         try
         {
-            string? outputFolder = Path.GetDirectoryName(fileinfo.FilePath);
-            string outputName = Path.Combine(outputFolder, outputFileName);
+            int count = 0;
+            bool converted = true;
+			List<FileInfo> files;
+            var originalFileInfo = FileManager.Instance.GetFile(file.Id);
 
-            string command = $"gs -sDEVICE={sDevice} -o {outputName}%d{extension} {fileinfo.FilePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
+			do
+			{
+				files = new List<FileInfo>(); //Clear list of files
+				//Create folder for images with original name
+				string folder = Path.GetFileNameWithoutExtension(file.FilePath);
+				string folderPath = Path.Combine(GlobalVariables.parsedOptions.Output, folder);
+				if (Directory.Exists(folderPath))
+				{
+					//Clear folder if it already exists
+					Directory.Delete(folderPath, true);
+				}
+				Directory.CreateDirectory(folderPath);
 
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = "/bin/bash";
-            startInfo.Arguments = $"-c \"{command}\"";
-            startInfo.RedirectStandardOutput = true;
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            startInfo.RedirectStandardError = true;
+				string command = $"gs -sDEVICE={sDevice} -o {folderPath}{outputFileName}%d{extension} {file.FilePath}";  // %d adds page number to filename, i.e outputFileName1.png outputFileName2.png
 
-            using (Process? process = Process.Start(startInfo))
-            {
-                string? output = process?.StandardOutput.ReadToEnd();
-                string? error = process?.StandardError.ReadToEnd();
+				ProcessStartInfo startInfo = new ProcessStartInfo();
+				startInfo.FileName = "/bin/bash";
+				startInfo.Arguments = $"-c \"{command}\"";
+				startInfo.RedirectStandardOutput = true;
+				startInfo.UseShellExecute = false;
+				startInfo.CreateNoWindow = true;
+				startInfo.RedirectStandardError = true;
 
-                process?.WaitForExit();
-            }
-			//TODO: How to check conversion for one file that turns into multiple files?
-            /*int count = 1;
-            bool converted = false;
-            do
-            {
-                converted = CheckConversionStatus(filePath, outputFileName+extension, pronom);
-                count++;
-                if (!converted)
-                {
-                    convertToImagesLinux(filePath, outputFileName, sDevice, extension, pronom);
+				using (Process? process = Process.Start(startInfo))
+				{
+					string? output = process?.StandardOutput.ReadToEnd();
+					string? error = process?.StandardError.ReadToEnd();
+
+					process?.WaitForExit();
+				}
+
+				var filesInFolder = Directory.GetFiles(folderPath);
+				foreach (var fileInFolder in filesInFolder)
+				{
+					var newFile = new FileInfo(fileInFolder, originalFileInfo);
+					files.Add(newFile);
+                    //Only checking as long as a file hasn't been converted, rest will be checked at the end of conversion
+                    converted = converted && CheckConversionStatus(newFile.FilePath, pronom);
                 }
-            } while (!converted && count < 4);
-            if (!converted)
-            {
-                throw new Exception("File was not converted");
-            }*/
-
+            } while (!converted && ++count < GlobalVariables.MAX_RETRIES);
+			FileManager.Instance.AddFiles(files);
+            file.Failed = !converted;
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo.FilePath);
+            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
         }
-
     }
 
 
@@ -341,12 +374,12 @@ public class GhostscriptConverter : Converter
     /// <param name="extension"> Extension for the new file </param>
     /// <param name="pdfVersion"> The PDF version to covnert to </param>
     /// <param name="pronom"> The output pronom </param>
-	void convertToPDF(FileToConvert fileinfo, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
+	void convertToPDF(FileToConvert file, string outputFileName, string sDevice, string extension, string pdfVersion, string pronom)
     {
-        string? outputFolder = Path.GetDirectoryName(fileinfo.FilePath);
+        string? outputFolder = Path.GetDirectoryName(file.FilePath);
 
         string outputFilePath = Path.Combine(outputFolder, outputFileName + extension);
-        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + fileinfo.FilePath;
+        string arguments = "-dCompatibilityLevel=" + pdfVersion + " -sDEVICE=pdfwrite -o " + outputFilePath + " " + file.FilePath;
         string command;
 
         try
@@ -368,7 +401,8 @@ public class GhostscriptConverter : Converter
             startInfo.RedirectStandardOutput = true;
             startInfo.UseShellExecute = false;
             startInfo.CreateNoWindow = true;
-            using (Process? exeProcess = Process.Start(startInfo))
+            using (Process? exeProcess = Process.Start(startInfo))	//TODO: System.ComponentModel.Win32Exception: 'An error occurred trying to start process 'C:\Users\larsm\source\repos\file-converter\bin\Debug\net8.0\GhostscriptBinaryFiles\gs10.02.1\bin\gsdll64.dll' with working directory 'C:\Users\larsm\source\repos\file-converter'. The specified executable is not a valid application for this OS platform.'
+
             {
                 exeProcess?.WaitForExit();
             }
@@ -377,25 +411,23 @@ public class GhostscriptConverter : Converter
             bool converted = false;
             do
             {
-                converted = CheckConversionStatus( outputFilePath, pronom, fileinfo);
+                converted = CheckConversionStatus( outputFilePath, pronom, file);
                 count++;
                 if (!converted)
                 {
-                    convertToPDF(fileinfo, outputFileName, sDevice, extension, pdfVersion, pronom);
+                    convertToPDF(file, outputFileName, sDevice, extension, pdfVersion, pronom);
                 }
             } while (!converted && count < 4);
             if (!converted)
             {
-                throw new Exception("File was not converted");
+                file.Failed = true;
             }
-
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: fileinfo.FilePath);
+            Logger.Instance.SetUpRunTimeLogMessage("Error when converting file with GhostScript. Error message: " + e.Message, true, filename: file.FilePath);
         }
     }
-
 }
 
 

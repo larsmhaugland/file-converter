@@ -10,6 +10,9 @@ using System.Drawing;
 using System.Net.Http.Headers;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.Diagnostics;
+using System.IO;
+using iText.Commons.Actions;
 
 /// <summary>
 /// iText7 is a subclass of the Converter class.                                                     <br></br>
@@ -27,7 +30,8 @@ using System.Text;
 public class iText7 : Converter
 {
 
-	private static readonly object padlock = new object();
+	private static readonly object pdfalock = new object();
+    private static readonly object imagelock = new object();
 
     public iText7()
 	{
@@ -35,7 +39,10 @@ public class iText7 : Converter
         SetNameAndVersion();
 		SupportedConversions = getListOfSupportedConvesions();
         SupportedOperatingSystems = getSupportedOS();
-	}
+
+        //Acknowledge AGPL usage warning
+        EventManager.AcknowledgeAgplUsageDisableWarningMessage();
+    }
 
     public override void GetVersion()
     {
@@ -222,6 +229,7 @@ public class iText7 : Converter
 		string filePathWithoutExtension = Path.Combine(dir, Path.GetFileNameWithoutExtension(file.FilePath));
 		string output = Path.Combine(filePathWithoutExtension + ".pdf");
         string filename = Path.Combine(file.FilePath);
+        var filestream = File.ReadAllBytes(filename);
 		try
 		{
             int count = 0;
@@ -229,14 +237,16 @@ public class iText7 : Converter
             do
             {
                 using (var pdfWriter = new PdfWriter(output, new WriterProperties().SetPdfVersion(pdfVersion)))
-		        using (var pdfDocument = new PdfDocument(pdfWriter))
-		        using (var document = new iText.Layout.Document(pdfDocument))
-		        {
-			        pdfDocument.SetTagged();
-			        PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
-			        iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filename));
-			        document.Add(image);
-		        }
+                using (var pdfDocument = new PdfDocument(pdfWriter))
+                using (var document = new iText.Layout.Document(pdfDocument))
+                {
+                    pdfDocument.SetTagged();
+                    PdfDocumentInfo info = pdfDocument.GetDocumentInfo();
+
+                    var imageData = ImageDataFactory.Create(filestream,false);
+                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(imageData);
+                    document.Add(image);
+                }
 		        if (conformanceLevel != null)
 		        {
 			        convertFromPDFToPDFA(new FileToConvert(output, file.Id), conformanceLevel, pronom);
@@ -247,7 +257,7 @@ public class iText7 : Converter
 		}
 		catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
+			Logger.Instance.SetUpRunTimeLogMessage("Error converting Image to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
 		}
 		
 	}
@@ -298,7 +308,7 @@ public class iText7 : Converter
         }
 		catch (Exception e)
 		{
-			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
+			Logger.Instance.SetUpRunTimeLogMessage("Error converting HTML to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
 		}
 
 	}
@@ -318,7 +328,7 @@ public class iText7 : Converter
             int count = 0;
             bool converted = false;
             PdfOutputIntent outputIntent;
-            lock (padlock)
+            lock (pdfalock)
             {
                 using (FileStream iccFileStream = new FileStream("src/ConversionTools/sRGB2014.icc", FileMode.Open))
                 {
@@ -328,7 +338,8 @@ public class iText7 : Converter
             do
             {
                 using (PdfWriter writer = new PdfWriter(tmpFilename)) // Create PdfWriter instance
-                using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) // Associate PdfADocument with PdfWriter
+                using (PdfADocument pdfADocument = new PdfADocument(writer, conformanceLevel, outputIntent)) //TODO: iText.Kernel.Exceptions.PdfException: 'Cannot operate with the flushed PdfStream.' ----- MERGE OUTPUT PDFA
+                                                                                                             // Associate PdfADocument with PdfWriter
                 using (PdfReader reader = new PdfReader(filename))
                 {
                     PdfDocument pdfDocument = new PdfDocument(reader);
@@ -351,7 +362,10 @@ public class iText7 : Converter
                         PdfCanvas canvas = new PdfCanvas(page);
                         canvas.AddXObject(pageCopy);
                     }
-                }
+                }       //TODO: iText.Pdfa.Exceptions.PdfAConformanceException: 'The value of interpolate key shall not be true'
+                //TODO: iText.Pdfa.Exceptions.PdfAConformanceException: 'For any spot color used in a DeviceN or NChannel colorspace, an entry in the Colorants dictionary shall be present.'
+                //"output\\OfficeTestData\\matte\\Innføringslekse kap 3+4.pdf"
+
                 converted = CheckConversionStatus(tmpFilename, pronom);
             if (!converted)
             {
@@ -370,7 +384,7 @@ public class iText7 : Converter
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting PDF to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
         }
     }
 
@@ -445,7 +459,7 @@ public class iText7 : Converter
         }
         catch (Exception e)
         {
-            Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
+            Logger.Instance.SetUpRunTimeLogMessage("Error converting PDF to PDF/A or PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
             throw;
         }
     }
@@ -537,7 +551,10 @@ public class iText7 : Converter
                 foreach (var file in files)
                 {
                     string filename = Path.Combine(file.FilePath);
-                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(ImageDataFactory.Create(filename));
+                    var filestream = File.ReadAllBytes(filename);
+                    var imageData = ImageDataFactory.Create(filestream, false);
+                    iText.Layout.Element.Image image = new iText.Layout.Element.Image(imageData); //TODO: System.UriFormatException: 'Invalid URI: The format of the URI could not be determined.'
+                                                                                                    //"output\\MergeFiles\\Norwegian_Flag\\Norwegian_flag (3339).jpg"
                     document.Add(image);
                 }
             }
@@ -560,12 +577,12 @@ public class iText7 : Converter
             var result = Siegfried.Instance.IdentifyFile(outputFileName, false);
             if (result != null)
             {
-                FileInfo fi = new FileInfo(result);
-                fi.Id = new Guid();
-                fi.IsMerged = true;
-                fi.ShouldMerge = true;
-                fi.AddConversionTool(NameAndVersion);
-                FileManager.Instance.Files.TryAdd(fi.Id, fi);
+                FileInfo newFileInfo = new FileInfo(result);
+                newFileInfo.Id = new Guid();
+                newFileInfo.IsMerged = pronom == result.matches[0].id;
+                newFileInfo.ShouldMerge = true;
+                newFileInfo.AddConversionTool(NameAndVersion);
+                FileManager.Instance.Files.TryAdd(newFileInfo.Id, newFileInfo);
             }
             else
             {
@@ -575,6 +592,7 @@ public class iText7 : Converter
         }
         catch (Exception e)
         {
+
             Logger.Instance.SetUpRunTimeLogMessage("Error combining files to PDF. Files are not combined: " + e.Message, true, pronom, outputFileName);
             return Task.CompletedTask;
         }
