@@ -102,7 +102,7 @@ public class Converter
 		if (file != null)
 		{
 			file.FilePath = newPath;
-			file.FileName = Path.GetFileName(newPath);
+			file.OriginalFilePath = Path.GetFileName(newPath);
 		} else
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("replaceFileInList: File not found in FileManager", true, filename: f.FilePath);

@@ -330,73 +330,73 @@ public class LibreOfficeConverter : Converter
 	{
 		try
 		{
-			using (Process process = new Process())
+            bool converted = false;
+			int count = 0;
+            string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
+            do
 			{
-				// Set the correct properties for the process thta will run libreoffice
-				process.StartInfo.FileName = GetPlatformExecutionFile();
-				process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
-
-				string sofficeCommand = GetSofficePath(sofficePath);
-				string arguments = GetLibreOfficeCommand(destinationPdf, sourceDoc, sofficeCommand, targetFormat);
-				process.StartInfo.Arguments = arguments;
-				process.StartInfo.RedirectStandardOutput = true;
-				process.StartInfo.RedirectStandardError = true;
-				process.StartInfo.UseShellExecute = false;
-				process.StartInfo.CreateNoWindow = true;
-
-				process.Start();
-
-				// Get output and potential error
-				string standardOutput = process.StandardOutput.ReadToEnd();
-				string standardError = process.StandardError.ReadToEnd();
-
-				process.WaitForExit();
-				int exitCode = process.ExitCode;
-
-				if (exitCode != 0)      // Something went wrong, warn the user
+				using (Process process = new Process())
 				{
-					Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
-					Console.WriteLine("Standard Output:\n" + standardOutput);
-					Console.WriteLine("Standard Error:\n" + standardError);
-				}
-			}
-			// Get the new filename and check if the document was converted correctly
-			string newFileName = Path.Combine(destinationPdf, Path.GetFileNameWithoutExtension(sourceDoc) + "." + targetFormat);
-            file.FilePath = newFileName;
-			string? currPronom = GetPronom(newFileName);
-			if(currPronom == null)
-			{
-				throw new Exception("Could not get pronom for file");
-			}
-			//Convert to another PDF format if LibreOffice's standard format is not the desired one
-			if(currPronom != pronom && PDFPronoms.Contains(pronom))
-			{
-				var converter = new iText7();
-				converter.convertFromPDFToPDF(file, pronom);
-				// Add iText7 to the list of conversion tools
-				var FileInfoMap = ConversionManager.Instance.FileInfoMap;
-                if (!FileInfoMap[file.Id].ConversionTools.Contains(converter.NameAndVersion))
-                {
-                    FileInfoMap[file.Id].ConversionTools.Add(converter.NameAndVersion);
-                }
-            }
-            bool converted = CheckConversionStatus(newFileName, pronom);
+					// Set the correct properties for the process thta will run libreoffice
+					process.StartInfo.FileName = GetPlatformExecutionFile();
+					process.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
 
-			if (!converted)
-			{
-                throw new Exception("File was not converted");
-			}
-			else
+					string sofficeCommand = GetSofficePath(sofficePath);
+					string arguments = GetLibreOfficeCommand(destinationPdf, sourceDoc, sofficeCommand, targetFormat);
+					process.StartInfo.Arguments = arguments;
+					process.StartInfo.RedirectStandardOutput = true;
+					process.StartInfo.RedirectStandardError = true;
+					process.StartInfo.UseShellExecute = false;
+					process.StartInfo.CreateNoWindow = true;
+
+					process.Start();
+
+					// Get output and potential error
+					string standardOutput = process.StandardOutput.ReadToEnd();
+					string standardError = process.StandardError.ReadToEnd();
+
+					process.WaitForExit();
+					int exitCode = process.ExitCode;
+
+					if (exitCode != 0)      // Something went wrong, warn the user
+					{
+						Console.WriteLine($"\n Filepath: {sourceDoc} :  Exit Code: {exitCode}\n");
+						Console.WriteLine("Standard Output:\n" + standardOutput);
+						Console.WriteLine("Standard Error:\n" + standardError);
+					}
+				}
+
+				// Set the new filename and check if the document was converted correctly
+				file.FilePath = newFileName;
+				string? currPronom = GetPronom(newFileName);
+				if (currPronom == null)
+				{
+					throw new Exception("Could not get pronom for file");
+				}
+				//Convert to another PDF format if LibreOffice's standard output format is not the desired one
+				if (currPronom != pronom && PDFPronoms.Contains(pronom))
+				{
+					var converter = new iText7();
+					converter.convertFromPDFToPDF(file, pronom);
+					// Add iText7 to the list of conversion tools
+					var FileInfoMap = ConversionManager.Instance.FileInfoMap;
+					if (!FileInfoMap[file.Id].ConversionTools.Contains(converter.NameAndVersion))
+					{
+						FileInfoMap[file.Id].ConversionTools.Add(converter.NameAndVersion);
+					}
+				}
+				converted = CheckConversionStatus(newFileName, pronom);
+			} while (!converted && ++count < GlobalVariables.MAX_RETRIES);
+			if (converted)
 			{
 				// Delete copy in ouputfolder if converted successfully
 				deleteOriginalFileFromOutputDirectory(sourceDoc);
-			}
-			replaceFileInList(newFileName, file);
+                replaceFileInList(newFileName, file);
+            }
 		}
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: sourceDoc);
-			throw;
 		}
 	}
 
@@ -512,7 +512,7 @@ public class LibreOfficeConverter : Converter
 			case "fmt/291":
 				extensionNameForConversion = "odt";
 				break;
-			case "fmt/473":
+			//case "fmt/473":		This is the code for Office Owner File
 			case "fmt/1827":
 			case "fmt/412":
 				extensionNameForConversion = "docx";
@@ -615,7 +615,7 @@ public class LibreOfficeConverter : Converter
 	List<string> DOCXPronoms =
 	[
 		// DOCX
-		"fmt/473",
+		//"fmt/473",		This is the code for Office Owner File
 		"fmt/1827",
 		"fmt/412",
 	];

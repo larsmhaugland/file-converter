@@ -12,7 +12,7 @@ public enum HashAlgorithms
 public class FileInfo
 {
 	public string FilePath { get; set; } = "";					// Filepath relative to input directory
-	public string FileName { get; set; } = "";					// Filename with extension
+	public string OriginalFilePath { get; set; } = "";					// Filename with extension
 	public string ShortFilePath { get; set; } = "";				// Filepath without input/output directory
 	public string OriginalPronom { get; set; } = "";            // Original Pronom ID
 	public string NewPronom { get; set; } = "";					// New Pronom ID
@@ -34,10 +34,27 @@ public class FileInfo
 	public bool IsMerged { get; set; } = false;					// True if file is merged
 	public bool NotSupported { get; set; } = false;				// True if file is not supported
 	public bool OutputNotSet { get; set; } = false;				// True if file didn't have a specified format
-	public string MergedTo { get; set; } = "";					// The file the file is merged to
+	public string NewFileName { get; set; } = "";				// The new name of the file
 
-	public FileInfo()
+
+	/// <summary>
+	/// Constroctor for FileInfo that takes a path and a FileInfo object as input. This sets all original values to the values of the input FileInfo object and the path to the input path.
+	/// </summary>
+	/// <param name="path"></param>
+	/// <param name="f"></param>
+	public FileInfo(string path, FileInfo f)
 	{
+		if(f == null)
+		{
+			throw new ArgumentNullException("FileInfo object is null");
+		}
+		FilePath = path;
+		OriginalFilePath = f.OriginalFilePath;
+		OriginalPronom = f.OriginalPronom;
+		OriginalChecksum = f.OriginalChecksum;
+		OriginalFormatName = f.OriginalFormatName;
+		OriginalMime = f.OriginalMime;
+		OriginalSize = f.OriginalSize;
 	}
 
 	/// <summary>
@@ -66,7 +83,7 @@ public class FileInfo
 	public FileInfo(SiegfriedFile siegfriedFile)
 	{
 		OriginalSize = siegfriedFile.filesize;
-		FileName = Path.GetFileName(siegfriedFile.filename);
+		OriginalFilePath = Path.GetFileName(siegfriedFile.filename);
 		if (siegfriedFile.matches.Length > 0) { 
 			OriginalPronom = siegfriedFile.matches[0].id;
 			OriginalFormatName = siegfriedFile.matches[0].format;
@@ -83,7 +100,7 @@ public class FileInfo
 		{
 			OriginalChecksum = NewChecksum = result.hash;
 			OriginalSize = NewSize = result.filesize;
-			FileName = Path.GetFileName(f.FilePath);
+			OriginalFilePath = Path.GetFileName(f.FilePath);
 			if (result.matches.Length > 0)
 			{
                 OriginalPronom = NewChecksum = result.matches[0].id;
@@ -114,7 +131,7 @@ public class FileInfo
 		{ 
 			File.Move(FilePath, newName);
 			FilePath = newName;
-			FileName = Path.GetFileName(newName);
+			OriginalFilePath = Path.GetFileName(newName);
 		} catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("RenameFile: " + e.Message, true);
@@ -133,9 +150,9 @@ public class FileInfo
 	void ParseOutput(string output)
 	{
 		if(FilePath != null)
-			FileName = FilePath.Split('\\').Last();
+			OriginalFilePath = FilePath.Split('\\').Last();
 		else
-			FileName = "N/A";
+			OriginalFilePath = "N/A";
 
 		Regex fileSizeRegex = new Regex(@"filesize : (\d+)");
 		Match fileSizeMatch = fileSizeRegex.Match(output);
@@ -193,7 +210,7 @@ public class FileInfo
 		{
 			try
 			{
-				using (var stream = File.OpenRead(FileName))
+				using (var stream = File.OpenRead(OriginalFilePath))
 				{
 					return BitConverter.ToString(conversionMethod.ComputeHash(stream)).Replace("-", "").ToLower();
 				}

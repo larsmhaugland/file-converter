@@ -196,10 +196,7 @@ public class iText7 : Converter
 			}
 			else if (PDFPronoms.Contains(file.CurrentPronom))
 			{
-				if (conformanceLevel != null)
-				{
-					convertFromPDFToPDFA(file, conformanceLevel, pronom);
-				}
+				convertFromPDFToPDF(file, pronom);
 			}
 			else if (ImagePronoms.Contains(file.CurrentPronom))
 			{
@@ -209,7 +206,6 @@ public class iText7 : Converter
         catch(Exception e)
 		{
 		    Logger.Instance.SetUpRunTimeLogMessage("Error converting file with iText7. Error message: " + e.Message, true, filename: file.FilePath);
-            throw;
 		}
     }
 
@@ -247,16 +243,11 @@ public class iText7 : Converter
 		        }
 			    
 			    converted = CheckConversionStatus(output, pronom, file);
-			} while (!converted && ++count < 3);
-			if (!converted)
-			{
-				throw new Exception("File was not converted");
-			}
+			} while (!converted && ++count < GlobalVariables.MAX_RETRIES);
 		}
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
-			throw;
 		}
 		
 	}
@@ -299,16 +290,15 @@ public class iText7 : Converter
                     convertFromPDFToPDFA(new FileToConvert(output,file.Id), conformanceLevel, filename);
                 }
                 converted = CheckConversionStatus(output, pronom, file);
-            } while (!converted && ++count < 3);
+            } while (!converted && ++count < GlobalVariables.MAX_RETRIES);
             if (!converted)
             {
-                throw new Exception("File was not converted");
+                file.Failed = true;
             }
         }
 		catch (Exception e)
 		{
 			Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF. File is not converted: " + e.Message, true, filename: file.FilePath);
-            throw;
 		}
 
 	}
@@ -367,10 +357,10 @@ public class iText7 : Converter
             {
                 CheckConversionStatus(tmpFilename, pronom);
             }
-            } while (!converted && ++count < 3);
+            } while (!converted && ++count < GlobalVariables.MAX_RETRIES);
             if (!converted)
             {
-                throw new Exception("File was not converted");
+                file.Failed = true;
             } else
             {
                 File.Delete(filename);
@@ -381,7 +371,6 @@ public class iText7 : Converter
         catch (Exception e)
         {
             Logger.Instance.SetUpRunTimeLogMessage("Error converting file to PDF-A. File is not converted: " + e.Message, true, filename: file.FilePath);
-            throw;
         }
     }
 
@@ -440,10 +429,10 @@ public class iText7 : Converter
                     }
                 }
                 converted = CheckConversionStatus(tmpFilename, pronom);
-            } while (!converted && ++count < 3);
+            } while (!converted && ++count < GlobalVariables.MAX_RETRIES);
             if (!converted)
             {
-                throw new Exception("File was not converted");
+                file.Failed = true;
             }
             else
             {
@@ -491,7 +480,7 @@ public class iText7 : Converter
             foreach (var file in files)
             {
                 string outputFileName = $@"{filename}_{groupCount}.pdf";
-                file.MergedTo = outputFileName;
+                file.NewFileName = outputFileName;
                 group.Add(file);
                 groupSize += file.OriginalSize;
                 if (groupSize > GlobalVariables.maxFileSize)
@@ -558,7 +547,7 @@ public class iText7 : Converter
                 string filename = Path.Combine(file.FilePath);
                 deleteOriginalFileFromOutputDirectory(filename);
                 file.IsMerged = true;
-                file.MergedTo = outputFileName;
+                file.NewFileName = outputFileName;
             }
 
             FileToConvert ftc = new FileToConvert(outputFileName, new Guid());

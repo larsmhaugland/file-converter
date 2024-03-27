@@ -203,11 +203,27 @@ public class FileManager
         filteredFiles = filteredFiles.Where(kv => kv.Value.Count > 0).ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
+	public void AddFiles(List<FileInfo> files)
+	{
+		foreach (var file in files)
+		{
+            Guid id = Guid.NewGuid();
+            file.Id = id;
+            Files.TryAdd(id, file);
+        }
+	}
+
+	public void AddFiles(FileInfo file)
+	{
+		AddFiles(new List<FileInfo> { file });
+	}
+
+
 	/// <summary>
 	/// Prints out a grouped list of all identified input file formats and target file formats with pronom codes and full name. <br></br>
 	/// Also gives a count of how many files are in each group.
 	/// </summary>
-	class FileInfoGroup
+	private class FileInfoGroup
 	{
         public string CurrentPronom { get; set; }
 		public string CurrentFormatName { get; set; }
@@ -224,6 +240,7 @@ public class FileManager
         }
         return int.MaxValue;
     }
+
 	public void DisplayFileList()
 	{
 

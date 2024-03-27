@@ -372,7 +372,7 @@ public class Siegfried
 		{
 			var file = new FileInfo(parsedData.files[i]);
 			file.FilePath = paths[i];
-			file.FileName = Path.GetFileName(file.FilePath);
+			file.OriginalFilePath = Path.GetFileName(file.FilePath);
             var pathWithoutInput = file.FilePath.Replace(GlobalVariables.parsedOptions.Input, "");
             file.ShortFilePath = Path.Combine(pathWithoutInput.Replace(GlobalVariables.parsedOptions.Output, ""));
             while (file.ShortFilePath[0] == '\\')

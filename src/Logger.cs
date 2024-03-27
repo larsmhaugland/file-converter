@@ -190,7 +190,7 @@ public class Logger
 					Tool = file.ConversionTools,
 					ShouldMerge = file.ShouldMerge,
 					IsMerged = file.IsMerged,
-					MergedTo = file.MergedTo
+					MergedTo = file.NewFileName
                 };
                 var parentDir = Path.GetDirectoryName(file.FilePath) ?? "";
 

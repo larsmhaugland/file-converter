@@ -1,3 +1,4 @@
+using SharpCompress;
 using System.Collections.Concurrent;
 
 public class FileToConvert
@@ -7,6 +8,7 @@ public class FileToConvert
 	public string TargetPronom { get; set; }        //From Dictionary
 	public List<string> Route { get; set; }         //From Dictionary
 	public bool IsModified { get; set; } = false;   //True if file has been worked on
+	public bool Failed { get; set; } = false;       //True if the file has failed conversion without throwing an exception
 	public CancellationToken ct { get; set; }        //CancellationToken for the conversion
 	public Guid Id { get; set; }   //Unique identifier for the file
 
@@ -278,7 +280,7 @@ public class ConversionManager
 			WorkingSetMap.Clear();
 			var totalQueued = 0;
 			//Loop through working set
-			Parallel.ForEach(WorkingSet.Values, new ParallelOptions { MaxDegreeOfParallelism = maxThreads }, file =>
+			WorkingSet.Values.ForEach(file =>
 			{
 				//Loop through converters
 				foreach (Converter converter in Converters)
@@ -384,8 +386,8 @@ public class ConversionManager
 
 		Parallel.ForEach(ws.Values, new ParallelOptions { MaxDegreeOfParallelism = GlobalVariables.maxThreads }, item =>
 		{
-			//If the file is not modified, remove it from the WorkingSet
-			if (!item.IsModified)
+			//If the file was not modified or failed the conversion, remove it from the WorkingSet
+			if (!item.IsModified || item.Failed)
 			{
 				itemsToRemove.Add(item.Id);
 				return;
@@ -437,14 +439,13 @@ public class ConversionManager
 			{
 				//Send file to converter
 				c.ConvertFile(f);
-				//Add the name of the converter to the file if the previous entry is not the same converter for documentation
-				if (c.NameAndVersion != null &&
+                f.IsModified = true;
+                //Add the name of the converter to the file if the previous entry is not the same converter for documentation
+                if (c.NameAndVersion != null &&
 					(FileInfoMap[f.Id].ConversionTools.Count == 0 || FileInfoMap[f.Id].ConversionTools.Last() != c.NameAndVersion))
 				{
 					FileInfoMap[f.Id].ConversionTools.Add(c.NameAndVersion);
 				}
-
-				f.IsModified = true;
 			}
 			catch (Exception e)
 			{
