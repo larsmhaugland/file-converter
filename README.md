@@ -106,6 +106,8 @@ Since the program is still in beta, there are some limitations to the software. 
   	- The current version of the program cannot successfully recover siegfried data from an incomplete run
 - Timeout
   	- Timeout for conversion is not yet implemented
+- Merging files
+  	- Merging large amounts of files has some bugs and results may vary.
 
 
 ### GUI
